@@ -28,7 +28,7 @@ export function Blob({ mode }: BlobProps) {
 
   return (
     <mesh ref={meshRef}>
-      <sphereGeometry args={[2.8, 64, 64]} />
+      <sphereGeometry args={[2.8, 32, 32]} />
       <meshStandardMaterial
         color={0x6366f1}
         transparent

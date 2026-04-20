@@ -39,7 +39,7 @@ function getLowEndSnapshot(): boolean {
   const cores = navigator.hardwareConcurrency ?? 8;
   const memory = (navigator as NavigatorWithDeviceMemory).deviceMemory ?? 4;
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-  return isMobile && (cores < 4 || memory < 4);
+  return isMobile && (cores < 6 || memory < 8);
 }
 
 function getLowEndServerSnapshot(): boolean {
