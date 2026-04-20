@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import { Outfit } from 'next/font/google';
+import { Background3D } from '@/components/three/background-3d';
+import { Header } from '@/components/layout/header';
+import { MiniPlayer } from '@/components/player/mini-player';
 import './globals.css';
 
 const outfit = Outfit({
@@ -17,13 +20,20 @@ export const metadata: Metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  // NOTE: user-scalable intentionally omitted (a11y WCAG 1.4.4)
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={outfit.variable}>
-      <body>{children}</body>
+      <body>
+        <Background3D />
+        <div className="ui-overlay pb-32">
+          <Header />
+          <div className="h-40" aria-hidden="true" />
+          {children}
+        </div>
+        <MiniPlayer />
+      </body>
     </html>
   );
 }
