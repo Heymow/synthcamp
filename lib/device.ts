@@ -1,33 +1,53 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
+
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+function subscribeReducedMotion(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const mq = window.matchMedia(REDUCED_MOTION_QUERY);
+  mq.addEventListener('change', callback);
+  return () => mq.removeEventListener('change', callback);
+}
+
+function getReducedMotionSnapshot(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+}
+
+function getReducedMotionServerSnapshot(): boolean {
+  return false;
+}
 
 export function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
+  return useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
+}
 
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
+// deviceMemory is not in the standard Navigator lib types yet.
+type NavigatorWithDeviceMemory = Navigator & { deviceMemory?: number };
 
-  return reduced;
+// Device capability does not change at runtime; no subscription needed.
+const subscribeLowEnd: (callback: () => void) => () => void = () => () => {};
+
+function getLowEndSnapshot(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  const memory = (navigator as NavigatorWithDeviceMemory).deviceMemory ?? 4;
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  return isMobile && (cores < 4 || memory < 4);
+}
+
+function getLowEndServerSnapshot(): boolean {
+  return false;
 }
 
 export function useIsLowEndDevice(): boolean {
-  const [lowEnd, setLowEnd] = useState(false);
-
-  useEffect(() => {
-    const cores = navigator.hardwareConcurrency ?? 8;
-    const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4;
-    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-    setLowEnd(isMobile && (cores < 4 || memory < 4));
-  }, []);
-
-  return lowEnd;
+  return useSyncExternalStore(subscribeLowEnd, getLowEndSnapshot, getLowEndServerSnapshot);
 }
 
 export function useBackground3DEnabled(): boolean {
