@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SynthCamp | The AI Music Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+        
+        :root {
+            --bg: #050507;
+            --accent: #6366f1; /* Retour au Bleu Indigo */
+        }
+
+        html {
+            overflow-y: scroll;
+        }
+
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: var(--bg); 
+            color: #ffffff;
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .ui-overlay {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, transparent 0%, rgba(5, 5, 7, 0.6) 100%);
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 28px;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
+        }
+
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .btn-primary:active { transform: scale(0.96); }
+
+        .album-shadow {
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        
+        .view-enter {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Animation du visualiseur live */
+        @keyframes wave {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+        .v-bar {
+            width: 2px;
+            background-color: #ffffff;
+            border-radius: 1px;
+            animation: wave 1s infinite ease-in-out;
+        }
+        .v-1 { animation-delay: 0.1s; }
+        .v-2 { animation-delay: 0.3s; }
+        .v-3 { animation-delay: 0.2s; }
+        .v-4 { animation-delay: 0.4s; }
+
+        .live-glow {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .grain {
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .sidebar-transition {
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- LOGO S (BLEU) ---
+        const LogoS = () => (
+            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]">
+                <path d="M30 25C30 20 35 15 45 15H70C75 15 80 19 80 24C80 29 76 33 71 33H45C40 33 38 35 38 38C38 41 40 43 45 43H70C85 43 90 53 90 63C90 73 85 85 70 85H30C25 85 20 81 20 76C20 71 24 67 29 67H70C75 67 77 65 77 62C77 59 75 57 70 57H45C30 57 25 47 25 37C25 32 27 28 30 25Z" 
+                      fill="url(#logoGradient)" />
+                <defs>
+                    <linearGradient id="logoGradient" x1="20" y1="15" x2="90" y2="85" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#ffffff" />
+                        <stop offset="1" stopColor="#6366f1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        );
+
+        const LiveVisualizer = () => (
+            <div className="flex items-center gap-[2px] h-4">
+                <div className="v-bar v-1"></div>
+                <div className="v-bar v-2"></div>
+                <div className="v-bar v-3"></div>
+                <div className="v-bar v-4"></div>
+            </div>
+        );
+
+        const StatusTimer = ({ baseTime, isCountdown = false, small = false }) => {
+            const [time, setTime] = useState("");
+
+            useEffect(() => {
+                const update = () => {
+                    const now = Date.now();
+                    const diff = isCountdown ? baseTime - now : now - baseTime;
+                    if (isCountdown && diff <= 0) { setTime("LIVE"); return; }
+                    const seconds = Math.floor((Math.abs(diff) / 1000) % 60);
+                    const minutes = Math.floor((Math.abs(diff) / (1000 * 60)) % 60);
+                    const hours = Math.floor((Math.abs(diff) / (1000 * 60 * 60)) % 24);
+                    const parts = [
+                        hours > 0 ? hours.toString().padStart(2, '0') : null,
+                        minutes.toString().padStart(2, '0'),
+                        seconds.toString().padStart(2, '0')
+                    ].filter(Boolean);
+                    setTime(parts.join(":"));
+                };
+                update();
+                const interval = setInterval(update, 1000);
+                return () => clearInterval(interval);
+            }, [baseTime, isCountdown]);
+
+            return (
+                <div className={`absolute z-20 pointer-events-none ${small ? 'top-2 right-4' : 'top-5 right-5'}`}>
+                    <span className={`${small ? 'text-[7px]' : 'text-[8px]'} font-black uppercase tracking-[0.15em] bg-black/60 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/10 text-white/50 inline-flex items-center`}>
+                        {isCountdown ? "Starts in" : "Started"} 
+                        <span className={`${small ? 'text-[9px]' : 'text-[11px]'} text-indigo-400 font-mono ml-1.5 tabular-nums drop-shadow-[0_0_5px_rgba(99,102,241,0.3)]`}>{time}</span>
+                    </span>
+                </div>
+            );
+        };
+
+        const Background3D = ({ mode }) => {
+            const mountRef = useRef(null);
+            const stateRef = useRef({ 
+                scene: null, camera: null, renderer: null, blob: null,
+                targetCam: { x: 0, y: 0, z: 6 },
+                targetColor: new THREE.Color(0x6366f1) 
+            });
+            
+            useEffect(() => {
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                mountRef.current.appendChild(renderer.domElement);
+
+                const geometry = new THREE.SphereGeometry(2.8, 64, 64);
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0x6366f1, transparent: true, opacity: 0.25, roughness: 0.2, metalness: 0.1, emissive: 0x6366f1, emissiveIntensity: 0.05
+                });
+                const blob = new THREE.Mesh(geometry, material);
+                scene.add(blob);
+
+                const light = new THREE.PointLight(0xffffff, 1.2, 50);
+                light.position.set(5, 5, 5);
+                scene.add(light);
+                scene.add(new THREE.AmbientLight(0x222222));
+
+                camera.position.z = 6;
+                stateRef.current = { ...stateRef.current, scene, camera, renderer, blob };
+
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    const { camera, blob, targetCam, targetColor } = stateRef.current;
+                    if (!camera || !blob) return;
+                    camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetCam.z, 0.03);
+                    blob.material.color.lerp(targetColor, 0.03);
+                    blob.rotation.y += 0.001;
+                    renderer.render(scene, camera);
+                };
+                animate();
+
+                const onResize = () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                };
+                window.addEventListener('resize', onResize);
+                return () => {
+                    window.removeEventListener('resize', onResize);
+                    if (mountRef.current && renderer.domElement) mountRef.current.removeChild(renderer.domElement);
+                };
+            }, []);
+
+            useEffect(() => {
+                stateRef.current.targetColor.set(mode === 'explore' ? 0x6366f1 : 0x4f46e5);
+                stateRef.current.targetCam.z = mode === 'explore' ? 7 : 5;
+            }, [mode]);
+
+            return <div ref={mountRef} />;
+        };
+
+        const SidebarItem = ({ icon, label, active, onClick }) => (
+            <button 
+                onClick={onClick} 
+                className={`w-full flex items-center gap-5 px-8 py-5 transition-all ${active ? 'text-white bg-white/5 border-l-4 border-indigo-500' : 'text-white/40 hover:text-white/70 hover:bg-white/[0.02]'}`}
+            >
+                <div className={`${active ? 'text-indigo-400' : ''}`}>{icon}</div>
+                <span className="text-xs font-black uppercase tracking-[0.25em]">{label}</span>
+            </button>
+        );
+
+        const App = () => {
+            const [mode, setMode] = useState('explore'); 
+            const [tab, setTab] = useState('home'); 
+            const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+            const [aiLevel, setAiLevel] = useState(50);
+
+            const mainStartTime = useRef(Date.now() - (45 * 60 * 1000 + 23 * 1000)).current; 
+            const secondary1StartTime = useRef(Date.now() - (12 * 60 * 1000)).current; 
+            const secondary2StartTime = useRef(Date.now() + (5 * 60 * 1000 + 42 * 1000)).current; 
+
+            const getPrice = (tracks) => {
+                const calculated = Math.ceil(tracks * 0.60);
+                return `${calculated - 0.01}`;
+            };
+
+            const getReleaseLabel = (trackCount) => {
+                let type = "Album";
+                if (trackCount === 1) type = "Single";
+                else if (trackCount <= 5) type = "EP";
+                return `${trackCount} ${trackCount > 1 ? 'tracks' : 'track'} • ${type}`;
+            };
+
+            const placeholderImages = [
+                "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=500&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=500&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=500&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=500&auto=format&fit=crop",
+                "https://images.unsplash.com/photo-1619983081563-430f63602796?q=80&w=500&auto=format&fit=crop"
+            ];
+
+            return (
+                <div className="relative min-h-screen w-full text-left">
+                    <Background3D mode={mode} />
+
+                    {/* SIDEBAR OVERLAY */}
+                    <div 
+                        className={`fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                        onClick={() => setIsSidebarOpen(false)}
+                    ></div>
+
+                    {/* SIDEBAR DRAWER */}
+                    <aside className={`fixed top-0 left-0 bottom-0 w-72 z-[70] bg-[#050507]/90 backdrop-blur-3xl border-r border-white/10 sidebar-transition ${isSidebarOpen ? 'translate-x-0 shadow-[20px_0_60px_rgba(0,0,0,0.8)]' : '-translate-x-full'}`}>
+                        <div className="p-8 pb-12">
+                            <div className="flex items-start gap-4">
+                                <LogoS />
+                                <div className="flex flex-col">
+                                    <h1 className="text-xl font-black uppercase italic tracking-tighter leading-none">SynthCamp</h1>
+                                    <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.3em] mt-1 leading-none italic">Menu</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col h-[calc(100%-120px)] justify-between">
+                            <nav>
+                                {mode === 'explore' ? (
+                                    <React.Fragment>
+                                        <SidebarItem onClick={() => {setTab('home'); setIsSidebarOpen(false)}} active={tab === 'home'} label="Home" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>} />
+                                        <SidebarItem onClick={() => {setTab('search'); setIsSidebarOpen(false)}} active={tab === 'search'} label="Search" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>} />
+                                        <SidebarItem onClick={() => {setTab('library'); setIsSidebarOpen(false)}} active={tab === 'library'} label="Library" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg>} />
+                                    </React.Fragment>
+                                ) : (
+                                    <React.Fragment>
+                                        <SidebarItem onClick={() => {setTab('catalog'); setIsSidebarOpen(false)}} active={tab === 'catalog'} label="My Music" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>} />
+                                        <SidebarItem onClick={() => {setTab('upload'); setIsSidebarOpen(false)}} active={tab === 'upload'} label="New Release" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>} />
+                                        <SidebarItem onClick={() => {setTab('parties'); setIsSidebarOpen(false)}} active={tab === 'parties'} label="Live Parties" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>} />
+                                        <SidebarItem onClick={() => {setTab('sales'); setIsSidebarOpen(false)}} active={tab === 'sales'} label="Earnings" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
+                                    </React.Fragment>
+                                )}
+                            </nav>
+
+                            <div className="p-8 border-t border-white/5 space-y-4">
+                                <div className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
+                                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-black text-[10px]">JD</div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">John Doe</span>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <div className="ui-overlay pb-32">
+                        {/* HEADER */}
+                        <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-[#050507] via-[#050507] via-[#050507]/90 via-[#050507]/40 to-transparent p-8 pb-24 pt-10">
+                            <div className="max-w-6xl mx-auto flex justify-between items-center h-14">
+                                <div className="flex items-center gap-6">
+                                    <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+                                    </button>
+                                    <div className="flex items-start gap-4">
+                                        <div className="mt-0.5"><LogoS /></div>
+                                        <div className="flex flex-col">
+                                            <h1 className="text-2xl font-black uppercase italic tracking-tighter leading-none">SynthCamp</h1>
+                                            <p className="text-[10px] font-bold text-white/50 uppercase tracking-[0.3em] mt-2 italic leading-none">The AI Music Marketplace</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="relative flex bg-white/5 rounded-full p-1 border border-white/10 glass-panel w-40 h-10 flex-shrink-0 overflow-hidden">
+                                    <div className={`absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full transition-all duration-500 cubic-bezier(0.23, 1, 0.32, 1) ${mode === 'explore' ? 'bg-white' : 'bg-indigo-600'}`} style={{ transform: mode === 'artist' ? 'translateX(100%)' : 'translateX(0)' }}></div>
+                                    <button onClick={() => { setMode('explore'); setTab('home'); }} className={`relative z-10 flex-1 h-full text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${mode === 'explore' ? 'text-black' : 'text-white/40 hover:text-white/60'}`}>Explore</button>
+                                    <button onClick={() => { setMode('artist'); setTab('catalog'); }} className={`relative z-10 flex-1 h-full text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${mode === 'artist' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}>Artist</button>
+                                </div>
+                            </div>
+                        </header>
+
+                        <div className="h-40"></div>
+
+                        {/* VUE: EXPLORE */}
+                        {mode === 'explore' && tab === 'home' && (
+                            <main className="px-6 space-y-12 max-w-4xl mx-auto view-enter">
+                                <section className="relative aspect-[4/5] sm:aspect-video rounded-[3rem] overflow-hidden album-shadow group cursor-pointer">
+                                    <img src="https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=1200&auto=format&fit=crop" alt="Hero" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"/>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent z-10"></div>
+                                    <div className="absolute bottom-10 left-10 z-20 space-y-2 text-left text-white">
+                                        <span className="bg-indigo-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg inline-block text-[10px]">Editor's Choice</span>
+                                        <h2 className="text-4xl font-black italic uppercase leading-none">Aura Genesis</h2>
+                                        <p className="text-white/90 text-xs font-semibold uppercase tracking-widest mb-1">By Sylvan Woods</p>
+                                        <p className="text-white/80 text-sm max-w-xs italic leading-tight">The world's first fully AI-orchestrated folk symphony.</p>
+                                        <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mt-1">{getReleaseLabel(12)}</p>
+                                        <div className="pt-4 flex gap-4">
+                                            <button className="bg-white text-black px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-colors">Listen Now</button>
+                                            <button className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest border border-white/10 hover:bg-white/20 transition-colors">${getPrice(12)}</button>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <div className="flex justify-between items-center mb-6 text-white/80"><h3 className="text-[10px] font-black uppercase tracking-[0.4em]">New Releases</h3><div className="h-[1px] flex-1 ml-6 bg-white/20"></div></div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                                        {[ {id: 1, title: "Neural Drift", artist: "Alexia V.", tracks: 12}, {id: 2, title: "Soil Echoes", artist: "Root System", tracks: 4}, {id: 3, title: "Binary Folk", artist: "Ghost Patch", tracks: 1}, {id: 4, title: "Latent Voice", artist: "Neuro-Choral", tracks: 8}, {id: 5, title: "Static Wind", artist: "Amber", tracks: 5}, {id: 6, title: "Silicon Soul", artist: "The Core", tracks: 14} ].map((item, index) => (
+                                            <div key={item.id} className="space-y-3 group cursor-pointer text-left">
+                                                <div className="aspect-square glass-panel rounded-[2rem] overflow-hidden relative active:scale-95 transition-transform border-white/5">
+                                                    <img src={placeholderImages[index]} alt={item.title} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-1000 group-hover:scale-110" onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=500&auto=format&fit=crop"; }}/>
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"><div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black shadow-xl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm tracking-tight leading-none italic text-white">{item.title}</p>
+                                                    <p className="text-[10px] text-white/90 font-medium mt-1 leading-none">by {item.artist}</p>
+                                                    <div className="flex justify-between items-center mt-2.5 px-0.5">
+                                                        <p className="text-[9px] font-bold text-white/70 uppercase tracking-widest">{getReleaseLabel(item.tracks)}</p>
+                                                        <span className="text-[11px] font-black text-indigo-400 font-mono tracking-tighter">${getPrice(item.tracks)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="pb-20">
+                                    <div className="flex justify-between items-center mb-6 text-white/80"><h3 className="text-[10px] font-black uppercase tracking-[0.4em]">Active Sound Rooms</h3><div className="h-[1px] flex-1 ml-6 bg-white/20"></div></div>
+                                    <div className="space-y-6">
+                                        <div className="glass-panel p-1 rounded-[2.5rem] overflow-hidden relative active:scale-[0.99] transition-transform duration-500 border-white/10 group cursor-pointer">
+                                            <StatusTimer baseTime={mainStartTime} />
+                                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-transparent to-transparent z-0"></div>
+                                            <img src="https://images.unsplash.com/photo-1514525253361-bee8a48790c3?q=80&w=1200&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 z-0 mix-blend-screen transition-transform duration-1000 group-hover:scale-110" alt="Background"/>
+                                            <div className="grain z-0"></div>
+                                            <div className="relative z-10 p-5 flex flex-col md:flex-row items-center justify-between gap-6 text-left">
+                                                <div className="flex items-center gap-6 flex-1">
+                                                    <div className="relative shrink-0"><div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center border border-white/20 backdrop-blur-md shadow-inner live-glow overflow-hidden relative"><img src={placeholderImages[0]} className="absolute inset-0 w-full h-full object-cover opacity-40 z-0" /><div className="relative z-10"><LiveVisualizer /></div></div><div className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-[#050507] animate-pulse shadow-[0_0_10px_red]"></div></div>
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center gap-3 mb-0.5 text-white/70"><span className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-400">On Air</span><div className="h-[1px] w-6 bg-white/30"></div><span className="text-[9px] font-bold uppercase tracking-widest text-white/80">Global Master Channel</span></div>
+                                                        <h3 className="text-3xl font-black italic uppercase tracking-tight leading-none text-white drop-shadow-lg">Latent Spaces Premiere</h3>
+                                                        <p className="text-[13px] font-bold text-indigo-300 uppercase tracking-[0.2em] pt-0.5">by Sylvan Woods</p>
+                                                        <p className="text-white text-sm italic font-medium pt-0.5">Experience the master cut with 1.2k listeners</p>
+                                                        <div className="pt-2 space-y-1.5"><div className="flex items-center gap-3 text-white/80"><div className="flex -space-x-2">{[1,2,3,4].map(i => <img key={i} src={`https://i.pravatar.cc/100?u=${i+10}`} className="w-6 h-6 rounded-full border border-black/40" />)}<div className="w-6 h-6 rounded-full bg-white/20 border border-white/10 flex items-center justify-center text-[7px] font-bold backdrop-blur-md">+1.2k</div></div><span className="text-[9px] font-bold text-indigo-300 uppercase tracking-widest">Live Worldwide</span></div><span className="text-[8px] font-bold text-white/60 uppercase tracking-widest block drop-shadow-md italic tracking-[0.1em]">London, Paris, Tokyo, Berlin, NYC...</span></div>
+                                                    </div>
+                                                </div>
+                                                <button className="bg-white text-black px-10 py-3.5 rounded-xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-indigo-50 shadow-xl transition-all w-full md:w-auto active:scale-95 group-hover:scale-105 shrink-0">Enter Now</button>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {[ {id: 1, title: "Neural Drift Jam", artist: "Alexia V.", listeners: 840, time: secondary1StartTime, isCountdown: false, img: placeholderImages[1], countries: "France, United Kingdom, Germany"}, {id: 2, title: "Binary Soundscape", artist: "Ghost Patch", listeners: 420, time: secondary2StartTime, isCountdown: true, img: placeholderImages[2], countries: "Japan, United States, Canada"} ].map((room) => (
+                                                <div key={room.id} className="glass-panel p-4 rounded-[2rem] overflow-hidden relative border-white/5 hover:bg-white/[0.05] transition-colors cursor-pointer group min-h-[95px] flex flex-col justify-center">
+                                                    <StatusTimer baseTime={room.time} isCountdown={room.isCountdown} small={true} />
+                                                    <div className="relative z-10 flex items-center justify-between gap-6 w-full mt-2">
+                                                        <div className="flex items-center gap-5 flex-1 min-w-0">
+                                                            <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center border border-white/10 shrink-0 relative overflow-hidden"><img src={room.img} className="absolute inset-0 w-full h-full object-cover opacity-20" />{!room.isCountdown ? <LiveVisualizer /> : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}</div>
+                                                            <div className="min-w-0 flex-1 pr-4">
+                                                                <div className="flex items-baseline gap-3 mb-1"><h4 className="font-bold text-lg text-white italic truncate leading-none">{room.title}</h4><p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">by {room.artist}</p></div>
+                                                                <div className="flex items-center gap-3 mt-2"><div className="text-[9px] font-bold text-white/70 uppercase tracking-[0.1em] flex gap-2 items-center flex-wrap"><span className="text-white whitespace-nowrap">{room.listeners} {room.isCountdown ? 'waiting' : 'listeners'}</span><span className="w-0.5 h-0.5 bg-white/30 rounded-full"></span><span className="italic">{room.countries}</span></div></div>
+                                                            </div>
+                                                        </div>
+                                                        <button className="self-end bg-white/10 text-white border border-white/20 px-7 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all shrink-0">{room.isCountdown ? 'Wait' : 'Enter'}</button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </section>
+                            </main>
+                        )}
+
+                        {/* ARTIST MODE */}
+                        {mode === 'artist' && (
+                            <main className="px-6 space-y-8 max-w-md mx-auto view-enter">
+                                {tab === 'catalog' && (
+                                    <div className="space-y-8 text-left text-white">
+                                        <div className="flex justify-between items-end text-white/90"><h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none text-white">My Music</h2><p className="text-[10px] font-bold uppercase tracking-widest mb-1 italic">2 active releases</p></div>
+                                        <div className="space-y-4">
+                                            <div className="glass-panel p-4 flex items-center gap-5 active:scale-[0.98] transition-transform hover:bg-white/[0.05] cursor-pointer"><div className="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 overflow-hidden shrink-0"><img src={placeholderImages[3]} className="w-full h-full object-cover" /></div><div className="flex-1 text-sm overflow-hidden text-white/90"><h3 className="font-bold text-lg leading-tight italic truncate text-white">Echoes of the Soil</h3><p className="text-[10px] font-medium mb-1">by John Doe</p><p className="text-[9px] font-bold uppercase tracking-widest italic text-white/70">{getReleaseLabel(12)}</p></div><div className="text-right shrink-0"><p className="font-bold text-lg leading-none italic text-white text-[12px]">${getPrice(12)}</p><p className="text-[9px] font-bold text-indigo-400 mt-1 uppercase tracking-tighter">842 Sales</p></div></div>
+                                            <div className="glass-panel p-4 flex items-center gap-5 group hover:bg-white/[0.03] transition-colors cursor-pointer border-white/5"><div className="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center border border-white/5 overflow-hidden shrink-0 opacity-60"><img src={placeholderImages[4]} className="w-full h-full object-cover" /></div><div className="flex-1 text-sm overflow-hidden text-white/70"><h3 className="font-bold text-lg leading-tight italic truncate text-white/80">Neural Folk EP</h3><p className="text-[10px] font-medium mb-1">by John Doe</p><p className="text-[9px] font-bold uppercase tracking-widest italic text-white/60">{getReleaseLabel(4)}</p></div><div className="text-right opacity-40 shrink-0"><p className="font-bold text-lg leading-none italic text-white/90 text-[12px]">${getPrice(4)}</p><p className="text-[9px] font-bold uppercase tracking-tighter mt-1 text-white/70">12 Sales</p></div></div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 text-white/90"><div className="glass-panel p-6"><p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-1 text-white/60">Total Revenue</p><p className="text-2xl font-black tracking-tighter leading-none font-mono text-white">$3,240.50</p></div><div className="glass-panel p-6 border-indigo-500/20 bg-indigo-500/5"><p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-1 text-white/60">Fan Base</p><p className="text-2xl font-black tracking-tighter leading-none text-white">12.8k</p></div></div>
+                                    </div>
+                                )}
+                                {tab === 'upload' && (
+                                    <div className="space-y-8 animate-in fade-in duration-500 text-white/90">
+                                        <h2 className="text-4xl font-black italic uppercase tracking-tighter text-center leading-none text-white">New<br/><span className="text-white/40 not-italic uppercase tracking-widest text-sm italic underline">Release</span></h2>
+                                        <div className="glass-panel p-10 border-dashed border-2 border-white/10 flex flex-col items-center justify-center min-h-[260px] active:scale-[0.98] transition-transform cursor-pointer hover:bg-white/[0.05]"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-6 text-white/50"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><p className="font-bold text-sm uppercase tracking-widest text-white/80">Select Audio Files</p></div>
+                                        <div className="glass-panel p-8 space-y-8 text-left">
+                                            <div className="flex justify-between items-end"><div><p className="text-xl font-bold tracking-tight italic leading-none text-white">Neural Boost</p><p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-white/70">AI assistance level</p></div><p className="text-4xl font-black text-indigo-400 font-mono leading-none tracking-tighter">{aiLevel}%</p></div>
+                                            <input type="range" className="w-full accent-indigo-500 cursor-pointer" value={aiLevel} onChange={(e) => setAiLevel(e.target.value)} />
+                                            <button className="btn-primary w-full py-5 rounded-2xl shadow-xl shadow-white/5 hover:bg-indigo-500 transition-colors uppercase font-black tracking-widest text-xs">Publish Release</button>
+                                        </div>
+                                    </div>
+                                )}
+                                {tab === 'sales' && (
+                                    <div className="space-y-8 text-left animate-in fade-in duration-500">
+                                        <h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none text-indigo-400">Earnings</h2>
+                                        <div className="glass-panel p-8 text-center bg-indigo-500/5 border-indigo-500/20">
+                                            <p className="text-[10px] font-black text-indigo-500/80 uppercase tracking-[0.3em] mb-3 leading-none">Withdrawable Balance</p>
+                                            <p className="text-6xl font-black tracking-tighter leading-none italic font-mono text-white">$3,240<span className="text-2xl text-white/60">.50</span></p>
+                                            <button className="mt-8 px-8 py-4 bg-indigo-500 text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-400 transition-colors active:scale-95">Request Payout</button>
+                                        </div>
+                                        <div className="glass-panel p-6">
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-4 border-b border-white/5 pb-2">Recent Sales</h3>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center text-xs"><span className="text-white/60">Neural Drift #1</span><span className="font-mono text-indigo-400">+$14.99</span></div>
+                                                <div className="flex justify-between items-center text-xs"><span className="text-white/60">Echoes of the Soil (Album)</span><span className="font-mono text-indigo-400">+$24.99</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {tab === 'parties' && (
+                                    <div className="space-y-8 text-center animate-in fade-in duration-500 pt-10">
+                                        <div className="w-20 h-20 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-indigo-500/20"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-indigo-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                                        <h2 className="text-3xl font-black italic uppercase leading-none text-white">Listening Parties</h2>
+                                        <p className="text-sm text-white/40 italic">Scheduled sessions with your fans appear here.</p>
+                                        <button className="mt-4 px-6 py-3 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/5 transition-colors">Schedule Party</button>
+                                    </div>
+                                )}
+                            </main>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
