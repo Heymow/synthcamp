@@ -1,3 +1,5 @@
-export default function Home() {
-  return <main>Welcome</main>;
+import { redirect } from 'next/navigation';
+
+export default function RootPage() {
+  redirect('/explore/home');
 }
