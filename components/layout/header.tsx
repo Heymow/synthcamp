@@ -39,7 +39,7 @@ export function Header() {
                 <h1 className="pr-0.5 text-base leading-none font-black tracking-tighter whitespace-nowrap uppercase italic md:text-2xl">
                   SynthCamp
                 </h1>
-                <p className="mt-1.5 hidden truncate text-[10px] leading-none font-bold tracking-[0.3em] text-white/60 uppercase italic sm:block md:mt-2">
+                <p className="mt-1.5 truncate text-[8px] leading-none font-bold tracking-[0.2em] text-white/60 uppercase italic sm:text-[10px] sm:tracking-[0.3em] md:mt-2">
                   The AI Music Marketplace
                 </p>
               </div>

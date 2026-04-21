@@ -14,7 +14,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
     <div
       role="group"
       aria-label="Mode"
-      className="glass-panel relative flex h-10 w-40 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5 p-1"
+      className="glass-panel relative flex h-10 w-32 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5 p-1 sm:w-40"
     >
       <div
         className={cn(

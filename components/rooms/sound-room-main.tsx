@@ -17,7 +17,7 @@ export function SoundRoomMain() {
       />
       <div className="grain z-0" />
 
-      <div className="relative z-10 flex flex-col gap-4 p-4 text-left md:gap-5 md:p-5">
+      <div className="relative z-10 flex flex-col gap-3 p-3 pt-3 text-left md:gap-5 md:p-5">
         {/* Top strip: ON AIR label + Timer chip */}
         <div className="flex items-center justify-between gap-3 text-white/70">
           <div className="flex min-w-0 items-center gap-3">
