@@ -29,7 +29,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
         aria-pressed={mode === 'explore'}
         onClick={() => onChange('explore')}
         className={cn(
-          'relative z-10 min-h-[44px] flex-1 text-[9px] font-black tracking-widest uppercase transition-colors duration-300',
+          'relative z-10 flex min-h-[44px] flex-1 items-center justify-center text-[9px] font-black tracking-widest uppercase transition-colors duration-300',
           mode === 'explore' ? 'text-black' : 'text-white/60 hover:text-white/80',
         )}
       >
@@ -40,7 +40,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
         aria-pressed={mode === 'artist'}
         onClick={() => onChange('artist')}
         className={cn(
-          'relative z-10 min-h-[44px] flex-1 text-[9px] font-black tracking-widest uppercase transition-colors duration-300',
+          'relative z-10 flex min-h-[44px] flex-1 items-center justify-center text-[9px] font-black tracking-widest uppercase transition-colors duration-300',
           mode === 'artist' ? 'text-white' : 'text-white/60 hover:text-white/80',
         )}
       >
