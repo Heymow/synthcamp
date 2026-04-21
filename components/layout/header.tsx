@@ -36,7 +36,7 @@ export function Header() {
                 <LogoS size={28} className="md:scale-[1.14]" />
               </div>
               <div className="flex min-w-0 flex-col">
-                <h1 className="truncate text-base leading-none font-black tracking-tighter uppercase italic md:text-2xl">
+                <h1 className="pr-0.5 text-base leading-none font-black tracking-tighter whitespace-nowrap uppercase italic md:text-2xl">
                   SynthCamp
                 </h1>
                 <p className="mt-1.5 hidden truncate text-[10px] leading-none font-bold tracking-[0.3em] text-white/60 uppercase italic sm:block md:mt-2">
