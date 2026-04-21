@@ -20,26 +20,26 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 right-0 left-0 z-50 bg-gradient-to-b from-[#050507] via-[#050507]/90 to-transparent p-8 pt-10 pb-24">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between">
-          <div className="flex items-center gap-6">
+      <header className="fixed top-0 right-0 left-0 z-50 bg-gradient-to-b from-[#050507] via-[#050507]/90 to-transparent p-4 pt-6 pb-24 md:p-8 md:pt-10">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3 md:gap-6">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10"
+              className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10"
             >
               <Menu size={20} strokeWidth={2.5} />
             </button>
-            <div className="flex items-start gap-4">
-              <div className="mt-0.5">
-                <LogoS />
+            <div className="flex min-w-0 items-start gap-2 md:gap-4">
+              <div className="mt-0.5 shrink-0">
+                <LogoS size={28} className="md:scale-[1.14]" />
               </div>
-              <div className="flex flex-col">
-                <h1 className="text-2xl leading-none font-black tracking-tighter uppercase italic">
+              <div className="flex min-w-0 flex-col">
+                <h1 className="truncate text-base leading-none font-black tracking-tighter uppercase italic md:text-2xl">
                   SynthCamp
                 </h1>
-                <p className="mt-2 text-[10px] leading-none font-bold tracking-[0.3em] text-white/60 uppercase italic">
+                <p className="mt-1.5 hidden truncate text-[10px] leading-none font-bold tracking-[0.3em] text-white/60 uppercase italic sm:block md:mt-2">
                   The AI Music Marketplace
                 </p>
               </div>

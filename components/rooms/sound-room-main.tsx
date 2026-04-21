@@ -28,13 +28,13 @@ export function SoundRoomMain() {
             </div>
             <div className="absolute top-1 right-1 h-3.5 w-3.5 animate-pulse rounded-full border-2 border-[#050507] bg-red-500 shadow-[0_0_10px_red]" />
           </div>
-          <div className="min-w-0 flex-1 space-y-1">
+          <div className="min-w-0 flex-1 space-y-1 pr-24 md:pr-0">
             <div className="mb-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-white/70">
               <span className="text-[9px] font-black tracking-[0.3em] text-indigo-400 uppercase md:tracking-[0.4em]">
                 On Air
               </span>
-              <div className="hidden h-[1px] w-6 bg-white/30 sm:block" />
-              <span className="truncate text-[9px] font-bold tracking-widest text-white/80 uppercase">
+              <div className="hidden h-[1px] w-6 bg-white/30 md:block" />
+              <span className="hidden truncate text-[9px] font-bold tracking-widest text-white/80 uppercase md:inline">
                 {MAIN_ROOM.channel}
               </span>
             </div>
