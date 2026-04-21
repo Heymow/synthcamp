@@ -175,12 +175,33 @@ supabase gen types typescript --local > lib/database.types.ts
 Toutes les tables ont RLS activée. Policies par table (résumé, détail dans migrations) :
 
 - `profiles` : SELECT public, UPDATE si `auth.uid() = id`, INSERT par trigger uniquement
-- `releases` : SELECT public si `status IN ('published', 'unlisted')` OR `auth.uid() = artist_id`, ALL (CRUD) si `auth.uid() = artist_id`
-- `tracks` : mêmes règles que release via JOIN
+- `releases` : SELECT public si `status IN ('published', 'unlisted')` OR `auth.uid() = artist_id`, INSERT/UPDATE si `auth.uid() = artist_id`, **DELETE refusé par policy `USING false`** — un release se met en `archived`, jamais supprimé (pour préserver l'intégrité des purchases futures)
+- `tracks` : mêmes règles que release via JOIN ; DELETE autorisé uniquement si release associé en `draft` (pas encore publié)
 - `rooms` : SELECT public, aucun INSERT/UPDATE/DELETE côté user (seedées)
-- `listening_parties` : SELECT public, INSERT/UPDATE/DELETE si `auth.uid() = artist_id` (+ app-layer checks pour rate limits)
+- `listening_parties` : SELECT public, INSERT/UPDATE si `auth.uid() = artist_id` (+ app-layer checks pour rate limits), DELETE refusé (cancellation via `status = 'cancelled'`)
 - `party_moderators` : SELECT public, INSERT/DELETE si auth.uid est l'artiste de la party OU modérateur déjà listé (permet délégation en cascade)
-- `purchases` : SELECT si `auth.uid() = buyer_id` OR `auth.uid() = release.artist_id` (l'artiste voit ses ventes)
+- `purchases` : SELECT si `auth.uid() = buyer_id` OR `auth.uid() = release.artist_id` (l'artiste voit ses ventes), INSERT uniquement via RPC Phase 3 (service_role), DELETE refusé
+
+### 5.4 Generic `updated_at` trigger
+
+Pattern standard réutilisé par toutes les tables ayant une colonne `updated_at` :
+
+```sql
+CREATE FUNCTION public.set_updated_at() RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attaché à chaque table mutable
+CREATE TRIGGER profiles_updated_at BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER releases_updated_at BEFORE UPDATE ON public.releases
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER listening_parties_updated_at BEFORE UPDATE ON public.listening_parties
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+```
 
 ## 6. Data model (schéma Phase 2 complet)
 
@@ -238,7 +259,10 @@ CREATE TABLE public.releases (
   credit_narrative text CHECK (char_length(credit_narrative) <= 280),
   credits_per_track boolean NOT NULL DEFAULT false,
   verification_status credit_verification_status NOT NULL DEFAULT 'declared',
-  release_date timestamptz,  -- date de sortie officielle (= scheduled_at de la party si party existe)
+  release_date timestamptz,  -- sémantique :
+  -- - Release avec party : release_date = listening_parties.scheduled_at (aligné)
+  -- - Release sans party : release_date = now() (release immédiat au publish, pas de scheduling possible sans party)
+  -- - Draft : NULL
   status release_status NOT NULL DEFAULT 'draft',
   is_listed boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -252,8 +276,8 @@ CREATE TABLE public.tracks (
   track_number integer NOT NULL CHECK (track_number BETWEEN 1 AND 100),
   title text NOT NULL CHECK (char_length(title) BETWEEN 1 AND 100),
   duration_seconds integer NOT NULL CHECK (duration_seconds > 0),
-  audio_source_key text,  -- R2 path (nullable Phase 2 si upload async)
-  hls_manifest_key text,  -- Phase 3
+  audio_source_key text,  -- R2 path (nullable en draft, NOT NULL requis au publish via RPC)
+  hls_manifest_key text,  -- Phase 3 (généré par transcoding)
   aes_key_id uuid,        -- Phase 3
   credit_category credit_category,  -- NULL = inherit release
   credit_tags text[],
@@ -261,8 +285,12 @@ CREATE TABLE public.tracks (
   UNIQUE(release_id, track_number)
 );
 
--- Contrainte : 3 tracks minimum par release au moment du publish
--- Appliquée via app-layer check (Postgres ne peut pas valider un aggregate sur INSERT release)
+-- Contraintes au publish (validées par RPC `validate_release_publish`) :
+--   1. Min 3 tracks par release
+--   2. Tous les tracks ont `audio_source_key NOT NULL` (audio obligatoire)
+--   3. Max 2 releases publiés par artiste dans le mois calendaire courant
+--   4. Si party : scheduled_at <= now() + interval '3 months' (calendrier max 3 mois)
+-- Applied app-layer ou via RPC, pas en DB constraints (agrégats impossibles)
 
 -- LISTENING PARTIES
 CREATE TABLE public.listening_parties (
@@ -375,8 +403,8 @@ BEGIN
 
   SELECT array_agg(DISTINCT tag)
   INTO all_tags
-  FROM public.tracks, unnest(COALESCE(credit_tags, '{}')) AS tag
-  WHERE release_id = p_release_id;
+  FROM public.tracks t, LATERAL unnest(COALESCE(t.credit_tags, '{}'::text[])) AS tag
+  WHERE t.release_id = p_release_id;
 
   UPDATE public.releases
   SET
@@ -392,8 +420,21 @@ END;
 $$;
 ```
 
-Trigger attaché à tracks :
+Wrapper trigger function (appelle la RPC `compute_release_credits_from_tracks`) :
+
 ```sql
+CREATE FUNCTION public.trigger_recompute_release_credits()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_release_id uuid;
+BEGIN
+  -- DELETE : utiliser OLD.release_id ; sinon NEW
+  v_release_id := COALESCE(NEW.release_id, OLD.release_id);
+  PERFORM public.compute_release_credits_from_tracks(v_release_id);
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
 CREATE TRIGGER tracks_credits_update_trigger
 AFTER INSERT OR UPDATE OF credit_category, credit_tags OR DELETE ON public.tracks
 FOR EACH ROW EXECUTE FUNCTION public.trigger_recompute_release_credits();
@@ -444,6 +485,11 @@ BEGIN
     ) THEN
       RAISE EXCEPTION 'GMC limit reached for this calendar month';
     END IF;
+  END IF;
+
+  -- Max 3 mois ahead (calendar range)
+  IF p_scheduled_at > now() + interval '3 months' THEN
+    RAISE EXCEPTION 'Cannot schedule more than 3 months ahead';
   END IF;
 
   -- Compute duration depuis tracks
@@ -525,22 +571,77 @@ RETURNS boolean LANGUAGE sql STABLE AS $$
 $$;
 ```
 
+### 7.6 `validate_release_publish(release_id uuid)` — gate de publication
+
+Validation atomique au moment du publish (appelée par la route `POST /api/releases/:id/publish`).
+
+```sql
+CREATE FUNCTION public.validate_release_publish(p_release_id uuid)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_artist_id uuid;
+  v_track_count integer;
+  v_missing_audio integer;
+  v_releases_this_month integer;
+BEGIN
+  SELECT artist_id INTO v_artist_id FROM public.releases WHERE id = p_release_id;
+  IF v_artist_id IS NULL OR v_artist_id <> auth.uid() THEN
+    RAISE EXCEPTION 'Release not found or not owned';
+  END IF;
+
+  -- 1. Min 3 tracks
+  SELECT COUNT(*) INTO v_track_count FROM public.tracks WHERE release_id = p_release_id;
+  IF v_track_count < 3 THEN
+    RAISE EXCEPTION 'Minimum 3 tracks required (found %)', v_track_count;
+  END IF;
+
+  -- 2. Tous les tracks ont audio_source_key
+  SELECT COUNT(*) INTO v_missing_audio FROM public.tracks
+  WHERE release_id = p_release_id AND audio_source_key IS NULL;
+  IF v_missing_audio > 0 THEN
+    RAISE EXCEPTION 'All tracks must have audio uploaded (% missing)', v_missing_audio;
+  END IF;
+
+  -- 3. Max 2 releases publiés par artiste dans le mois calendaire courant
+  -- (compte les releases avec status in ('scheduled','published','unlisted') dont release_date est dans le mois courant)
+  SELECT COUNT(*) INTO v_releases_this_month FROM public.releases
+  WHERE artist_id = v_artist_id
+    AND status IN ('scheduled', 'published', 'unlisted')
+    AND release_date IS NOT NULL
+    AND date_trunc('month', release_date) = date_trunc('month', now())
+    AND id <> p_release_id;  -- exclut le release qu'on est en train de publier
+  IF v_releases_this_month >= 2 THEN
+    RAISE EXCEPTION 'Monthly release limit reached (2 per calendar month)';
+  END IF;
+END;
+$$;
+```
+
 ## 8. Règles métier — récapitulatif
 
 | Règle | Implémentation |
 |---|---|
-| Release min 3 tracks avant publish | App-layer check dans route `/api/releases/publish` |
+| Release min 3 tracks avant publish | RPC `validate_release_publish` |
+| **Audio obligatoire au publish** (tous tracks ont `audio_source_key`) | RPC `validate_release_publish` |
 | EP / Album label | Helper `getReleaseLabel` frontend : `trackCount <= 5 ? 'EP' : 'Album'` |
 | `price_minimum` = formule | Calculé côté app au publish : `ceil(trackCount * 0.60) - 0.01` |
-| Status transitions release | draft → scheduled (party created) OR published (direct) ; scheduled → live (Phase 4 via pg_cron) ; live → published (Phase 4) ; anywhere → archived OR unlisted |
+| **Max 2 releases publiés / artiste / mois calendaire** | RPC `validate_release_publish` |
+| **`release_date` sélectionnable** (date + heure, timezone-aware, équivalents mondiaux affichés) | UI wizard step Pricing&Party ; stocké en UTC en DB |
+| **Release sans party = `release_date = now()`** (publication immédiate) | App-layer au publish |
+| **Release avec party = `release_date = party.scheduled_at`** | RPC `validate_and_create_listening_party` |
+| Status transitions release | draft → scheduled (avec party) OR published (sans party, immédiat) ; scheduled → live → published (Phase 4 via pg_cron) ; anywhere → archived OR unlisted |
 | Party slot = 15 min precision | DB CHECK sur `scheduled_at % 900 = 0` |
 | Party overlap prevention | EXCLUDE USING gist constraint |
-| 1 GMC/mois/artiste | RPC `validate_and_create_listening_party` |
-| 1 party active/artiste | RPC idem |
-| Edit lockout 24h | RPC `check_release_editable` appelé avant UPDATE |
-| Cancel lockout 1h | RPC `cancel_listening_party` |
+| 1 GMC / artiste / mois calendaire | RPC `validate_and_create_listening_party` |
+| 1 party active / artiste (à tout moment) | RPC idem |
+| **Calendar max 3 mois ahead** | RPC idem (check `scheduled_at <= now() + interval '3 months'`) |
+| 1 party par release | `UNIQUE(release_id)` sur `listening_parties` |
+| Edit lockout 24h avant party | RPC `check_release_editable` |
+| Cancel lockout 1h avant party | RPC `cancel_listening_party` |
+| Release jamais DELETE, seulement archive | RLS `DELETE USING false` sur releases |
 | Creative Credits global auto-computed | Trigger sur `tracks` → RPC `compute_release_credits_from_tracks` |
 | Editor's Choice | RPC `get_editors_choice` appelé par `/explore/home` |
+| `updated_at` auto-refresh sur UPDATE | Triggers `set_updated_at` sur profiles/releases/listening_parties |
 | pg_cron transitions party | **Désactivé Phase 2** (activé Phase 4) |
 
 ## 9. UI — pages à construire
@@ -566,15 +667,23 @@ $$;
 
 ### Wizard `/artist/upload` — les steps
 
-1. **Metadata** : title, description, cover upload (drag-drop + preview), language, genres (tags input free-form)
-2. **Tracks** : drag-drop réordonnable, par track : titre, upload audio file, duration auto-extraite
-3. **Credits** : category picker (3 boutons), tags optionnels (checkboxes), narrative (textarea 280 chars), lien « Personnaliser par track » → section per-track avec picker par track
+1. **Metadata** : title, description, cover upload (drag-drop + preview), language, genres (tags input free-form, max 5)
+2. **Tracks** : drag-drop réordonnable, par track : titre, **upload audio file obligatoire** (via signed URL R2), duration auto-extraite via `HTMLAudioElement` avant upload. Minimum 3 tracks pour passer à l'étape suivante.
+3. **Credits** : category picker (3 boutons : acoustic / hybrid / ai_crafted), tags optionnels (checkboxes), narrative (textarea 280 chars), lien « Personnaliser par track » → section per-track avec picker par track (global recalculé en read-only)
 4. **Pricing & Party** :
-   - Affiche `price_minimum` calculé depuis nombre de tracks
+   - Affiche `price_minimum` calculé depuis nombre de tracks (read-only, helper « Les auditeurs peuvent payer plus s'ils veulent »)
+   - Affiche le quota mensuel utilisé (« Tu as publié 1/2 release ce mois »)
    - Toggle « Planifier une listening party » (default ON)
-   - Si ON : sélecteur de room (3 cartes radio) + calendrier des slots disponibles dans la room choisie (grid 7 jours × slots 15 min) + confirmation
-   - Si OFF : release ira directement en `published` au submit
-5. **Publish** : résumé, bouton final « Publier »
+   - Si **ON** :
+     - Sélecteur de room (3 cartes radio : Global Master Channel premium + 2 secondaires)
+     - Si GMC : indique si l'artiste a déjà utilisé son quota mensuel GMC
+     - Calendrier : grid scrollable **3 mois ahead max**, 7 jours par vue, slots 15-min dans chaque jour, slots occupés disabled avec tooltip « Occupé par [Autre Artiste] », slots conflictuels (durée chevaucherait) aussi disabled
+     - Au click sur un slot libre → confirmation en modale avec : **date/heure dans le fuseau horaire détecté** (ex: Europe/Paris) + **équivalents dans 5 zones** (LA, NYC, London, Paris, Tokyo) en affichage read-only
+     - `release_date` = ce `scheduled_at` automatiquement
+   - Si **OFF** :
+     - Release sera publié immédiatement au submit (`release_date = now()`, status → `published`)
+     - Petit message : « La release sera visible dès la validation »
+5. **Publish** : résumé complet (titre, artiste, tracks count + durée totale, prix minimum, party si any), bouton final « Publier »
 
 ### Sidebar nav update (Phase 2)
 
@@ -639,8 +748,10 @@ Routes sont des `route.ts` dans `app/api/.../route.ts`, utilisent `createServerC
 - Signup/login Google OAuth fonctionne
 - Profile auto-créé au premier login (display_name dérivé du nom Google ou local-part email)
 - User peut éditer son profile et opt-in artist
-- Artist peut créer un release complet (metadata + 3+ tracks + credits + cover upload)
-- Artist peut scheduler une listening party sur une room libre avec validation de toutes les règles (GMC 1/mois, 1 active/artiste, 15min precision, pas d'overlap)
+- Artist peut créer un release complet (metadata + 3+ tracks + audio upload + credits + cover upload)
+- Artist **ne peut pas publier** un release si : <3 tracks, tracks sans audio, ou 2 releases déjà publiés dans le mois
+- Artist peut scheduler une listening party sur une room libre avec validation de toutes les règles (GMC 1/mois, 1 active/artiste, 15min precision, pas d'overlap, max 3 mois ahead)
+- Calendar du wizard affiche les slots occupés + équivalents horaires mondiaux (LA, NYC, London, Paris, Tokyo) lors de la confirmation
 - Artist peut cancel une party avant lockout 1h
 - Artist peut éditer un release avant lockout 24h (si party scheduled)
 - Home affiche Editor's Choice auto OU Fresh fallback, New Releases grid, 3 Active Sound Rooms réels
