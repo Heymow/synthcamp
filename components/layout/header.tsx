@@ -40,7 +40,7 @@ export function Header() {
                   SynthCamp
                 </h1>
                 <p className="mt-1.5 truncate text-[8px] leading-none font-bold tracking-[0.2em] text-white/60 uppercase italic sm:text-[10px] sm:tracking-[0.3em] md:mt-2">
-                  The AI Music Marketplace
+                  <span className="hidden sm:inline">The </span>AI Music Marketplace
                 </p>
               </div>
             </div>
