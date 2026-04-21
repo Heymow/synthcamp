@@ -10,6 +10,9 @@
 @layer base {
   html {
     overflow-y: scroll;
+    /* Reserve scrollbar gutter always so it doesn't disappear when
+       Radix Dialog locks body scroll — prevents fixed header shift. */
+    scrollbar-gutter: stable;
   }
 
   body {
