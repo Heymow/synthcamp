@@ -259,10 +259,12 @@ CREATE TABLE public.releases (
   credit_narrative text CHECK (char_length(credit_narrative) <= 280),
   credits_per_track boolean NOT NULL DEFAULT false,
   verification_status credit_verification_status NOT NULL DEFAULT 'declared',
-  release_date timestamptz,  -- sémantique :
-  -- - Release avec party : release_date = listening_parties.scheduled_at (aligné)
-  -- - Release sans party : release_date = now() (release immédiat au publish, pas de scheduling possible sans party)
+  release_date timestamptz,  -- sémantique (user-sélectionnable dans wizard step 4) :
   -- - Draft : NULL
+  -- - Release avec party : release_date = listening_parties.scheduled_at (aligné, pas user-modifiable sans re-scheduling)
+  -- - Release sans party + immédiat : release_date = now() au publish
+  -- - Release sans party + scheduled futur : release_date = user-pick, max 3 mois ahead
+  --   Transition scheduled → published via pg_cron `cron_publish_future_releases` (activé Phase 2)
   status release_status NOT NULL DEFAULT 'draft',
   is_listed boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -462,6 +464,11 @@ BEGIN
     RAISE EXCEPTION 'Release not found or not owned';
   END IF;
 
+  -- Party ne peut être créée que pour un release en 'draft' (au moment du publish wizard)
+  IF (SELECT status FROM public.releases WHERE id = p_release_id) <> 'draft' THEN
+    RAISE EXCEPTION 'Party scheduling only at publish time (release must be in draft status)';
+  END IF;
+
   -- Pas de party active existante pour cet artiste
   IF EXISTS (
     SELECT 1 FROM public.listening_parties
@@ -571,7 +578,34 @@ RETURNS boolean LANGUAGE sql STABLE AS $$
 $$;
 ```
 
-### 7.6 `validate_release_publish(release_id uuid)` — gate de publication
+### 7.6 `cron_publish_future_releases()` — auto-publish des releases schedulées sans party
+
+Phase 2 active un pg_cron job pour transitionner les releases **sans party** dont `release_date` est passée. Party-bearing releases restent en `scheduled` (bascule dans Phase 4).
+
+```sql
+CREATE FUNCTION public.cron_publish_future_releases()
+RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE public.releases r
+  SET status = 'published', updated_at = now()
+  WHERE r.status = 'scheduled'
+    AND r.release_date IS NOT NULL
+    AND r.release_date <= now()
+    AND NOT EXISTS (
+      SELECT 1 FROM public.listening_parties p
+      WHERE p.release_id = r.id
+        AND p.status NOT IN ('cancelled', 'ended')
+    );
+$$;
+
+-- Activé Phase 2 (pg_cron party transitions reste désactivé)
+SELECT cron.schedule(
+  'publish-future-releases',
+  '* * * * *',   -- tick chaque minute
+  $$SELECT public.cron_publish_future_releases();$$
+);
+```
+
+### 7.7 `validate_release_publish(release_id uuid)` — gate de publication
 
 Validation atomique au moment du publish (appelée par la route `POST /api/releases/:id/publish`).
 
@@ -627,9 +661,11 @@ $$;
 | `price_minimum` = formule | Calculé côté app au publish : `ceil(trackCount * 0.60) - 0.01` |
 | **Max 2 releases publiés / artiste / mois calendaire** | RPC `validate_release_publish` |
 | **`release_date` sélectionnable** (date + heure, timezone-aware, équivalents mondiaux affichés) | UI wizard step Pricing&Party ; stocké en UTC en DB |
-| **Release sans party = `release_date = now()`** (publication immédiate) | App-layer au publish |
+| **Release sans party + immédiat = `release_date = now()`** | App-layer au publish |
+| **Release sans party + futur = `release_date` user-pick (max 3 mois)** | App-layer au publish, auto-bascule via pg_cron |
 | **Release avec party = `release_date = party.scheduled_at`** | RPC `validate_and_create_listening_party` |
-| Status transitions release | draft → scheduled (avec party) OR published (sans party, immédiat) ; scheduled → live → published (Phase 4 via pg_cron) ; anywhere → archived OR unlisted |
+| Auto-publish releases sans party à `release_date` | **pg_cron `cron_publish_future_releases`** (activé Phase 2, tick 1 min) |
+| Status transitions release | draft → scheduled (avec party OR futur sans party) OR published (sans party, immédiat) ; scheduled → published auto (pg_cron Phase 2 pour sans-party, Phase 4 pour avec-party) ; anywhere → archived OR unlisted |
 | Party slot = 15 min precision | DB CHECK sur `scheduled_at % 900 = 0` |
 | Party overlap prevention | EXCLUDE USING gist constraint |
 | 1 GMC / artiste / mois calendaire | RPC `validate_and_create_listening_party` |
@@ -642,7 +678,10 @@ $$;
 | Creative Credits global auto-computed | Trigger sur `tracks` → RPC `compute_release_credits_from_tracks` |
 | Editor's Choice | RPC `get_editors_choice` appelé par `/explore/home` |
 | `updated_at` auto-refresh sur UPDATE | Triggers `set_updated_at` sur profiles/releases/listening_parties |
-| pg_cron transitions party | **Désactivé Phase 2** (activé Phase 4) |
+| pg_cron transitions party (`scheduled → live → ended`) | **Désactivé Phase 2** (activé Phase 4) |
+| pg_cron releases sans party (`scheduled → published`) | **Activé Phase 2** (tick 1 min, safe car pas d'effet side-playback) |
+| Party scheduling requiert release.status = `draft` | RPC check en début de `validate_and_create_listening_party` — empêche d'ajouter une party à un release déjà published |
+| `releases.slug` generation | API route `POST /api/releases` génère depuis title (kebab-case + suffixe numérique sur collision) |
 
 ## 9. UI — pages à construire
 
@@ -680,29 +719,67 @@ $$;
      - Calendrier : grid scrollable **3 mois ahead max**, 7 jours par vue, slots 15-min dans chaque jour, slots occupés disabled avec tooltip « Occupé par [Autre Artiste] », slots conflictuels (durée chevaucherait) aussi disabled
      - Au click sur un slot libre → confirmation en modale avec : **date/heure dans le fuseau horaire détecté** (ex: Europe/Paris) + **équivalents dans 5 zones** (LA, NYC, London, Paris, Tokyo) en affichage read-only
      - `release_date` = ce `scheduled_at` automatiquement
-   - Si **OFF** :
-     - Release sera publié immédiatement au submit (`release_date = now()`, status → `published`)
-     - Petit message : « La release sera visible dès la validation »
+   - Si **OFF** (pas de listening party) :
+     - Sub-toggle **« Sortie »** : (a) Immédiat | (b) Date future
+     - Si (a) Immédiat : `release_date = now()`, status → `published` au submit
+     - Si (b) Date future : picker date+heure (timezone détectée + équivalents mondiaux idem step party), max 3 mois ahead, `release_date = user_pick`, status → `scheduled`. Auto-bascule vers `published` via pg_cron `cron_publish_future_releases` quand la date arrive.
+     - Message selon le choix : « La release sera visible dès la validation » ou « La release sera publiée automatiquement le [date] »
 5. **Publish** : résumé complet (titre, artiste, tracks count + durée totale, prix minimum, party si any), bouton final « Publier »
 
 ### Sidebar nav update (Phase 2)
 
 Le mockup avait Artist mode → `catalog`, `upload`, `parties`, `sales`. On garde. Explore mode → `home`, `search`, `library`. On garde.
 
-Nouveauté : option « Devenir artiste » dans `/settings/profile` si `is_artist = false`. Submit déclenche `UPDATE profiles SET is_artist = true WHERE id = auth.uid()`.
+Nouveauté : option « Devenir artiste » dans `/settings/profile` si `is_artist = false`. Submit déclenche `UPDATE profiles SET is_artist = true WHERE id = auth.uid()` (après vérif que `slug` est défini).
+
+**Opt-out artiste (note UX) :** pas d'action publique pour repasser `is_artist = true → false` en Phase 2 (edge case rare). Si un user le demande, le faire en SQL direct. Si volume réel, ajouter en Phase 6.
+
+**Cancel party — UX (note) :** après cancel, le release revient à `draft`. L'artiste doit repasser par le wizard de publish pour remettre le release en ligne. L'UI de `/artist/parties` affiche un bouton « Republier » qui lance le wizard pré-rempli.
 
 ## 10. API routes (Next.js)
 
-- `GET /api/auth/callback` — handler Supabase OAuth callback
-- `POST /api/releases` — create draft release, return `release_id`
-- `PATCH /api/releases/:id` — update (vérifie `check_release_editable`)
-- `POST /api/releases/:id/tracks` — add track
-- `DELETE /api/releases/:id/tracks/:trackId`
-- `POST /api/releases/:id/publish` — valide minimum 3 tracks, calcule `price_minimum`, set status, crée party si demandée
-- `POST /api/parties/:id/cancel` — appelle RPC `cancel_listening_party`
-- `GET /api/rooms/:roomId/calendar?from=...&to=...` — retourne slots occupés (côté client affiche dispos)
+### Auth
+- `GET /api/auth/callback` — handler Supabase OAuth callback, redirect post-auth
 
-Routes sont des `route.ts` dans `app/api/.../route.ts`, utilisent `createServerClient` pour récupérer la session user. RLS + RPC font la validation métier.
+### Profile
+- `PATCH /api/profile` — éditer `display_name`, `slug`, `avatar_url`, `bio` (RLS enforces `auth.uid() = id`)
+- `POST /api/profile/become-artist` — set `is_artist = true` (vérifie que `slug` est défini avant)
+
+### Storage signed URLs
+- `POST /api/covers/upload-url` — retourne signed URL pour upload vers Supabase Storage bucket `covers` (vérifie ownership du release passé en param)
+- `POST /api/tracks/:id/upload-url` — retourne signed URL pour upload vers R2 (vérifie ownership du release parent)
+
+### Releases
+- `POST /api/releases` — create draft release, génère slug depuis title (kebab-case + suffixe numérique sur collision UNIQUE violation), return `release_id` + slug
+- `PATCH /api/releases/:id` — update metadata/credits/pricing (vérifie `check_release_editable` côté RPC)
+- `POST /api/releases/:id/tracks` — add track metadata (titre, duration, track_number)
+- `PATCH /api/releases/:id/tracks/:trackId` — update track
+- `DELETE /api/releases/:id/tracks/:trackId` — remove track (RLS : seulement si release en draft)
+- `POST /api/releases/:id/publish` — orchestration du publish :
+  1. Appelle RPC `validate_release_publish` (3 tracks min, audio requis, 2/mois max)
+  2. Selon payload :
+     - Party ON → appelle RPC `validate_and_create_listening_party`
+     - Sans party + immédiat → `UPDATE releases SET status='published', release_date=now()`
+     - Sans party + futur → `UPDATE releases SET status='scheduled', release_date=<user_date>`
+- `POST /api/releases/:id/archive` — `UPDATE releases SET status='archived'` (RLS : artist owner)
+
+### Parties
+- `POST /api/parties` — créer party (appelle RPC `validate_and_create_listening_party`)
+- `POST /api/parties/:id/cancel` — appelle RPC `cancel_listening_party`
+- `GET /api/rooms/:roomId/calendar?from=...&to=...` — retourne slots occupés dans la plage, max range 3 mois
+
+Toutes les routes sont des `route.ts` dans `app/api/.../route.ts`, utilisent `createServerClient` pour récupérer la session user. RLS + RPC font la validation métier. Réponses d'erreur uniformisées : `{ error: { code, message } }` avec status HTTP approprié.
+
+**Slug generation logic** (côté API route POST /api/releases) :
+```typescript
+// Pseudocode
+const base = slugify(title); // kebab-case, ASCII, max 100 chars
+let slug = base;
+let suffix = 1;
+while (await exists(slug)) {
+  slug = `${base}-${suffix++}`;
+}
+```
 
 ## 11. Storage configuration
 
@@ -728,8 +805,13 @@ Routes sont des `route.ts` dans `app/api/.../route.ts`, utilisent `createServerC
 - Trigger `handle_new_user` crée profile après auth.users INSERT
 - RPC `validate_and_create_listening_party` rejette party avec overlap
 - RPC `validate_and_create_listening_party` rejette 2e GMC dans même mois
+- RPC `validate_and_create_listening_party` rejette si release.status != 'draft'
+- RPC `validate_and_create_listening_party` rejette si scheduled_at > now + 3 mois
+- RPC `validate_release_publish` rejette <3 tracks, audio manquant, 2-releases/mois reached
 - RPC `cancel_listening_party` rejette après lockout 1h
 - Trigger `compute_release_credits_from_tracks` calcule hybrid quand mixed
+- pg_cron `cron_publish_future_releases` flip release sans party à `published` quand date passée
+- pg_cron ne touche PAS releases avec party active
 
 ### E2E Playwright — 3 scénarios critiques
 - Signup magic link → profile créé, is_artist=false
@@ -751,7 +833,9 @@ Routes sont des `route.ts` dans `app/api/.../route.ts`, utilisent `createServerC
 - Artist peut créer un release complet (metadata + 3+ tracks + audio upload + credits + cover upload)
 - Artist **ne peut pas publier** un release si : <3 tracks, tracks sans audio, ou 2 releases déjà publiés dans le mois
 - Artist peut scheduler une listening party sur une room libre avec validation de toutes les règles (GMC 1/mois, 1 active/artiste, 15min precision, pas d'overlap, max 3 mois ahead)
+- Artist peut publier un release **sans party** avec choix : immédiat OU date future (max 3 mois ahead) → pg_cron auto-bascule à `published` à la date choisie
 - Calendar du wizard affiche les slots occupés + équivalents horaires mondiaux (LA, NYC, London, Paris, Tokyo) lors de la confirmation
+- Slug du release auto-généré depuis title au create (kebab-case, collision-safe avec suffixe numérique)
 - Artist peut cancel une party avant lockout 1h
 - Artist peut éditer un release avant lockout 24h (si party scheduled)
 - Home affiche Editor's Choice auto OU Fresh fallback, New Releases grid, 3 Active Sound Rooms réels
