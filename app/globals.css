@@ -13,6 +13,19 @@
     /* Reserve scrollbar gutter always so it doesn't disappear when
        Radix Dialog locks body scroll — prevents fixed header shift. */
     scrollbar-gutter: stable;
+    /* Defuse react-remove-scroll (used by Radix Dialog): it computes a
+       scrollbar-width padding and applies it via this CSS variable when
+       the dialog opens. Since we reserve scrollbar space already, any
+       compensation would shift centered content to the left. */
+    --removed-body-scroll-bar-size: 0px;
+  }
+
+  /* Hard override on the elements react-remove-scroll targets, in case the
+     library forces inline styles with its own specificity. */
+  html[data-scroll-locked],
+  body[data-scroll-locked] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
   }
 
   body {

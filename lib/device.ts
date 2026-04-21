@@ -43,7 +43,11 @@ function getLowEndSnapshot(): boolean {
 }
 
 function getLowEndServerSnapshot(): boolean {
-  return false;
+  // Pessimistic default on the server: assume low-end so SSR renders the
+  // static fallback gradient instead of the WebGL Canvas. Clients with real
+  // capabilities upgrade to the Canvas after hydration (one-way transition,
+  // less jarring than the reverse flash on mobile).
+  return true;
 }
 
 export function useIsLowEndDevice(): boolean {
