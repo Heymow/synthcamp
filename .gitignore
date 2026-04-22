@@ -33,6 +33,8 @@ pnpm-debug.log*
 # Test artifacts
 coverage
 .vitest-cache
+playwright-report/
+test-results/
 
 # Misc
 *.tsbuildinfo
