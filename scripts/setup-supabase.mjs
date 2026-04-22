@@ -12,8 +12,11 @@
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const SUPABASE_RELEASE = '2026.01.15';
-const BASE_URL = `https://raw.githubusercontent.com/supabase/supabase/${SUPABASE_RELEASE}/docker`;
+// Using 'master' for latest. For reproducibility, pin to a specific release tag
+// (check https://github.com/supabase/supabase/releases — tags follow patterns
+// like v1.x or YYYY-MM-DD-based). Override by setting SUPABASE_REF env var.
+const SUPABASE_REF = process.env.SUPABASE_REF || 'master';
+const BASE_URL = `https://raw.githubusercontent.com/supabase/supabase/${SUPABASE_REF}/docker`;
 const SUPABASE_DIR = join(process.cwd(), 'supabase-selfhost');
 
 async function download(url, destPath, { optional = false } = {}) {
@@ -169,7 +172,7 @@ DOCKER_SOCKET_LOCATION=/var/run/docker.sock
 `;
 
 async function main() {
-  console.log(`→ Downloading Supabase docker-compose (release ${SUPABASE_RELEASE})`);
+  console.log(`→ Downloading Supabase docker-compose (ref: ${SUPABASE_REF})`);
   await mkdir(SUPABASE_DIR, { recursive: true });
 
   await download(`${BASE_URL}/docker-compose.yml`, join(SUPABASE_DIR, 'docker-compose.yml'));
