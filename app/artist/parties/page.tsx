@@ -35,7 +35,7 @@ export default async function ArtistPartiesPage() {
   return (
     <main className="view-enter mx-auto max-w-md space-y-6 px-6 pb-32">
       <div className="flex items-end justify-between">
-        <h2 className="text-3xl font-black italic uppercase leading-none tracking-tighter text-white">
+        <h2 className="text-3xl leading-none font-black tracking-tighter text-white uppercase italic">
           Mes parties
         </h2>
         <Link href="/artist/upload">
@@ -62,7 +62,7 @@ export default async function ArtistPartiesPage() {
                 )}
                 <span
                   className={
-                    'shrink-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest ' +
+                    'shrink-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold tracking-widest uppercase ' +
                     (p.status === 'live'
                       ? 'bg-red-500/20 text-red-300'
                       : p.status === 'scheduled'
@@ -85,7 +85,7 @@ export default async function ArtistPartiesPage() {
               <div className="flex gap-2 pt-1">
                 <Link
                   href={`/party/${p.id}`}
-                  className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300"
+                  className="text-[10px] font-bold tracking-widest text-indigo-400 uppercase hover:text-indigo-300"
                 >
                   View party →
                 </Link>
@@ -95,7 +95,7 @@ export default async function ArtistPartiesPage() {
         </div>
       ) : (
         <GlassPanel className="p-6 text-center">
-          <p className="text-sm italic text-white/60">
+          <p className="text-sm text-white/60 italic">
             Aucune party programmée.{' '}
             <Link href="/artist/upload" className="text-indigo-400 hover:text-indigo-300">
               Crée un release avec party
