@@ -1,71 +1,78 @@
+import { redirect } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { Button } from '@/components/ui/button';
 import { getPrice, getReleaseLabel } from '@/lib/pricing';
-import { ARTIST_RELEASES } from '@/lib/mock-data';
+import { getCurrentProfile } from '@/lib/data/profile';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
 
-export default function ArtistCatalogPage() {
+export default async function ArtistCatalogPage() {
+  const profile = await getCurrentProfile();
+  if (!profile) redirect('/auth/login');
+  if (!profile.is_artist) redirect('/settings/profile');
+
+  const supabase = await getSupabaseServerClient();
+  const { data: releasesRaw } = await supabase
+    .from('releases')
+    .select('id, title, slug, cover_url, status, tracks(count)')
+    .eq('artist_id', profile.id)
+    .order('created_at', { ascending: false });
+
+  const releases = (releasesRaw ?? []) as Array<{
+    id: string;
+    title: string;
+    slug: string;
+    cover_url: string;
+    status: string;
+    tracks: { count: number }[] | null;
+  }>;
+
   return (
     <main className="view-enter mx-auto max-w-md space-y-8 px-6 pb-32">
       <div className="flex items-end justify-between text-white/90">
-        <h2 className="text-4xl leading-none font-black tracking-tighter text-white uppercase italic">
+        <h2 className="text-4xl font-black italic uppercase leading-none tracking-tighter text-white">
           My Music
         </h2>
-        <p className="mb-1 text-[10px] font-bold tracking-widest uppercase italic">
-          2 active releases
-        </p>
+        <Link href="/artist/upload">
+          <Button variant="primary" size="sm">
+            + New
+          </Button>
+        </Link>
       </div>
-
-      <div className="space-y-4">
-        {ARTIST_RELEASES.map((release, idx) => (
-          <GlassPanel
-            key={release.id}
-            className="flex cursor-pointer items-center gap-5 p-4 transition-transform hover:bg-white/[0.05] active:scale-[0.98]"
-          >
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-              <Image
-                src={release.cover}
-                alt={`${release.title} cover`}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="flex-1 overflow-hidden text-sm text-white/90">
-              <h3 className="truncate text-lg leading-tight font-bold text-white italic">
-                {release.title}
-              </h3>
-              <p className="mb-1 text-[10px] font-medium">by {release.artist}</p>
-              <p className="text-[9px] font-bold tracking-widest text-white/70 uppercase italic">
-                {getReleaseLabel(release.trackCount)}
-              </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-[12px] leading-none font-bold text-white italic">
-                ${getPrice(release.trackCount)}
-              </p>
-              <p className="mt-1 text-[9px] font-bold tracking-tighter text-indigo-400 uppercase">
-                {idx === 0 ? '842' : '12'} Sales
-              </p>
-            </div>
-          </GlassPanel>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 text-white/90">
-        <GlassPanel className="p-6">
-          <p className="mb-1 text-[9px] font-bold tracking-[0.2em] text-white/70 uppercase">
-            Total Revenue
-          </p>
-          <p className="font-mono text-2xl leading-none font-black tracking-tighter text-white">
-            $3,240.50
+      {releases.length > 0 ? (
+        <div className="space-y-4">
+          {releases.map((r) => {
+            const count = r.tracks?.[0]?.count ?? 0;
+            return (
+              <Link key={r.id} href={`/r/${r.slug}`}>
+                <GlassPanel className="flex cursor-pointer items-center gap-5 p-4 transition-transform hover:bg-white/[0.05] active:scale-[0.98]">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
+                    <Image src={r.cover_url} alt={r.title} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <h3 className="truncate text-sm font-bold italic text-white">{r.title}</h3>
+                    <p className="text-[9px] uppercase tracking-widest text-white/60">
+                      {getReleaseLabel(count)} · {r.status}
+                    </p>
+                  </div>
+                  <span className="font-mono text-xs text-indigo-400">${getPrice(count)}</span>
+                </GlassPanel>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <GlassPanel className="p-6 text-center">
+          <p className="text-sm italic text-white/60">
+            Aucun release encore.{' '}
+            <Link href="/artist/upload" className="text-indigo-400 hover:text-indigo-300">
+              Crée ton premier
+            </Link>
+            .
           </p>
         </GlassPanel>
-        <GlassPanel className="border-indigo-500/20 bg-indigo-500/5 p-6">
-          <p className="mb-1 text-[9px] font-bold tracking-[0.2em] text-white/70 uppercase">
-            Fan Base
-          </p>
-          <p className="text-2xl leading-none font-black tracking-tighter text-white">12.8k</p>
-        </GlassPanel>
-      </div>
+      )}
     </main>
   );
 }
