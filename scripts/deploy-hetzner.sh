@@ -165,19 +165,30 @@ install_caddy() {
   step "Caddy installation"
 
   if command -v caddy >/dev/null 2>&1; then
-    success "Caddy already installed ($(caddy version))"
+    success "Caddy already installed ($(caddy version | head -1))"
     return
   fi
 
   info "Adding Caddy apt repository"
   apt install -y -qq debian-keyring debian-archive-keyring apt-transport-https
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | tee /etc/apt/trusted.gpg.d/caddy-stable.asc >/dev/null 2>&1
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null 2>&1
+
+  # Clean up any prior broken attempts
+  rm -f /etc/apt/trusted.gpg.d/caddy-stable.asc \
+        /etc/apt/sources.list.d/caddy-stable.list \
+        /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+
+  # Use official install pattern from caddyserver.com/docs/install :
+  # dearmor the ASCII key into a binary keyring in /usr/share/keyrings/
+  # then add the sources list which includes a signed-by= pointer to that keyring.
+  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+    | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
+    | tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
 
   info "Installing Caddy"
   apt update -qq
   apt install -y -qq caddy
-  success "Caddy $(caddy version | cut -d' ' -f1) installed"
+  success "Caddy $(caddy version | head -1 | cut -d' ' -f1) installed"
 }
 
 # ----- Repo clone ------------------------------------------------------------
