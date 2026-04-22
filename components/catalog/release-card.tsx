@@ -1,10 +1,16 @@
 import Image from 'next/image';
 import { Play } from 'lucide-react';
 import { getPrice, getReleaseLabel } from '@/lib/pricing';
-import type { Release } from '@/lib/mock-data';
 
 export interface ReleaseCardProps {
-  release: Release;
+  release: {
+    id: string;
+    title: string;
+    slug: string;
+    cover_url: string;
+    artist: { display_name: string };
+    tracks_count: number;
+  };
 }
 
 export function ReleaseCard({ release }: ReleaseCardProps) {
@@ -12,7 +18,7 @@ export function ReleaseCard({ release }: ReleaseCardProps) {
     <article className="group cursor-pointer space-y-3 text-left">
       <div className="glass-panel relative aspect-square overflow-hidden rounded-[2rem] border-white/5 transition-transform active:scale-95">
         <Image
-          src={release.cover}
+          src={release.cover_url}
           alt={`${release.title} cover`}
           fill
           sizes="(max-width: 640px) 50vw, 33vw"
@@ -26,18 +32,18 @@ export function ReleaseCard({ release }: ReleaseCardProps) {
         </div>
       </div>
       <div>
-        <p className="truncate text-sm leading-none font-bold tracking-tight text-white italic">
+        <p className="truncate text-sm font-bold italic leading-none tracking-tight text-white">
           {release.title}
         </p>
-        <p className="mt-1 text-[10px] leading-none font-medium text-white/80">
-          by {release.artist}
+        <p className="mt-1 text-[10px] font-medium leading-none text-white/80">
+          by {release.artist.display_name}
         </p>
         <div className="mt-2.5 flex items-center justify-between px-0.5">
-          <p className="text-[9px] font-bold tracking-widest text-white/70 uppercase">
-            {getReleaseLabel(release.trackCount)}
+          <p className="text-[9px] font-bold uppercase tracking-widest text-white/70">
+            {getReleaseLabel(release.tracks_count)}
           </p>
           <span className="font-mono text-[11px] font-black tracking-tighter text-indigo-400">
-            ${getPrice(release.trackCount)}
+            ${getPrice(release.tracks_count)}
           </span>
         </div>
       </div>
