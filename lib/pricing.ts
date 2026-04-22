@@ -1,5 +1,6 @@
 export function getPrice(trackCount: number): string {
-  return (trackCount * 0.6 - 0.01).toFixed(2);
+  const calculated = Math.ceil(trackCount * 0.6);
+  return (calculated - 0.01).toFixed(2);
 }
 
 export function getReleaseLabel(trackCount: number): string {
