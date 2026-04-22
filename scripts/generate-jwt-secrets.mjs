@@ -68,22 +68,35 @@ const dashboardPassword = randomBytes(18).toString('base64')
   .slice(0, 24);
 
 // Output
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log(' Supabase self-host secrets (copy into supabase-selfhost/.env)   ');
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log('');
-console.log(`POSTGRES_PASSWORD=${postgresPassword}`);
-console.log('');
-console.log(`JWT_SECRET=${jwtSecret}`);
-console.log('');
-console.log(`ANON_KEY=${anonKey}`);
-console.log('');
-console.log(`SERVICE_ROLE_KEY=${serviceRoleKey}`);
-console.log('');
-console.log(`DASHBOARD_USERNAME=admin`);
-console.log(`DASHBOARD_PASSWORD=${dashboardPassword}`);
-console.log('');
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log(' ⚠  Save these in your password manager NOW. JWT_SECRET and keys   ');
-console.log('    cannot be regenerated — new ones would invalidate all sessions.');
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+const outputEnv = process.argv.includes('--env');
+
+if (outputEnv) {
+  // Machine-readable dotenv format (used by deploy-hetzner.sh)
+  console.log(`POSTGRES_PASSWORD='${postgresPassword}'`);
+  console.log(`JWT_SECRET='${jwtSecret}'`);
+  console.log(`ANON_KEY='${anonKey}'`);
+  console.log(`SERVICE_ROLE_KEY='${serviceRoleKey}'`);
+  console.log(`DASHBOARD_USERNAME='admin'`);
+  console.log(`DASHBOARD_PASSWORD='${dashboardPassword}'`);
+} else {
+  // Human-readable pretty output (default)
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(' Supabase self-host secrets (copy into supabase-selfhost/.env)   ');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('');
+  console.log(`POSTGRES_PASSWORD=${postgresPassword}`);
+  console.log('');
+  console.log(`JWT_SECRET=${jwtSecret}`);
+  console.log('');
+  console.log(`ANON_KEY=${anonKey}`);
+  console.log('');
+  console.log(`SERVICE_ROLE_KEY=${serviceRoleKey}`);
+  console.log('');
+  console.log(`DASHBOARD_USERNAME=admin`);
+  console.log(`DASHBOARD_PASSWORD=${dashboardPassword}`);
+  console.log('');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(' ⚠  Save these in your password manager NOW. JWT_SECRET and keys   ');
+  console.log('    cannot be regenerated — new ones would invalidate all sessions.');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+}
