@@ -37,3 +37,10 @@ coverage
 # Misc
 *.tsbuildinfo
 .turbo
+
+# Supabase self-host — runtime state, not versioned
+supabase-selfhost/.env
+supabase-selfhost/docker-compose.yml
+supabase-selfhost/.env.example
+supabase-selfhost/volumes/
+
