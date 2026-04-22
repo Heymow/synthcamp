@@ -1,6 +1,11 @@
-// Stub for phase 2. Will wire @supabase/ssr createBrowserClient when backend is live.
-// Foundation does NOT connect to Supabase; this export is a placeholder that throws if called.
+'use client';
 
-export function getSupabaseBrowserClient(): never {
-  throw new Error('Supabase browser client is a stub in Foundation. Wire in phase 2.');
+import { createBrowserClient } from '@supabase/ssr';
+import type { Database } from '@/lib/database.types';
+
+export function getSupabaseBrowserClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) throw new Error('Missing Supabase env vars');
+  return createBrowserClient<Database>(url, anon);
 }

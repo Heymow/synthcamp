@@ -1,5 +1,25 @@
-// Stub for phase 2. Will wire @supabase/ssr createServerClient when backend is live.
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import type { Database } from '@/lib/database.types';
 
-export function getSupabaseServerClient(): never {
-  throw new Error('Supabase server client is a stub in Foundation. Wire in phase 2.');
+export async function getSupabaseServerClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) throw new Error('Missing Supabase env vars');
+  const cookieStore = await cookies();
+
+  return createServerClient<Database>(url, anon, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (cookiesToSet) => {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          );
+        } catch {
+          // Called from Server Component — setting cookies not allowed here
+        }
+      },
+    },
+  });
 }
