@@ -30,25 +30,27 @@ Copy the entire output. Save in your password manager immediately — the JWT_SE
 
 ### 2. Download the official Supabase docker-compose
 
-```bash
-cd supabase-selfhost
-bash setup.sh
-```
-
-This downloads `docker-compose.yml`, `.env.example`, and `volumes/` from the official Supabase repo (pinned version). It also applies a patch to disable the Realtime service (Phase 4 feature).
-
-### 3. Create your `.env` from the example
+From project root (cross-platform, works on Windows PowerShell / macOS / Linux) :
 
 ```bash
-cp .env.example .env
+node scripts/setup-supabase.mjs
 ```
 
-Edit `.env` and fill in:
-- All values from `node scripts/generate-jwt-secrets.mjs` output
-- SMTP config from Brevo (host: `smtp-relay.brevo.com`, port `587`, user: your email, pass: your API key)
+This downloads `docker-compose.yml`, `.env.example`, and `volumes/` (Kong config + init scripts) from the official Supabase repo (pinned release). It also patches the config to disable the Realtime service (Phase 4 feature).
+
+### 3. Env values — where they go
+
+**Important** : for a Railway deployment, you do **NOT** need to create a local `.env` file. All the env vars go directly into Railway's UI (Service → Variables tab), copied from your password manager.
+
+Use `.env.example` as a **reference checklist** — the list of variables you need to configure, with comments explaining each. Paste them into Railway one by one (or bulk-import via Railway's raw-editor).
+
+Values to collect before deploying :
+- All values from `node scripts/generate-jwt-secrets.mjs` output (password manager)
+- SMTP config from Brevo (host: `smtp-relay.brevo.com`, port `587`, user: your Brevo login email, pass: your API key starting `xkeysib-`)
 - Google OAuth credentials (client ID + secret from Google Cloud Console)
-- `SITE_URL` = your Next.js app URL on Railway (or `http://localhost:3000` for dev)
-- `API_EXTERNAL_URL` = your Supabase public URL on Railway (known after step 5)
+- After Railway deploy you'll also need to update `SITE_URL`, `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI` with the generated Railway domain
+
+**Only create `supabase-selfhost/.env`** if you plan to run the stack locally via `docker compose up` for development. For Railway-only deployment, skip it.
 
 ### 4. Deploy to Railway
 
