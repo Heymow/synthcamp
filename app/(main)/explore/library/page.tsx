@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { ReleaseCard } from '@/components/catalog/release-card';
 import { SignInGate } from '@/components/auth/sign-in-gate';
+import { LocalDateTime } from '@/components/ui/local-datetime';
 import { getCurrentProfile } from '@/lib/data/profile';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -113,8 +114,8 @@ export default async function LibraryPage() {
                         {p.artist?.display_name ?? 'Artist'}
                         {p.room && ` · ${p.room.name}`}
                       </p>
-                      <p className="mt-1 font-mono text-[10px] text-white/50">
-                        {new Date(p.scheduled_at).toLocaleString('en-US')}
+                      <p className="mt-1 text-[10px] text-white/50">
+                        <LocalDateTime iso={p.scheduled_at} />
                       </p>
                     </div>
                     <Link

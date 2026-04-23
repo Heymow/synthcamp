@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { HeroRelease } from '@/components/catalog/hero-release';
 import { ReleaseCard } from '@/components/catalog/release-card';
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { LocalDateTime } from '@/components/ui/local-datetime';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 interface ReleaseWithArtist {
@@ -156,8 +157,8 @@ export default async function ExploreHomePage() {
                       <p className="text-xs font-bold uppercase tracking-widest text-white/70">
                         by {party.release?.artist?.display_name ?? 'Unknown'}
                       </p>
-                      <p className="font-mono text-xs text-white/60">
-                        {new Date(party.scheduled_at).toLocaleString('en-US')}
+                      <p className="text-xs text-white/60">
+                        <LocalDateTime iso={party.scheduled_at} showTimezone={false} />
                       </p>
                     </>
                   ) : (

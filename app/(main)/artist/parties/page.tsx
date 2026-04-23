@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { SignInGate } from '@/components/auth/sign-in-gate';
 import { CancelPartyButton } from '@/components/party/cancel-party-button';
+import { LocalDateTime } from '@/components/ui/local-datetime';
 import { getCurrentProfile } from '@/lib/data/profile';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -77,12 +78,9 @@ export default async function ArtistPartiesPage() {
                   {p.status}
                 </span>
               </div>
-              <p className="text-xs text-white/70">
-                {p.room?.name ?? 'Unknown room'} ·{' '}
-                {new Date(p.scheduled_at).toLocaleString('en-US', {
-                  dateStyle: 'short',
-                  timeStyle: 'short',
-                })}
+              <p className="flex flex-wrap items-center gap-x-2 text-xs text-white/70">
+                <span>{p.room?.name ?? 'Unknown room'} ·</span>
+                <LocalDateTime iso={p.scheduled_at} />
               </p>
               <div className="flex items-center justify-between gap-2 pt-1">
                 <Link

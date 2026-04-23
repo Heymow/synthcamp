@@ -11,6 +11,7 @@ import type { PlayerTrack } from '@/components/player/mini-player-provider';
 import { EmbedButton } from '@/components/catalog/embed-button';
 import { ReportButton } from '@/components/social/report-button';
 import { CancelPartyButton } from '@/components/party/cancel-party-button';
+import { LocalDateTime } from '@/components/ui/local-datetime';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import type { ReleaseStatus } from '@/lib/database.types';
@@ -205,11 +206,11 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
                   {party.status}
                 </span>
               </div>
-              <p className="font-mono text-[11px] text-white/70">
-                {new Date(party.scheduled_at).toLocaleString('en-US', {
-                  dateStyle: 'full',
-                  timeStyle: 'short',
-                })}
+              <p className="text-[11px] text-white/70">
+                <LocalDateTime
+                  iso={party.scheduled_at}
+                  options={{ dateStyle: 'full', timeStyle: 'short' }}
+                />
               </p>
               {isOwner && party.status === 'scheduled' && (
                 <div className="pt-1">
