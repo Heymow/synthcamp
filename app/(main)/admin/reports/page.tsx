@@ -2,9 +2,11 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { SignInGate } from '@/components/auth/sign-in-gate';
+import { AdminNav } from '@/components/admin/admin-nav';
 import { ReportRow } from '@/components/admin/report-row';
 import { getCurrentProfile } from '@/lib/data/profile';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { enrichReportTargets } from '@/lib/admin/enrich-reports';
 import type { ReportStatus, ReportTargetType } from '@/lib/database.types';
 
 interface ReportQueryRow {
@@ -41,8 +43,9 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
     .order('created_at', { ascending: false })
     .limit(50);
   const reports = (reportsRaw ?? []) as unknown as ReportQueryRow[];
+  const targets = await enrichReportTargets(supabase, reports);
 
-  const filters: Array<{ key: 'open' | 'reviewed' | 'dismissed'; label: string }> = [
+  const filters: Array<{ key: ReportStatus; label: string }> = [
     { key: 'open', label: 'Open' },
     { key: 'reviewed', label: 'Reviewed' },
     { key: 'dismissed', label: 'Dismissed' },
@@ -52,12 +55,14 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
     <main className="view-enter mx-auto max-w-2xl space-y-6 px-6 pb-32">
       <div>
         <h2 className="text-3xl font-black italic uppercase leading-none tracking-tighter text-white">
-          Reports
+          Admin
         </h2>
         <p className="mt-2 text-xs italic text-white/60">
-          Admin-only queue. Mark each report reviewed or dismissed once handled.
+          Moderation queue.
         </p>
       </div>
+
+      <AdminNav />
 
       <div className="flex flex-wrap gap-2">
         {filters.map((f) => (
@@ -82,18 +87,23 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
         </GlassPanel>
       ) : (
         <div className="space-y-4">
-          {reports.map((r) => (
-            <ReportRow
-              key={r.id}
-              id={r.id}
-              targetType={r.target_type}
-              targetId={r.target_id}
-              reason={r.reason}
-              status={r.status}
-              createdAt={r.created_at}
-              reporterName={r.reporter?.display_name ?? 'Unknown'}
-            />
-          ))}
+          {reports.map((r) => {
+            const t = targets[r.id];
+            return (
+              <ReportRow
+                key={r.id}
+                id={r.id}
+                targetType={r.target_type}
+                targetLabel={t?.label ?? 'Target not found'}
+                targetSublabel={t?.sublabel}
+                targetHref={t?.href}
+                reason={r.reason}
+                status={r.status}
+                createdAt={r.created_at}
+                reporterName={r.reporter?.display_name ?? 'Unknown'}
+              />
+            );
+          })}
         </div>
       )}
     </main>

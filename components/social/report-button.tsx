@@ -63,6 +63,10 @@ export function ReportButton({ targetType, targetId, label = 'Report' }: ReportB
   return (
     <GlassPanel className="space-y-3 p-4">
       <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Report</p>
+      <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[10px] italic text-amber-200">
+        Abusive or repeated bad-faith reports may result in a ban. Only submit
+        if you've spotted content that actually violates the rules.
+      </p>
       <form onSubmit={submit} className="space-y-3">
         <textarea
           required

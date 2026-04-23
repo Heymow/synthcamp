@@ -137,10 +137,10 @@ export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
             {profile.is_admin && (
               <button
                 type="button"
-                onClick={() => go('/admin/reports')}
+                onClick={() => go('/admin')}
                 className="w-full cursor-pointer text-left text-[9px] font-bold tracking-[0.3em] text-indigo-400 uppercase hover:text-indigo-300"
               >
-                Admin · reports
+                Admin dashboard
               </button>
             )}
             <form action="/auth/logout" method="POST">

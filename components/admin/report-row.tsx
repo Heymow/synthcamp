@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { LocalDateTime } from '@/components/ui/local-datetime';
 import type { ReportStatus, ReportTargetType } from '@/lib/database.types';
@@ -9,21 +10,28 @@ import type { ReportStatus, ReportTargetType } from '@/lib/database.types';
 interface ReportRowProps {
   id: string;
   targetType: ReportTargetType;
-  targetId: string;
+  targetLabel: string;
+  targetSublabel?: string;
+  targetHref?: string;
   reason: string;
   status: ReportStatus;
   createdAt: string;
   reporterName: string;
+  /** Total reports from this reporter that have been dismissed. */
+  reporterDismissed: number;
 }
 
 export function ReportRow({
   id,
   targetType,
-  targetId,
+  targetLabel,
+  targetSublabel,
+  targetHref,
   reason,
   status,
   createdAt,
   reporterName,
+  reporterDismissed,
 }: ReportRowProps) {
   const router = useRouter();
   const [current, setCurrent] = useState<ReportStatus>(status);
@@ -52,18 +60,35 @@ export function ReportRow({
     });
   };
 
+  const targetInner = (
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-sm font-bold italic text-white">{targetLabel}</p>
+      {targetSublabel && (
+        <p className="truncate text-[10px] font-bold uppercase tracking-widest text-white/50">
+          {targetSublabel}
+        </p>
+      )}
+    </div>
+  );
+
   return (
     <GlassPanel className="space-y-3 p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white/70">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="shrink-0 rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-indigo-300">
             {targetType}
           </span>
-          <span className="font-mono text-[10px] text-white/40">{targetId.slice(0, 8)}</span>
+          {targetHref ? (
+            <Link href={targetHref} className="min-w-0 flex-1 hover:opacity-80" target="_blank">
+              {targetInner}
+            </Link>
+          ) : (
+            targetInner
+          )}
         </div>
         <span
           className={
-            'rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest ' +
+            'shrink-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest ' +
             (current === 'open'
               ? 'bg-red-500/20 text-red-300'
               : current === 'reviewed'
@@ -74,9 +99,30 @@ export function ReportRow({
           {current}
         </span>
       </div>
-      <p className="text-sm text-white">{reason}</p>
-      <p className="text-[10px] text-white/50">
-        Reported by {reporterName} · <LocalDateTime iso={createdAt} showTimezone={false} />
+      <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3 text-sm text-white/90">
+        {reason}
+      </div>
+      <p className="flex flex-wrap items-center gap-2 text-[10px] text-white/50">
+        <span>
+          Reported by <span className="text-white/80">{reporterName}</span>
+        </span>
+        {reporterDismissed > 0 && (
+          <span
+            className={
+              'rounded-full px-2 py-0.5 font-bold uppercase tracking-widest ' +
+              (reporterDismissed >= 3
+                ? 'bg-red-500/20 text-red-300'
+                : reporterDismissed >= 1
+                  ? 'bg-amber-500/20 text-amber-300'
+                  : 'bg-white/10 text-white/60')
+            }
+            title={`${reporterDismissed} prior report${reporterDismissed === 1 ? '' : 's'} dismissed`}
+          >
+            {reporterDismissed} dismissed
+          </span>
+        )}
+        <span>·</span>
+        <LocalDateTime iso={createdAt} showTimezone={false} />
       </p>
       <div className="flex items-center gap-2 pt-1 text-[10px] font-bold uppercase tracking-widest">
         <button
