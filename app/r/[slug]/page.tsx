@@ -59,7 +59,7 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
     .select(
       `*,
        artist:profiles!releases_artist_id_fkey(display_name, slug, bio),
-       tracks(id, track_number, title, duration_seconds),
+       tracks(id, track_number, title, duration_seconds, preview_url),
        listening_parties(
          id, scheduled_at, status,
          room:rooms(name, slug)
@@ -80,7 +80,13 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
     credit_narrative: string | null;
     price_minimum: number;
     artist: { display_name: string; slug: string | null; bio: string | null };
-    tracks: Array<{ id: string; track_number: number; title: string; duration_seconds: number }>;
+    tracks: Array<{
+      id: string;
+      track_number: number;
+      title: string;
+      duration_seconds: number;
+      preview_url: string | null;
+    }>;
     listening_parties: Array<{
       id: string;
       scheduled_at: string;
@@ -140,6 +146,7 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
                 artist: r.artist.display_name,
                 coverUrl: r.cover_url,
                 durationSeconds: tracks[0].duration_seconds,
+                previewUrl: tracks[0].preview_url,
               }}
             />
           )}
@@ -163,6 +170,7 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
                 artist: r.artist.display_name,
                 coverUrl: r.cover_url,
                 durationSeconds: t.duration_seconds,
+                previewUrl: t.preview_url,
                 trackNumber: t.track_number,
               }}
             />

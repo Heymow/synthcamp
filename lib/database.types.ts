@@ -170,6 +170,7 @@ export interface Database {
           audio_source_key: string | null;
           hls_manifest_key: string | null;
           aes_key_id: string | null;
+          preview_url: string | null;
           credit_category: CreditCategory | null;
           credit_tags: string[] | null;
           created_at: string;
@@ -183,6 +184,7 @@ export interface Database {
           audio_source_key?: string | null;
           hls_manifest_key?: string | null;
           aes_key_id?: string | null;
+          preview_url?: string | null;
           credit_category?: CreditCategory | null;
           credit_tags?: string[] | null;
           created_at?: string;
@@ -196,6 +198,7 @@ export interface Database {
           audio_source_key?: string | null;
           hls_manifest_key?: string | null;
           aes_key_id?: string | null;
+          preview_url?: string | null;
           credit_category?: CreditCategory | null;
           credit_tags?: string[] | null;
           created_at?: string;

@@ -54,6 +54,23 @@ function avatarUrl(slug) {
   return `https://picsum.photos/seed/${slug}-avatar/200/200`;
 }
 
+// Six CC-licensed demo tracks from SoundHelix, widely used for audio testing.
+// Rotated round-robin per seeded track so each one is different.
+const PREVIEW_URLS = [
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
+];
+let previewCounter = 0;
+function nextPreviewUrl() {
+  const url = PREVIEW_URLS[previewCounter % PREVIEW_URLS.length];
+  previewCounter += 1;
+  return url;
+}
+
 async function ok(res, context) {
   if (!res.ok) {
     const body = await res.text();
@@ -390,7 +407,8 @@ async function seedArtist(spec) {
         track_number: i + 1,
         title: t.title,
         duration_seconds: t.duration_seconds,
-        // audio_source_key intentionally null — Phase 3 adds real audio
+        preview_url: nextPreviewUrl(),
+        // audio_source_key intentionally null — Phase 3 adds real HLS+AES DRM
       });
     }
     console.log(`  ${r.tracks.length} tracks inserted`);
