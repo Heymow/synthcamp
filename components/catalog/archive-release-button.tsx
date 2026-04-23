@@ -49,8 +49,11 @@ export function ArchiveReleaseButton({ releaseId, releaseTitle }: ArchiveRelease
       onClick={(e) => e.preventDefault()}
       className="flex flex-col items-end gap-1 text-[9px]"
     >
-      <span className="font-bold uppercase tracking-widest text-white/60">
+      <span className="max-w-[180px] text-right font-bold uppercase tracking-widest text-white/60">
         Archive &quot;{releaseTitle}&quot;?
+      </span>
+      <span className="max-w-[180px] text-right text-[8px] normal-case italic text-white/40">
+        Hides from public view. Scheduled party is cancelled. Files stay on disk.
       </span>
       <div className="flex gap-2">
         <button

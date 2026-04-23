@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { SignInGate } from '@/components/auth/sign-in-gate';
+import { CancelPartyButton } from '@/components/party/cancel-party-button';
 import { getCurrentProfile } from '@/lib/data/profile';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -83,13 +84,14 @@ export default async function ArtistPartiesPage() {
                   timeStyle: 'short',
                 })}
               </p>
-              <div className="flex gap-2 pt-1">
+              <div className="flex items-center justify-between gap-2 pt-1">
                 <Link
                   href={`/party/${p.id}`}
                   className="text-[10px] font-bold tracking-widest text-indigo-400 uppercase hover:text-indigo-300"
                 >
                   View party →
                 </Link>
+                {p.status === 'scheduled' && <CancelPartyButton partyId={p.id} />}
               </div>
             </GlassPanel>
           ))}
