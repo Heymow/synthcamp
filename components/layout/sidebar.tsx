@@ -5,13 +5,23 @@ import { Home, Search, Library, LayoutGrid, Upload, Users, DollarSign } from 'lu
 import { Sheet } from '@/components/ui/sheet';
 import { SidebarItem } from '@/components/layout/sidebar-item';
 import { LogoS } from '@/components/branding/logo-s';
+import type { Profile } from '@/lib/data/profile';
 
 export interface SidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  profile: Profile | null;
 }
 
-export function Sidebar({ open, onOpenChange }: SidebarProps) {
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isExplore = pathname.startsWith('/explore');
@@ -90,14 +100,26 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
           )}
         </nav>
 
-        <div className="space-y-4 border-t border-white/5 p-8">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 p-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black">
-              JD
+        {profile && (
+          <div className="space-y-3 border-t border-white/5 p-8">
+            <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 p-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black">
+                {getInitials(profile.display_name)}
+              </div>
+              <span className="truncate text-[10px] font-black tracking-widest uppercase">
+                {profile.display_name}
+              </span>
             </div>
-            <span className="text-[10px] font-black tracking-widest uppercase">John Doe</span>
+            <form action="/auth/logout" method="POST">
+              <button
+                type="submit"
+                className="w-full text-left text-[9px] font-bold tracking-[0.3em] text-white/40 uppercase hover:text-white/80"
+              >
+                Sign out
+              </button>
+            </form>
           </div>
-        </div>
+        )}
       </div>
     </Sheet>
   );

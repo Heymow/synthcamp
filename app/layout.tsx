@@ -3,6 +3,7 @@ import { Outfit } from 'next/font/google';
 import { Background3D } from '@/components/three/background-3d';
 import { Header } from '@/components/layout/header';
 import { MiniPlayer } from '@/components/player/mini-player';
+import { getCurrentProfile } from '@/lib/data/profile';
 import './globals.css';
 
 const outfit = Outfit({
@@ -22,13 +23,15 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const profile = await getCurrentProfile();
+
   return (
     <html lang="en" className={outfit.variable}>
       <body>
         <Background3D />
         <div className="ui-overlay pb-32">
-          <Header />
+          <Header profile={profile} />
           <div className="h-40" aria-hidden="true" />
           {children}
         </div>

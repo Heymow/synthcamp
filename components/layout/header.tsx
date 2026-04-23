@@ -6,8 +6,13 @@ import { Menu } from 'lucide-react';
 import { LogoS } from '@/components/branding/logo-s';
 import { ModeToggle, type Mode } from '@/components/ui/mode-toggle';
 import { Sidebar } from '@/components/layout/sidebar';
+import type { Profile } from '@/lib/data/profile';
 
-export function Header() {
+interface HeaderProps {
+  profile: Profile | null;
+}
+
+export function Header({ profile }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -49,7 +54,7 @@ export function Header() {
         </div>
       </header>
 
-      <Sidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
+      <Sidebar open={sidebarOpen} onOpenChange={setSidebarOpen} profile={profile} />
     </>
   );
 }
