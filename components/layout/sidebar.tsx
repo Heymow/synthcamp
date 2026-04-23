@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Home, Search, Library, LayoutGrid, Upload, Users, DollarSign } from 'lucide-react';
@@ -105,14 +106,34 @@ export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
 
         {profile && (
           <div className="space-y-3 border-t border-white/5 p-8">
-            <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 p-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black">
-                {getInitials(profile.display_name)}
+            <button
+              type="button"
+              onClick={() => go('/settings/profile')}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 text-left transition hover:bg-white/10"
+            >
+              {profile.avatar_url ? (
+                <Image
+                  src={profile.avatar_url}
+                  alt={profile.display_name}
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black">
+                  {getInitials(profile.display_name)}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <span className="block truncate text-[10px] font-black tracking-widest uppercase">
+                  {profile.display_name}
+                </span>
+                <span className="block text-[8px] font-bold tracking-[0.3em] text-white/40 uppercase">
+                  Edit profile
+                </span>
               </div>
-              <span className="truncate text-[10px] font-black tracking-widest uppercase">
-                {profile.display_name}
-              </span>
-            </div>
+            </button>
             <form action="/auth/logout" method="POST">
               <button
                 type="submit"

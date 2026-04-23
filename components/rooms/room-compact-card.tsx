@@ -66,7 +66,7 @@ export function RoomCompactCard({
     >
       {party && <StatusTimer baseTime={baseTime} isCountdown={isCountdown} small />}
 
-      <div className="flex items-start gap-3 md:items-center md:gap-5">
+      <div className="flex items-center gap-3 md:gap-5">
         <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 md:h-14 md:w-14">
           {release && (
             <Image src={release.cover_url} alt="" fill className="object-cover opacity-20" />
