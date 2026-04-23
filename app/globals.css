@@ -100,12 +100,36 @@
   }
 
   .gmc-backdrop {
+    overflow: hidden;
+    background: #0a0a1f;
+  }
+
+  .gmc-backdrop::before {
+    content: '';
+    position: absolute;
+    inset: -25%;
+    pointer-events: none;
     background:
-      radial-gradient(ellipse at 20% 0%, rgba(234, 88, 12, 0.22), transparent 55%),
-      radial-gradient(ellipse at 85% 90%, rgba(234, 88, 12, 0.15), transparent 60%),
-      linear-gradient(135deg, rgba(49, 46, 129, 0.55) 0%, rgba(15, 10, 30, 0.7) 50%, rgba(49, 46, 129, 0.45) 100%);
-    background-size: 200% 200%, 200% 200%, 300% 300%;
-    animation: gmc-gradient-shift 18s ease-in-out infinite;
+      radial-gradient(ellipse 55% 45% at 30% 30%, rgba(79, 70, 229, 0.55), transparent 65%),
+      radial-gradient(ellipse 50% 40% at 70% 65%, rgba(99, 102, 241, 0.5), transparent 65%),
+      radial-gradient(ellipse 30% 25% at 55% 45%, rgba(129, 140, 248, 0.3), transparent 70%);
+    filter: blur(48px);
+    animation: gmc-flame-a 16s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .gmc-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 35% 25% at 20% 75%, rgba(234, 88, 12, 0.14), transparent 60%),
+      radial-gradient(ellipse 28% 22% at 82% 22%, rgba(251, 146, 60, 0.1), transparent 60%);
+    filter: blur(40px);
+    mix-blend-mode: screen;
+    animation: gmc-flame-b 22s ease-in-out infinite;
+    will-change: transform;
   }
 
   .grain {
@@ -136,12 +160,30 @@
   }
 }
 
-@keyframes gmc-gradient-shift {
+@keyframes gmc-flame-a {
   0%, 100% {
-    background-position: 0% 0%, 100% 100%, 0% 50%;
+    transform: translate(0%, 0%) scale(1);
+  }
+  25% {
+    transform: translate(6%, -4%) scale(1.08);
   }
   50% {
-    background-position: 100% 50%, 0% 50%, 100% 50%;
+    transform: translate(-4%, 5%) scale(0.96);
+  }
+  75% {
+    transform: translate(3%, -6%) scale(1.04);
+  }
+}
+
+@keyframes gmc-flame-b {
+  0%, 100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  33% {
+    transform: translate(-5%, 4%) scale(1.15);
+  }
+  66% {
+    transform: translate(5%, -3%) scale(0.92);
   }
 }
 
