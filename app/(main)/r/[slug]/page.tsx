@@ -11,6 +11,7 @@ import type { PlayerTrack } from '@/components/player/mini-player-provider';
 import { EmbedButton } from '@/components/catalog/embed-button';
 import { ReportButton } from '@/components/social/report-button';
 import { CancelPartyButton } from '@/components/party/cancel-party-button';
+import { ArchiveReleaseButton } from '@/components/catalog/archive-release-button';
 import { LocalDateTime } from '@/components/ui/local-datetime';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -73,8 +74,19 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
     viewer = null;
   }
 
+  // Is the viewer an admin? Enables moderation controls below.
+  let viewerIsAdmin = false;
+  if (viewer) {
+    const { data: me } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', viewer.id)
+      .maybeSingle();
+    viewerIsAdmin = Boolean(me?.is_admin);
+  }
+
   const statuses: ReleaseStatus[] = viewer
-    ? ['published', 'unlisted', 'scheduled', 'draft']
+    ? ['published', 'unlisted', 'scheduled', 'draft', 'archived']
     : ['published', 'unlisted', 'scheduled'];
 
   const { data: release } = await supabase
@@ -181,8 +193,18 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
             <p className="text-xs italic text-white/60">« {r.credit_narrative} »</p>
           )}
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            {getReleaseLabel(tracks.length)} · Min ${r.price_minimum.toFixed(2)}
+            {getReleaseLabel(tracks.length)} · Min ${r.price_minimum.toFixed(2)} ·{' '}
+            <span className="text-white/50">{r.status}</span>
           </p>
+
+          {viewerIsAdmin && !isOwner && r.status !== 'archived' && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-300">
+                Admin moderation
+              </p>
+              <ArchiveReleaseButton releaseId={r.id} releaseTitle={r.title} />
+            </div>
+          )}
           {party && party.room && (
             <div
               className={

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { LiveStatus } from '@/components/party/live-status';
 import { WaitButton } from '@/components/party/wait-button';
+import { CancelPartyButton } from '@/components/party/cancel-party-button';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import type { PartyStatus } from '@/lib/database.types';
 import { getReleaseLabel } from '@/lib/pricing';
@@ -68,6 +69,15 @@ export default async function PartyPage({ params }: PartyPageProps) {
     viewerId = null;
   }
   let isSubscribed = false;
+  let viewerIsAdmin = false;
+  if (viewerId) {
+    const { data: me } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', viewerId)
+      .maybeSingle();
+    viewerIsAdmin = Boolean(me?.is_admin);
+  }
   if (viewerId && partyShape.status === 'scheduled') {
     const { data: alert } = await supabase
       .from('party_alerts')
@@ -163,6 +173,14 @@ export default async function PartyPage({ params }: PartyPageProps) {
               isAuthenticated={viewerId !== null}
               variant="primary"
             />
+          )}
+          {viewerIsAdmin && partyShape.status === 'scheduled' && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-300">
+                Admin moderation
+              </p>
+              <CancelPartyButton partyId={partyShape.id} />
+            </div>
           )}
           {release && partyShape.status === 'scheduled' && (
             <Link
