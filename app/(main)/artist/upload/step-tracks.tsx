@@ -187,25 +187,31 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
         })}
       </div>
 
-      <label className="block space-y-1">
+      <div className="space-y-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
           Add a track
         </span>
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              await addTrack(file);
-              e.target.value = '';
-            }
-          }}
-          disabled={uploading !== null}
-          className="block w-full text-xs text-white/80 file:mr-3 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:text-white hover:file:bg-white/20"
-        />
-        {uploading && <p className="text-xs italic text-white/60">Uploading...</p>}
-      </label>
+        <label
+          className={
+            'inline-flex cursor-pointer items-center justify-center rounded-xl bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-white/20 ' +
+            (uploading !== null ? 'pointer-events-none opacity-50' : '')
+          }
+        >
+          {uploading !== null ? 'Uploading...' : 'Choose audio file'}
+          <input
+            type="file"
+            accept="audio/*"
+            onChange={async (e) => {
+              const input = e.target;
+              const file = input.files?.[0];
+              input.value = '';
+              if (file) await addTrack(file);
+            }}
+            disabled={uploading !== null}
+            className="sr-only"
+          />
+        </label>
+      </div>
 
       {error && <p className="text-xs italic text-red-400">{error}</p>}
 
