@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { HeroRelease } from '@/components/catalog/hero-release';
 import { ReleaseCard } from '@/components/catalog/release-card';
 import { GlassPanel } from '@/components/ui/glass-panel';
-import { LocalDateTime } from '@/components/ui/local-datetime';
+import { RoomHeroCard } from '@/components/rooms/room-hero-card';
+import { RoomCompactCard } from '@/components/rooms/room-compact-card';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 interface ReleaseWithArtist {
@@ -14,6 +15,19 @@ interface ReleaseWithArtist {
   artist: { display_name: string } | null;
   tracks: { count: number }[] | null;
 }
+
+type PartyRow = {
+  id: string;
+  scheduled_at: string;
+  status: 'scheduled' | 'live';
+  room_id: string;
+  release: {
+    title: string;
+    slug: string;
+    cover_url: string;
+    artist: { display_name: string } | null;
+  } | null;
+};
 
 export default async function ExploreHomePage() {
   const supabase = await getSupabaseServerClient();
@@ -59,25 +73,13 @@ export default async function ExploreHomePage() {
     .select(
       `id, scheduled_at, status, room_id,
        release:releases!listening_parties_release_id_fkey(
-         title, slug,
+         title, slug, cover_url,
          artist:profiles!releases_artist_id_fkey(display_name)
        )`,
     )
     .in('status', ['scheduled', 'live'])
     .gte('scheduled_at', new Date().toISOString())
     .order('scheduled_at', { ascending: true });
-
-  type PartyRow = {
-    id: string;
-    scheduled_at: string;
-    status: string;
-    room_id: string;
-    release: {
-      title: string;
-      slug: string;
-      artist: { display_name: string } | null;
-    } | null;
-  };
 
   // Group parties by room_id, keep earliest per room
   const partiesByRoom = new Map<string, PartyRow>();
@@ -86,6 +88,10 @@ export default async function ExploreHomePage() {
   }
 
   const heroTracksCount = hero?.tracks?.[0]?.count ?? 0;
+
+  const roomList = rooms ?? [];
+  const gmc = roomList.find((r) => r.kind === 'global_master');
+  const secondaries = roomList.filter((r) => r.kind !== 'global_master');
 
   return (
     <main className="view-enter mx-auto max-w-4xl space-y-12 px-6 pb-32">
@@ -140,42 +146,22 @@ export default async function ExploreHomePage() {
 
       <section className="pb-20">
         <SectionHeader title="Active Sound Rooms" />
-        <div className="space-y-4">
-          {(rooms ?? []).map((room) => {
-            const party = partiesByRoom.get(room.id);
-            return (
-              <GlassPanel key={room.id} className="flex items-center justify-between p-5">
-                <div className="min-w-0 space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">
-                    {room.name}
-                  </p>
-                  {party ? (
-                    <>
-                      <p className="truncate text-lg font-bold italic text-white">
-                        {party.release?.title ?? 'Release'}
-                      </p>
-                      <p className="text-xs font-bold uppercase tracking-widest text-white/70">
-                        by {party.release?.artist?.display_name ?? 'Unknown'}
-                      </p>
-                      <p className="text-xs text-white/60">
-                        <LocalDateTime iso={party.scheduled_at} showTimezone={false} />
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-sm italic text-white/50">No party scheduled</p>
-                  )}
-                </div>
-                {party && (
-                  <Link
-                    href={`/party/${party.id}`}
-                    className="shrink-0 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-indigo-300 hover:bg-indigo-500/20"
-                  >
-                    Enter
-                  </Link>
-                )}
-              </GlassPanel>
-            );
-          })}
+        <div className="space-y-6">
+          {gmc && (
+            <RoomHeroCard
+              roomName={gmc.name}
+              party={partiesByRoom.get(gmc.id) ?? null}
+            />
+          )}
+          <div className="grid grid-cols-1 gap-4">
+            {secondaries.map((room) => (
+              <RoomCompactCard
+                key={room.id}
+                roomName={room.name}
+                party={partiesByRoom.get(room.id) ?? null}
+              />
+            ))}
+          </div>
         </div>
       </section>
     </main>
