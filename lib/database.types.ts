@@ -352,6 +352,39 @@ export interface Database {
           },
         ];
       };
+      follows: {
+        Row: {
+          follower_id: string;
+          followed_id: string;
+          created_at: string;
+        };
+        Insert: {
+          follower_id: string;
+          followed_id: string;
+          created_at?: string;
+        };
+        Update: {
+          follower_id?: string;
+          followed_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'follows_follower_id_fkey';
+            columns: ['follower_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+            isOneToOne: false;
+          },
+          {
+            foreignKeyName: 'follows_followed_id_fkey';
+            columns: ['followed_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+            isOneToOne: false;
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -419,3 +452,4 @@ export type Track = Tables<'tracks'>;
 export type ListeningParty = Tables<'listening_parties'>;
 export type PartyModerator = Tables<'party_moderators'>;
 export type Purchase = Tables<'purchases'>;
+export type Follow = Tables<'follows'>;

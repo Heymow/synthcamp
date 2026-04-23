@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { ReleaseCard } from '@/components/catalog/release-card';
+import { FollowButton } from '@/components/social/follow-button';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 // TODO: reserve slugs 'catalog', 'upload', 'parties', 'sales' at artist registration
@@ -52,6 +53,27 @@ export default async function ArtistProfilePage({ params }: ArtistPageProps) {
 
   if (!profile || !profile.is_artist) notFound();
 
+  const {
+    data: { user: viewer },
+  } = await supabase.auth.getUser();
+
+  const { count: followerCount } = await supabase
+    .from('follows')
+    .select('*', { count: 'exact', head: true })
+    .eq('followed_id', profile.id);
+
+  let isFollowing = false;
+  const isSelf = viewer?.id === profile.id;
+  if (viewer && !isSelf) {
+    const { data: followRow } = await supabase
+      .from('follows')
+      .select('follower_id')
+      .eq('follower_id', viewer.id)
+      .eq('followed_id', profile.id)
+      .maybeSingle();
+    isFollowing = Boolean(followRow);
+  }
+
   const { data: releasesRaw } = await supabase
     .from('releases')
     .select('id, title, slug, cover_url, tracks(count)')
@@ -79,11 +101,27 @@ export default async function ArtistProfilePage({ params }: ArtistPageProps) {
             className="rounded-full"
           />
         )}
-        <div className="space-y-2">
+        <div className="min-w-0 flex-1 space-y-2">
           <h1 className="text-3xl font-black italic uppercase leading-none tracking-tighter text-white">
             {profile.display_name}
           </h1>
           {profile.bio && <p className="text-sm italic text-white/80">{profile.bio}</p>}
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">
+            <span className="font-mono text-white">{followerCount ?? 0}</span>{' '}
+            {followerCount === 1 ? 'follower' : 'followers'}
+          </p>
+        </div>
+        <div className="shrink-0">
+          {!viewer ? (
+            <FollowButton
+              artistSlug={slug}
+              initialFollowing={false}
+              disabled
+              disabledReason="Sign in to follow"
+            />
+          ) : isSelf ? null : (
+            <FollowButton artistSlug={slug} initialFollowing={isFollowing} />
+          )}
         </div>
       </section>
 
