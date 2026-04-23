@@ -17,7 +17,11 @@ export type PartyStatus = 'scheduled' | 'live' | 'ended' | 'cancelled';
 export type RoomKind = 'global_master' | 'secondary';
 export type ReportTargetType = 'release' | 'profile' | 'party' | 'track';
 export type ReportStatus = 'open' | 'reviewed' | 'dismissed';
-export type NotificationKind = 'release_published' | 'party_scheduled' | 'follow';
+export type NotificationKind =
+  | 'release_published'
+  | 'party_scheduled'
+  | 'follow'
+  | 'report_created';
 
 // ===== Main Database type =====
 
@@ -573,6 +577,10 @@ export interface Database {
       };
       admin_unban_user: {
         Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      notify_admins_of_report: {
+        Args: { p_report_id: string };
         Returns: undefined;
       };
     };
