@@ -10,8 +10,10 @@ import { PlayTrackRow } from '@/components/player/play-track-row';
 import type { PlayerTrack } from '@/components/player/mini-player-provider';
 import { EmbedButton } from '@/components/catalog/embed-button';
 import { ReportButton } from '@/components/social/report-button';
+import { CancelPartyButton } from '@/components/party/cancel-party-button';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import type { ReleaseStatus } from '@/lib/database.types';
 
 interface ReleasePageProps {
   params: Promise<{ slug: string }>;
@@ -58,6 +60,16 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
   const { slug } = await params;
   const supabase = await getSupabaseServerClient();
 
+  // RLS lets the artist see their own draft; relax the status filter so
+  // the owner can preview scheduled/draft releases on /r/[slug].
+  const {
+    data: { user: viewer },
+  } = await supabase.auth.getUser();
+
+  const statuses: ReleaseStatus[] = viewer
+    ? ['published', 'unlisted', 'scheduled', 'draft']
+    : ['published', 'unlisted', 'scheduled'];
+
   const { data: release } = await supabase
     .from('releases')
     .select(
@@ -70,7 +82,7 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
        )`,
     )
     .eq('slug', slug)
-    .in('status', ['published', 'unlisted', 'scheduled'])
+    .in('status', statuses)
     .single();
 
   if (!release) notFound();
@@ -80,6 +92,8 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
     title: string;
     description: string | null;
     cover_url: string;
+    status: string;
+    artist_id: string;
     credit_category: string;
     credit_narrative: string | null;
     price_minimum: number;
@@ -100,7 +114,15 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
     }> | null;
   };
 
-  const party = r.listening_parties?.[0] ?? null;
+  // Owner must also be able to view drafts; non-owners hit 404 on drafts.
+  const isOwner = viewer?.id === r.artist_id;
+  if (r.status === 'draft' && !isOwner) notFound();
+
+  // Prefer an active party (scheduled/live). Fall back to the most recent
+  // cancelled/ended party so the owner still sees history on their draft.
+  const parties = r.listening_parties ?? [];
+  const party =
+    parties.find((p) => p.status === 'scheduled' || p.status === 'live') ?? parties[0] ?? null;
   const tracks = [...r.tracks].sort((a, b) => a.track_number - b.track_number);
 
   const playerTracks: PlayerTrack[] = tracks.map((t) => ({
@@ -146,12 +168,46 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
             {getReleaseLabel(tracks.length)} · Min ${r.price_minimum.toFixed(2)}
           </p>
           {party && party.room && (
-            <Link
-              href={`/party/${party.id}`}
-              className="block rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3 text-sm font-bold uppercase tracking-widest text-indigo-300 hover:bg-indigo-500/20"
+            <div
+              className={
+                'space-y-2 rounded-xl border px-4 py-3 ' +
+                (party.status === 'live'
+                  ? 'border-red-500/40 bg-red-500/10'
+                  : party.status === 'scheduled'
+                    ? 'border-indigo-500/30 bg-indigo-500/10'
+                    : 'border-white/10 bg-white/5')
+              }
             >
-              Listening Party on {party.room.name} · {new Date(party.scheduled_at).toLocaleString('en-US')}
-            </Link>
+              <div className="flex items-center justify-between gap-3">
+                <Link
+                  href={`/party/${party.id}`}
+                  className="text-xs font-bold uppercase tracking-widest text-indigo-300 hover:text-indigo-200"
+                >
+                  {party.status === 'live' ? 'Live now' : 'Listening Party'} ·{' '}
+                  {party.room.name}
+                </Link>
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white/70">
+                  {party.status}
+                </span>
+              </div>
+              <p className="font-mono text-[11px] text-white/70">
+                {new Date(party.scheduled_at).toLocaleString('en-US', {
+                  dateStyle: 'full',
+                  timeStyle: 'short',
+                })}
+              </p>
+              {isOwner && party.status === 'scheduled' && (
+                <div className="pt-1">
+                  <CancelPartyButton partyId={party.id} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {isOwner && r.status === 'draft' && !party && (
+            <p className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[11px] italic text-white/60">
+              Draft preview — visible only to you. Finish the wizard to publish.
+            </p>
           )}
           {playerTracks[0] && <PlayReleaseButton track={playerTracks[0]} />}
           <Button variant="ghost" size="md" disabled className="w-full">
