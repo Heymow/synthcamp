@@ -131,6 +131,15 @@ async function findReleaseBySlug(slug) {
   return (await res.json())[0] ?? null;
 }
 
+async function findTrackByNumber(releaseId, trackNumber) {
+  const res = await fetch(
+    `${REST}/tracks?release_id=eq.${releaseId}&track_number=eq.${trackNumber}&select=id`,
+    { headers: HEADERS },
+  );
+  await ok(res, `find track ${trackNumber} on release ${releaseId}`);
+  return (await res.json())[0] ?? null;
+}
+
 async function insertRelease(row) {
   const res = await fetch(`${REST}/releases`, {
     method: 'POST',
@@ -374,48 +383,52 @@ async function seedArtist(spec) {
   console.log(`  profile updated`);
 
   for (const r of spec.releases) {
-    const existing = await findReleaseBySlug(r.slug);
-    if (existing) {
-      console.log(`  release ${r.slug} exists — skipping`);
-      continue;
-    }
-
     const totalDuration = r.tracks.reduce((sum, t) => sum + t.duration_seconds, 0);
 
-    const release = await insertRelease({
-      artist_id: userId,
-      title: r.title,
-      slug: r.slug,
-      description: r.description,
-      cover_url: coverUrl(r.slug),
-      language: r.language,
-      genres: r.genres,
-      price_minimum: priceFor(r.tracks.length),
-      credit_category: r.credit_category,
-      credit_tags: r.credit_tags,
-      credit_narrative: r.credit_narrative,
-      status: r.status,
-      release_date: daysFromNow(r.release_date_offset_days),
-      is_listed: true,
-    });
-    console.log(`  release ${r.slug} created (${r.status})`);
+    let release = await findReleaseBySlug(r.slug);
+    if (!release) {
+      release = await insertRelease({
+        artist_id: userId,
+        title: r.title,
+        slug: r.slug,
+        description: r.description,
+        cover_url: coverUrl(r.slug),
+        language: r.language,
+        genres: r.genres,
+        price_minimum: priceFor(r.tracks.length),
+        credit_category: r.credit_category,
+        credit_tags: r.credit_tags,
+        credit_narrative: r.credit_narrative,
+        status: r.status,
+        release_date: daysFromNow(r.release_date_offset_days),
+        is_listed: true,
+      });
+      console.log(`  release ${r.slug} created (${r.status})`);
+    } else {
+      console.log(`  release ${r.slug} exists — reconciling tracks`);
+    }
 
+    let inserted = 0;
     for (let i = 0; i < r.tracks.length; i++) {
       const t = r.tracks[i];
+      const trackNumber = i + 1;
+      const existingTrack = await findTrackByNumber(release.id, trackNumber);
+      if (existingTrack) continue;
       await insertTrack({
         release_id: release.id,
-        track_number: i + 1,
+        track_number: trackNumber,
         title: t.title,
         duration_seconds: t.duration_seconds,
         preview_url: nextPreviewUrl(),
         // audio_source_key intentionally null — Phase 3 adds real HLS+AES DRM
       });
+      inserted += 1;
     }
-    console.log(`  ${r.tracks.length} tracks inserted`);
+    if (inserted > 0) console.log(`  ${inserted} tracks inserted`);
 
     if (r.party) {
-      const existing = await findPartyByRelease(release.id);
-      if (existing) {
+      const existingParty = await findPartyByRelease(release.id);
+      if (existingParty) {
         console.log(`  party already exists — skipping`);
         continue;
       }

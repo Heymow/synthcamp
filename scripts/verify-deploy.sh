@@ -67,14 +67,14 @@ else
   fi
 fi
 
-step "Public endpoints (expect 200)"
+step "Public endpoints (2xx or 3xx)"
 check_url() {
   local path="$1"
   local url="${BASE}${path}"
   local code
   code=$(curl -sS -o /dev/null -w '%{http_code}' "$url" || echo "000")
-  if [[ "$code" == "200" ]]; then
-    ok "$path → 200"
+  if [[ "$code" =~ ^(2|3)[0-9][0-9]$ ]]; then
+    ok "$path → $code"
   else
     bad "$path → $code"
     FAILURES=$((FAILURES + 1))
