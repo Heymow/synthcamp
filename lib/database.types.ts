@@ -587,6 +587,10 @@ export interface Database {
         Args: { p_report_id: string };
         Returns: undefined;
       };
+      get_user_emails: {
+        Args: { p_ids: string[] };
+        Returns: { id: string; email: string }[];
+      };
     };
     Enums: {
       credit_category: CreditCategory;

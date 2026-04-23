@@ -95,13 +95,12 @@ export async function POST(request: NextRequest) {
           })),
         );
 
-        // Resolve emails only for this party's subscribers.
-        const emails = await Promise.all(
-          subIds.map(async (uid) => {
-            const { data } = await supabase.auth.admin.getUserById(uid);
-            return data.user?.email ?? null;
-          }),
-        );
+        // Resolve emails via SECURITY DEFINER RPC (self-hosted GoTrue admin API
+        // is unreliable; reading auth.users directly is cleaner).
+        const { data: emailRows } = await supabase.rpc('get_user_emails', {
+          p_ids: subIds,
+        });
+        const emails = (emailRows ?? []).map((row) => row.email);
 
         const { subject, html, text } = renderPartyReminderEmail({
           partyId: p.id,
