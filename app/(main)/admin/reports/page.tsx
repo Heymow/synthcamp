@@ -27,23 +27,19 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
   if (!profile.is_admin) notFound();
 
   const { status } = await searchParams;
-  const filter: ReportStatus | 'all' =
-    status === 'reviewed' || status === 'dismissed' || status === 'open'
-      ? status
-      : 'open';
+  const filter: ReportStatus =
+    status === 'reviewed' || status === 'dismissed' ? status : 'open';
 
   const supabase = await getSupabaseServerClient();
-  let query = supabase
+  const { data: reportsRaw } = await supabase
     .from('reports')
     .select(
       `id, target_type, target_id, reason, status, created_at,
        reporter:profiles!reports_reporter_id_fkey(display_name)`,
     )
+    .eq('status', filter)
     .order('created_at', { ascending: false })
     .limit(50);
-  if (filter !== 'all') query = query.eq('status', filter);
-
-  const { data: reportsRaw } = await query;
   const reports = (reportsRaw ?? []) as unknown as ReportQueryRow[];
 
   const filters: Array<{ key: 'open' | 'reviewed' | 'dismissed'; label: string }> = [
