@@ -1,14 +1,53 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { PlayReleaseButton } from '@/components/player/play-release-button';
+import { PlayTrackRow } from '@/components/player/play-track-row';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 interface ReleasePageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: ReleasePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await getSupabaseServerClient();
+  const { data } = await supabase
+    .from('releases')
+    .select('title, description, cover_url, artist:profiles!releases_artist_id_fkey(display_name)')
+    .eq('slug', slug)
+    .in('status', ['published', 'unlisted', 'scheduled'])
+    .single();
+  if (!data) return { title: 'Release not found — SynthCamp' };
+  const row = data as unknown as {
+    title: string;
+    description: string | null;
+    cover_url: string;
+    artist: { display_name: string } | null;
+  };
+  const artistName = row.artist?.display_name ?? 'SynthCamp';
+  const title = `${row.title} — ${artistName}`;
+  const description = row.description ?? `Listen to ${row.title} by ${artistName} on SynthCamp.`;
+  return {
+    title,
+    description,
+    openGraph: {
+      type: 'music.album',
+      title,
+      description,
+      images: [{ url: row.cover_url, width: 800, height: 800, alt: row.title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [row.cover_url],
+    },
+  };
 }
 
 export default async function ReleasePage({ params }: ReleasePageProps) {
@@ -115,23 +154,19 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
           Tracklist
         </h2>
         <GlassPanel className="divide-y divide-white/5 p-0">
-          {tracks.map((t) => {
-            const mm = Math.floor(t.duration_seconds / 60);
-            const ss = (t.duration_seconds % 60).toString().padStart(2, '0');
-            return (
-              <div key={t.id} className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <span className="font-mono text-sm text-white/50">
-                    {t.track_number.toString().padStart(2, '0')}
-                  </span>
-                  <span className="text-sm text-white">{t.title}</span>
-                </div>
-                <span className="font-mono text-xs text-white/60">
-                  {mm}:{ss}
-                </span>
-              </div>
-            );
-          })}
+          {tracks.map((t) => (
+            <PlayTrackRow
+              key={t.id}
+              track={{
+                id: t.id,
+                title: t.title,
+                artist: r.artist.display_name,
+                coverUrl: r.cover_url,
+                durationSeconds: t.duration_seconds,
+                trackNumber: t.track_number,
+              }}
+            />
+          ))}
         </GlassPanel>
       </section>
     </main>

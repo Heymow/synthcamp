@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,6 +11,33 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 interface ArtistPageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: ArtistPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await getSupabaseServerClient();
+  const { data } = await supabase
+    .from('profiles')
+    .select('display_name, bio, avatar_url, is_artist')
+    .eq('slug', slug)
+    .single();
+  if (!data || !data.is_artist) return { title: 'Artist not found — SynthCamp' };
+  const title = `${data.display_name} — SynthCamp`;
+  const description = data.bio ?? `Discover ${data.display_name}'s releases on SynthCamp.`;
+  const images = data.avatar_url
+    ? [{ url: data.avatar_url, width: 400, height: 400, alt: data.display_name }]
+    : undefined;
+  return {
+    title,
+    description,
+    openGraph: { type: 'profile', title, description, images },
+    twitter: {
+      card: images ? 'summary' : 'summary',
+      title,
+      description,
+      images: data.avatar_url ? [data.avatar_url] : undefined,
+    },
+  };
 }
 
 export default async function ArtistProfilePage({ params }: ArtistPageProps) {
