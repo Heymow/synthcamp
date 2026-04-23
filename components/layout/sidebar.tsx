@@ -92,7 +92,7 @@ export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
               />
               <SidebarItem
                 icon={<DollarSign size={18} strokeWidth={2.5} />}
-                label="Earnings"
+                label="Dashboard"
                 active={pathname === '/artist/sales'}
                 onClick={() => go('/artist/sales')}
               />
