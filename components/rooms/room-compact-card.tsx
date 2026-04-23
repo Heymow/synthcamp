@@ -80,7 +80,7 @@ export function RoomCompactCard({
         </div>
       </div>
 
-      <div className="relative z-10 min-w-0 flex-1 space-y-1 pr-24 md:pr-28">
+      <div className="relative z-10 min-w-0 flex-1 space-y-1 pr-28 md:pr-32">
         <div className="flex items-baseline gap-3">
           <h4 className="line-clamp-2 min-w-0 text-base leading-tight font-bold text-white italic md:text-lg">
             {release?.title ?? roomName}
@@ -112,7 +112,7 @@ export function RoomCompactCard({
                     className="rounded-full border border-black/40"
                   />
                 ))}
-                <div className="flex h-[18px] min-w-[22px] items-center justify-center rounded-full border border-white/10 bg-white/20 px-1 text-[7px] font-bold backdrop-blur-md">
+                <div className="flex h-[18px] min-w-[22px] items-center justify-center rounded-full border border-indigo-400/40 bg-indigo-500/30 px-1 text-[7px] font-bold text-white backdrop-blur-md">
                   +{listeners.count}
                 </div>
               </div>
@@ -128,7 +128,7 @@ export function RoomCompactCard({
       </div>
 
       {party && (
-        <div className="absolute right-4 top-1/2 z-10 -translate-y-1/2 md:right-5">
+        <div className="absolute right-4 bottom-4 z-10 md:right-5 md:bottom-5">
           {party.status === 'live' ? (
             <Button variant="ghost" size="sm" className="shrink-0">
               Enter
