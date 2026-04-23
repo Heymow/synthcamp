@@ -55,9 +55,11 @@ export async function POST(request: NextRequest) {
   // Fire-and-forget in-app notification to every admin; swallow failures
   // so the reporter still gets a 201 on their submission.
   if (inserted?.id) {
-    await supabase
-      .rpc('notify_admins_of_report', { p_report_id: inserted.id })
-      .catch(() => undefined);
+    try {
+      await supabase.rpc('notify_admins_of_report', { p_report_id: inserted.id });
+    } catch {
+      // ignore notif fanout errors — the report itself persisted
+    }
   }
 
   return NextResponse.json({ ok: true }, { status: 201 });
