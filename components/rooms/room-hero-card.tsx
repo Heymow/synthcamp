@@ -132,7 +132,7 @@ export function RoomHeroCard({
                       className="rounded-full border border-black/40"
                     />
                   ))}
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/20 text-[7px] font-bold backdrop-blur-md">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full border border-indigo-400/40 bg-indigo-500/30 text-[7px] font-bold text-white backdrop-blur-md">
                     +1.2k
                   </div>
                 </div>
