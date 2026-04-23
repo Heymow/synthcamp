@@ -17,6 +17,7 @@ interface ReportRowProps {
   status: ReportStatus;
   createdAt: string;
   reporterName: string;
+  reporterHref?: string;
   /** Total reports from this reporter that have been dismissed. */
   reporterDismissed: number;
 }
@@ -31,6 +32,7 @@ export function ReportRow({
   status,
   createdAt,
   reporterName,
+  reporterHref,
   reporterDismissed,
 }: ReportRowProps) {
   const router = useRouter();
@@ -104,7 +106,18 @@ export function ReportRow({
       </div>
       <p className="flex flex-wrap items-center gap-2 text-[10px] text-white/50">
         <span>
-          Reported by <span className="text-white/80">{reporterName}</span>
+          Reported by{' '}
+          {reporterHref ? (
+            <Link
+              href={reporterHref}
+              target="_blank"
+              className="text-indigo-300 hover:text-indigo-200"
+            >
+              {reporterName}
+            </Link>
+          ) : (
+            <span className="text-white/80">{reporterName}</span>
+          )}
         </span>
         {reporterDismissed > 0 && (
           <span
@@ -112,9 +125,7 @@ export function ReportRow({
               'rounded-full px-2 py-0.5 font-bold uppercase tracking-widest ' +
               (reporterDismissed >= 3
                 ? 'bg-red-500/20 text-red-300'
-                : reporterDismissed >= 1
-                  ? 'bg-amber-500/20 text-amber-300'
-                  : 'bg-white/10 text-white/60')
+                : 'bg-amber-500/20 text-amber-300')
             }
             title={`${reporterDismissed} prior report${reporterDismissed === 1 ? '' : 's'} dismissed`}
           >

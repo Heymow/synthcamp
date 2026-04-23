@@ -9,6 +9,9 @@ import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { enrichReportTargets } from '@/lib/admin/enrich-reports';
 import type { ReportStatus, ReportTargetType } from '@/lib/database.types';
 
+// Moderation queue must always reflect current state.
+export const dynamic = 'force-dynamic';
+
 interface ReportQueryRow {
   id: string;
   target_type: ReportTargetType;
@@ -17,7 +20,7 @@ interface ReportQueryRow {
   status: ReportStatus;
   created_at: string;
   reporter_id: string;
-  reporter: { display_name: string } | null;
+  reporter: { display_name: string; slug: string | null } | null;
 }
 
 interface AdminReportsPageProps {
@@ -38,7 +41,7 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
     .from('reports')
     .select(
       `id, target_type, target_id, reason, status, created_at, reporter_id,
-       reporter:profiles!reports_reporter_id_fkey(display_name)`,
+       reporter:profiles!reports_reporter_id_fkey(display_name, slug)`,
     )
     .eq('status', filter)
     .order('created_at', { ascending: false })
@@ -115,6 +118,7 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
                 status={r.status}
                 createdAt={r.created_at}
                 reporterName={r.reporter?.display_name ?? 'Unknown'}
+                reporterHref={r.reporter?.slug ? `/artist/${r.reporter.slug}` : undefined}
                 reporterDismissed={dismissCount.get(r.reporter_id) ?? 0}
               />
             );
