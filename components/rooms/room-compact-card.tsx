@@ -21,11 +21,18 @@ export interface RoomCompactCardProps {
   party: RoomCompactCardParty | null;
 }
 
+// Placeholder listener data — phase 5 replaces with real counts + regions.
+const PLACEHOLDER_LISTENERS = {
+  live: { count: '840', label: 'listeners', region: 'Worldwide' },
+  scheduled: { count: '42', label: 'waiting', region: 'Worldwide' },
+};
+
 export function RoomCompactCard({ roomName, party }: RoomCompactCardProps) {
   const release = party?.release ?? null;
   const artistName = release?.artist?.display_name ?? 'Unknown';
   const baseTime = party ? new Date(party.scheduled_at).getTime() : 0;
   const isCountdown = party?.status === 'scheduled';
+  const listeners = party ? PLACEHOLDER_LISTENERS[party.status] : null;
 
   const body = (
     <article
@@ -42,8 +49,8 @@ export function RoomCompactCard({ roomName, party }: RoomCompactCardProps) {
       </div>
 
       <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex items-center justify-between gap-2">
-          <h4 className="min-w-0 truncate text-base leading-none font-bold text-white italic md:text-lg">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="line-clamp-2 min-w-0 text-base leading-tight font-bold text-white italic md:text-lg">
             {release?.title ?? roomName}
           </h4>
           {party && (
@@ -51,24 +58,26 @@ export function RoomCompactCard({ roomName, party }: RoomCompactCardProps) {
           )}
         </div>
 
-        {release ? (
-          <p className="truncate text-[10px] font-bold tracking-widest text-indigo-400 uppercase">
-            by {artistName}
-          </p>
-        ) : (
-          <p className="truncate text-[10px] font-bold tracking-widest text-white/40 uppercase">
-            {roomName}
-          </p>
-        )}
+        <p className="truncate text-[10px] font-bold tracking-widest uppercase">
+          {release ? (
+            <span className="text-indigo-400">by {artistName}</span>
+          ) : (
+            <span className="text-white/40">{roomName}</span>
+          )}
+        </p>
 
         <div className="flex items-center justify-between gap-2 pt-1">
-          <p className="truncate text-[9px] italic text-white/60">
-            {party?.status === 'live'
-              ? 'On air now'
-              : party
-                ? 'Scheduled'
-                : 'No party scheduled'}
-          </p>
+          {listeners ? (
+            <div className="flex min-w-0 items-center gap-2 text-[9px] font-bold tracking-[0.1em] text-white/70 uppercase">
+              <span className="whitespace-nowrap text-white">
+                {listeners.count} {listeners.label}
+              </span>
+              <span className="h-0.5 w-0.5 shrink-0 rounded-full bg-white/30" />
+              <span className="truncate italic">{listeners.region}</span>
+            </div>
+          ) : (
+            <p className="truncate text-[9px] italic text-white/50">No party scheduled</p>
+          )}
           {party && (
             <Button variant="ghost" size="sm" className="shrink-0">
               {party.status === 'live' ? 'Enter' : 'Wait'}
