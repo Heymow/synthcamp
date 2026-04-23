@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { compressImage } from '@/lib/image-compress';
 import type { WizardState } from './types';
 
 interface StepMetadataProps {
@@ -143,21 +144,31 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
     setState((prev) => ({ ...prev, genres: prev.genres.filter((x) => x !== g) }));
   };
 
-  // Upload cover before release exists: create a temp release? No — simpler:
-  // require the user to fill title first, auto-create the draft on upload.
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const input = e.target;
+    const picked = input.files?.[0];
+    // Reset the input value so re-selecting the same file still triggers onChange
+    input.value = '';
+    if (!picked) return;
+
+    setError(null);
 
     if (!state.title.trim()) {
       setError('Enter a title before uploading cover');
       return;
     }
 
+    // Compress client-side so oversized images don't hit the bucket's 10 MB cap
+    let file = picked;
+    try {
+      file = await compressImage(picked);
+    } catch {
+      // Fall back to raw file; Storage will reject if it's still too large.
+    }
+
     // Ensure a release exists first
     let releaseId = state.releaseId;
     if (!releaseId) {
-      // Create a placeholder draft so we can attach the cover
       const res = await fetch('/api/releases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
