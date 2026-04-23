@@ -198,10 +198,10 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
           </p>
 
           {viewerIsAdmin && !isOwner && r.status !== 'archived' && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-300">
-                Admin moderation
-              </p>
+            <div className="flex items-center gap-2 pt-1">
+              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-amber-300">
+                Admin
+              </span>
               <ArchiveReleaseButton releaseId={r.id} releaseTitle={r.title} />
             </div>
           )}
