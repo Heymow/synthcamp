@@ -79,9 +79,13 @@ export function SignInGate({
           <input
             type="email"
             required
+            autoFocus
+            autoComplete="email"
+            inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your@email.com"
+            aria-label="Email address"
             className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
             disabled={status === 'sending' || status === 'sent'}
           />
