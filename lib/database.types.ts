@@ -517,6 +517,10 @@ export interface Database {
         Args: { p_release_id: string };
         Returns: undefined;
       };
+      popular_genres: {
+        Args: { p_limit?: number };
+        Returns: { genre: string; c: number }[];
+      };
     };
     Enums: {
       credit_category: CreditCategory;
