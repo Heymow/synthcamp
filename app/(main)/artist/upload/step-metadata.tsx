@@ -259,16 +259,19 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
           </div>
         </div>
 
-        <label className="block space-y-1">
+        <label className="flex flex-col gap-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            Language (ISO 639-1, e.g. fr, en)
+            Language (ISO 639-1, e.g. fr, en) — optional
           </span>
           <input
             type="text"
             value={state.language}
-            onChange={(e) => setState((prev) => ({ ...prev, language: e.target.value }))}
+            onChange={(e) =>
+              setState((prev) => ({ ...prev, language: e.target.value.toLowerCase() }))
+            }
             maxLength={2}
             pattern="[a-z]{2}"
+            placeholder="en"
             className="w-28 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
           />
         </label>

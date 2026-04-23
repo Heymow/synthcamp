@@ -47,7 +47,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   title: '',
   description: '',
   coverUrl: null,
-  language: 'fr',
+  language: '',
   genres: [],
   tracks: [],
   credits: { category: 'acoustic', tags: [], narrative: '', perTrack: false },
