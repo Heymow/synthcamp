@@ -45,10 +45,11 @@ export function RoomCompactCard({
   const body = (
     <article
       className={
-        'glass-panel group relative flex items-center gap-3 overflow-hidden rounded-[1.5rem] border-white/5 p-3 transition-colors md:gap-5 md:rounded-[2rem] md:p-4 ' +
+        'glass-panel group relative flex min-h-[95px] items-center gap-3 overflow-hidden rounded-[1.5rem] border-white/5 p-4 transition-colors md:gap-5 md:rounded-[2rem] md:p-5 ' +
         (party ? 'cursor-pointer hover:bg-white/[0.05]' : 'opacity-70')
       }
     >
+      {party && <StatusTimer baseTime={baseTime} isCountdown={isCountdown} small />}
       <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 md:h-14 md:w-14">
         {release && (
           <Image src={release.cover_url} alt="" fill className="object-cover opacity-20" />
@@ -56,23 +57,23 @@ export function RoomCompactCard({
         <LiveVisualizer />
       </div>
 
-      <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex items-start justify-between gap-2">
+      <div className="relative z-10 min-w-0 flex-1 space-y-1 pr-16">
+        <div className="flex items-baseline gap-3">
           <h4 className="line-clamp-2 min-w-0 text-base leading-tight font-bold text-white italic md:text-lg">
             {release?.title ?? roomName}
           </h4>
-          {party && (
-            <StatusTimer baseTime={baseTime} isCountdown={isCountdown} small inline />
+          {release && (
+            <p className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-indigo-400">
+              by {artistName}
+            </p>
           )}
         </div>
 
-        <p className="truncate text-[10px] font-bold tracking-widest uppercase">
-          {release ? (
-            <span className="text-indigo-400">by {artistName}</span>
-          ) : (
-            <span className="text-white/40">{roomName}</span>
-          )}
-        </p>
+        {!release && (
+          <p className="truncate text-[10px] font-bold uppercase tracking-widest text-white/40">
+            {roomName}
+          </p>
+        )}
 
         <div className="flex items-center justify-between gap-2 pt-1">
           {listeners ? (
