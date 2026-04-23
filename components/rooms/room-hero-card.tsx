@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Hourglass } from 'lucide-react';
 import { LiveVisualizer } from '@/components/visualizers/live-visualizer';
 import { StatusTimer } from '@/components/visualizers/status-timer';
 import { Button } from '@/components/ui/button';
@@ -87,7 +88,11 @@ export function RoomHeroCard({
                 />
               )}
               <div className="relative z-10">
-                <LiveVisualizer />
+                {party?.status === 'live' ? (
+                  <LiveVisualizer />
+                ) : (
+                  <Hourglass size={22} strokeWidth={2} className="text-white/80" />
+                )}
               </div>
             </div>
             {party?.status === 'live' && (
