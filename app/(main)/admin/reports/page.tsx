@@ -16,6 +16,7 @@ interface ReportQueryRow {
   reason: string;
   status: ReportStatus;
   created_at: string;
+  reporter_id: string;
   reporter: { display_name: string } | null;
 }
 
@@ -36,7 +37,7 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
   const { data: reportsRaw } = await supabase
     .from('reports')
     .select(
-      `id, target_type, target_id, reason, status, created_at,
+      `id, target_type, target_id, reason, status, created_at, reporter_id,
        reporter:profiles!reports_reporter_id_fkey(display_name)`,
     )
     .eq('status', filter)
@@ -44,6 +45,21 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
     .limit(50);
   const reports = (reportsRaw ?? []) as unknown as ReportQueryRow[];
   const targets = await enrichReportTargets(supabase, reports);
+
+  // Count prior dismissed reports per reporter in this batch — an abuse
+  // signal the admin can factor into their decision.
+  const reporterIds = [...new Set(reports.map((r) => r.reporter_id))];
+  const dismissCount = new Map<string, number>();
+  if (reporterIds.length > 0) {
+    const { data: dismissed } = await supabase
+      .from('reports')
+      .select('reporter_id')
+      .eq('status', 'dismissed')
+      .in('reporter_id', reporterIds);
+    for (const row of dismissed ?? []) {
+      dismissCount.set(row.reporter_id, (dismissCount.get(row.reporter_id) ?? 0) + 1);
+    }
+  }
 
   const filters: Array<{ key: ReportStatus; label: string }> = [
     { key: 'open', label: 'Open' },
@@ -57,9 +73,7 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
         <h2 className="text-3xl font-black italic uppercase leading-none tracking-tighter text-white">
           Admin
         </h2>
-        <p className="mt-2 text-xs italic text-white/60">
-          Moderation queue.
-        </p>
+        <p className="mt-2 text-xs italic text-white/60">Moderation queue.</p>
       </div>
 
       <AdminNav />
@@ -101,6 +115,7 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
                 status={r.status}
                 createdAt={r.created_at}
                 reporterName={r.reporter?.display_name ?? 'Unknown'}
+                reporterDismissed={dismissCount.get(r.reporter_id) ?? 0}
               />
             );
           })}
