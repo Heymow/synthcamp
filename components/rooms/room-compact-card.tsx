@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Hourglass } from 'lucide-react';
 import { LiveVisualizer } from '@/components/visualizers/live-visualizer';
 import { StatusTimer } from '@/components/visualizers/status-timer';
 import { Button } from '@/components/ui/button';
@@ -70,7 +71,13 @@ export function RoomCompactCard({
         {release && (
           <Image src={release.cover_url} alt="" fill className="object-cover opacity-20" />
         )}
-        <LiveVisualizer />
+        <div className="relative z-10">
+          {party?.status === 'live' ? (
+            <LiveVisualizer />
+          ) : (
+            <Hourglass size={16} strokeWidth={2} className="text-white/70" />
+          )}
+        </div>
       </div>
 
       <div className="relative z-10 min-w-0 flex-1 space-y-1 pr-24 md:pr-28">
