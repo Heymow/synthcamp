@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: 'placehold.co' },
       { protocol: 'https', hostname: 'api.synthcamp.net' },
+      { protocol: 'https', hostname: 'www.synthcamp.net' },
     ],
   },
 };
