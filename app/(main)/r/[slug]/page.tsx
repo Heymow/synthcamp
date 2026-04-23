@@ -62,9 +62,15 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
 
   // RLS lets the artist see their own draft; relax the status filter so
   // the owner can preview scheduled/draft releases on /r/[slug].
-  const {
-    data: { user: viewer },
-  } = await supabase.auth.getUser();
+  // auth.getUser can throw on corrupt/expired cookies — swallow so the
+  // page renders for anonymous viewers regardless.
+  let viewer: { id: string } | null = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    viewer = data.user;
+  } catch {
+    viewer = null;
+  }
 
   const statuses: ReleaseStatus[] = viewer
     ? ['published', 'unlisted', 'scheduled', 'draft']
