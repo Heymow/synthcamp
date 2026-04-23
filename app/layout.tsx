@@ -24,7 +24,7 @@ export const viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={outfit.variable}>
+    <html lang="en" className={outfit.variable}>
       <body>
         <Background3D />
         <div className="ui-overlay pb-32">

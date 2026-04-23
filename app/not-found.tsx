@@ -9,12 +9,12 @@ export default function NotFound() {
       <GlassPanel className="flex flex-col items-center space-y-6 p-12 text-center">
         <LogoS size={48} />
         <h2 className="text-3xl leading-none font-black text-white uppercase italic">
-          Signal perdu
+          Signal lost
         </h2>
-        <p className="text-sm text-white/70 italic">Cette fréquence n&apos;existe pas.</p>
+        <p className="text-sm text-white/70 italic">This frequency doesn&apos;t exist.</p>
         <Link href="/explore/home">
           <Button variant="primary" size="md">
-            Retour à l&apos;Explore
+            Back to Explore
           </Button>
         </Link>
       </GlassPanel>

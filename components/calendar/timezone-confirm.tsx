@@ -27,13 +27,13 @@ export function TimezoneConfirm({ scheduledAt, onConfirm, onCancel }: TimezoneCo
       className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
     >
       <GlassPanel className="w-full max-w-md space-y-4 p-6">
-        <h3 className="text-lg font-bold italic text-white">Confirmer le créneau</h3>
+        <h3 className="text-lg font-bold italic text-white">Confirm slot</h3>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-            Ton fuseau ({localTz})
+            Your timezone ({localTz})
           </p>
           <p className="font-mono text-lg text-indigo-400">
-            {scheduledAt.toLocaleString('fr-FR', {
+            {scheduledAt.toLocaleString('en-US', {
               timeZone: localTz,
               dateStyle: 'full',
               timeStyle: 'short',
@@ -42,13 +42,13 @@ export function TimezoneConfirm({ scheduledAt, onConfirm, onCancel }: TimezoneCo
         </div>
         <div className="space-y-1 border-t border-white/5 pt-3">
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-            Équivalents mondiaux
+            World equivalents
           </p>
           {WORLD_ZONES.map((z) => (
             <div key={z.tz} className="flex justify-between text-xs">
               <span className="text-white/70">{z.label}</span>
               <span className="font-mono text-white">
-                {scheduledAt.toLocaleString('fr-FR', {
+                {scheduledAt.toLocaleString('en-US', {
                   timeZone: z.tz,
                   dateStyle: 'short',
                   timeStyle: 'short',
@@ -59,10 +59,10 @@ export function TimezoneConfirm({ scheduledAt, onConfirm, onCancel }: TimezoneCo
         </div>
         <div className="flex gap-3">
           <Button variant="ghost" size="md" onClick={onCancel} className="flex-1">
-            Annuler
+            Cancel
           </Button>
           <Button variant="primary" size="md" onClick={onConfirm} className="flex-1">
-            Confirmer
+            Confirm
           </Button>
         </div>
       </GlassPanel>

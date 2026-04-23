@@ -186,7 +186,7 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block space-y-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            Titre *
+            Title *
           </span>
           <input
             type="text"
@@ -208,14 +208,14 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
             onChange={(e) => setState((prev) => ({ ...prev, description: e.target.value }))}
             maxLength={2000}
             rows={3}
-            placeholder="Ton release en quelques mots…"
+            placeholder="Your release in a few words..."
             className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
           />
         </label>
 
         <div className="space-y-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            Pochette *
+            Cover *
           </span>
           {state.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -232,12 +232,12 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
             disabled={uploading}
             className="block w-full text-xs text-white/80 file:mr-3 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:text-white hover:file:bg-white/20"
           />
-          {uploading && <p className="text-xs italic text-white/60">Upload en cours…</p>}
+          {uploading && <p className="text-xs italic text-white/60">Uploading...</p>}
         </div>
 
         <label className="block space-y-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            Langue (ISO 639-1, ex: fr, en)
+            Language (ISO 639-1, e.g. fr, en)
           </span>
           <input
             type="text"
@@ -285,7 +285,7 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
               className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
             />
             <Button type="button" variant="ghost" size="sm" onClick={addGenre}>
-              + Ajouter
+              + Add
             </Button>
           </div>
         </div>
@@ -297,7 +297,7 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
           disabled={submitting || uploading || !state.title || !state.coverUrl}
           className="w-full"
         >
-          {submitting ? 'Enregistrement...' : 'Suivant →'}
+          {submitting ? 'Saving...' : 'Next →'}
         </Button>
       </form>
       {error && <p className="text-xs italic text-red-400">{error}</p>}

@@ -35,10 +35,10 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     });
     setSaving(false);
     if (!res.ok) {
-      const body = (await res.json().catch(() => ({ error: 'Erreur inconnue' }))) as {
+      const body = (await res.json().catch(() => ({ error: 'Unknown error' }))) as {
         error?: string;
       };
-      setError(body.error ?? 'Erreur inconnue');
+      setError(body.error ?? 'Unknown error');
     } else {
       setStatus('saved');
       router.refresh();
@@ -47,7 +47,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
   const becomeArtist = async () => {
     if (!slug) {
-      setError('Définis un slug avant de passer artiste');
+      setError('Set a slug before becoming an artist');
       return;
     }
     const res = await fetch('/api/profile/become-artist', { method: 'POST' });
@@ -55,10 +55,10 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       router.refresh();
       router.push('/artist/catalog');
     } else {
-      const body = (await res.json().catch(() => ({ error: 'Erreur inconnue' }))) as {
+      const body = (await res.json().catch(() => ({ error: 'Unknown error' }))) as {
         error?: string;
       };
-      setError(body.error ?? 'Erreur inconnue');
+      setError(body.error ?? 'Unknown error');
     }
   };
 
@@ -67,7 +67,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       <form onSubmit={save} className="space-y-4">
         <label className="block space-y-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            Nom affiché
+            Display name
           </span>
           <input
             type="text"
@@ -81,7 +81,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
         <label className="block space-y-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            Slug URL (ex: neon-shadow)
+            Slug URL (e.g. neon-shadow)
           </span>
           <input
             type="text"
@@ -92,13 +92,13 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
             maxLength={50}
             pattern="^[a-z0-9-]{1,50}$"
-            placeholder="ton-pseudo"
+            placeholder="your-handle"
           />
         </label>
 
         <label className="block space-y-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            Bio (optionnel)
+            Bio (optional)
           </span>
           <textarea
             value={bio}
@@ -106,20 +106,20 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
             maxLength={1000}
             rows={4}
-            placeholder="Quelques mots sur toi..."
+            placeholder="A few words about you..."
           />
         </label>
 
         <Button type="submit" variant="primary" size="md" disabled={saving} className="w-full">
-          {saving ? 'Enregistrement...' : status === 'saved' ? 'Sauvegardé ✓' : 'Sauvegarder'}
+          {saving ? 'Saving...' : status === 'saved' ? 'Saved ✓' : 'Save'}
         </Button>
       </form>
 
       {!initialProfile.is_artist && (
         <div className="space-y-3 border-t border-white/5 pt-5">
-          <p className="text-sm text-white/80">Tu veux publier ta musique ?</p>
+          <p className="text-sm text-white/80">Want to publish your music?</p>
           <Button variant="accent" size="md" onClick={becomeArtist} className="w-full">
-            Devenir artiste
+            Become an artist
           </Button>
         </div>
       )}

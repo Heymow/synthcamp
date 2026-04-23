@@ -153,7 +153,7 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
   return (
     <GlassPanel className="space-y-5 p-6">
       <p className="text-sm text-white/80">
-        Minimum 3 tracks. EP : 3-5 tracks. Album : 6+ tracks.
+        Minimum 3 tracks. EP: 3-5 tracks. Album: 6+ tracks.
       </p>
 
       <div className="space-y-2">
@@ -189,7 +189,7 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
 
       <label className="block space-y-1">
         <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-          Ajouter un track
+          Add a track
         </span>
         <input
           type="file"
@@ -204,14 +204,14 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
           disabled={uploading !== null}
           className="block w-full text-xs text-white/80 file:mr-3 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:text-white hover:file:bg-white/20"
         />
-        {uploading && <p className="text-xs italic text-white/60">Upload en cours…</p>}
+        {uploading && <p className="text-xs italic text-white/60">Uploading...</p>}
       </label>
 
       {error && <p className="text-xs italic text-red-400">{error}</p>}
 
       <div className="flex gap-3 pt-2">
         <Button variant="ghost" size="md" onClick={onBack} className="flex-1">
-          ← Retour
+          ← Back
         </Button>
         <Button
           variant="primary"
@@ -220,7 +220,7 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
           disabled={!canProceed || uploading !== null}
           className="flex-1"
         >
-          Suivant → ({state.tracks.length}/3 min)
+          Next → ({state.tracks.length}/3 min)
         </Button>
       </div>
     </GlassPanel>

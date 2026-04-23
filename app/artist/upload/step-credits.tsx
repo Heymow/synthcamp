@@ -83,7 +83,7 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
     <GlassPanel className="space-y-5 p-6">
       <div className="space-y-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-          Process créatif
+          Creative process
         </p>
         <div className="grid grid-cols-3 gap-2">
           {CATEGORIES.map((c) => (
@@ -107,7 +107,7 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
 
       <div className="space-y-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-          Tags optionnels
+          Optional tags
         </p>
         <div className="flex flex-wrap gap-2">
           {TAG_OPTIONS.map((tag) => {
@@ -133,7 +133,7 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
 
       <label className="block space-y-1">
         <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-          Ton process en quelques mots (optionnel, 280 chars)
+          Your process in a few words (optional, 280 chars)
         </span>
         <textarea
           value={state.credits.narrative}
@@ -145,7 +145,7 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
           }
           maxLength={280}
           rows={3}
-          placeholder="« Enregistré live avec 2 synthés modulaires, mastering par Suno v4… »"
+          placeholder="&quot;Recorded live with 2 modular synths, mastered with Suno v4...&quot;"
           className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
         />
         <span className="block text-right text-[9px] text-white/40">
@@ -166,8 +166,8 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
           className="accent-indigo-500"
         />
         <span className="text-xs text-white/80">
-          Personnaliser les credits par track (optionnel, Phase 2 MVP : les tracks peuvent avoir
-          leurs propres credit_category + tags post-upload via SQL/API)
+          Customize credits per track (optional; Phase 2 MVP: tracks can have their own
+          credit_category + tags post-upload via SQL/API)
         </span>
       </label>
 
@@ -175,7 +175,7 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
 
       <div className="flex gap-3 pt-2">
         <Button variant="ghost" size="md" onClick={onBack} className="flex-1">
-          ← Retour
+          ← Back
         </Button>
         <Button
           variant="primary"
@@ -184,7 +184,7 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
           disabled={submitting}
           className="flex-1"
         >
-          {submitting ? 'Enregistrement...' : 'Suivant →'}
+          {submitting ? 'Saving...' : 'Next →'}
         </Button>
       </div>
     </GlassPanel>

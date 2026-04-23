@@ -45,17 +45,17 @@ export default function LoginPage() {
             SynthCamp
           </h1>
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">
-            Bienvenue
+            Welcome
           </p>
         </div>
 
         <Button variant="ghost" size="lg" onClick={submitGoogle} className="w-full">
-          Continuer avec Google
+          Continue with Google
         </Button>
 
         <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/50">
           <div className="h-[1px] flex-1 bg-white/10" />
-          <span>ou</span>
+          <span>or</span>
           <div className="h-[1px] flex-1 bg-white/10" />
         </div>
 
@@ -65,7 +65,7 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="ton@email.com"
+            placeholder="your@email.com"
             className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
             disabled={status === 'sending' || status === 'sent'}
           />
@@ -77,16 +77,16 @@ export default function LoginPage() {
             disabled={status === 'sending' || status === 'sent'}
           >
             {status === 'sending'
-              ? 'Envoi...'
+              ? 'Sending...'
               : status === 'sent'
-                ? 'Email envoyé ✓'
-                : 'Recevoir le lien magique'}
+                ? 'Email sent ✓'
+                : 'Send magic link'}
           </Button>
         </form>
 
         {status === 'sent' && (
           <p className="text-center text-xs italic text-white/70">
-            Check ta boîte mail, click sur le lien pour te connecter.
+            Check your inbox and click the link to sign in.
           </p>
         )}
 

@@ -89,7 +89,7 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
               href={`/party/${party.id}`}
               className="block rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3 text-sm font-bold uppercase tracking-widest text-indigo-300 hover:bg-indigo-500/20"
             >
-              Listening Party on {party.room.name} · {new Date(party.scheduled_at).toLocaleString('fr-FR')}
+              Listening Party on {party.room.name} · {new Date(party.scheduled_at).toLocaleString('en-US')}
             </Link>
           )}
           <Button variant="primary" size="md" disabled className="w-full">

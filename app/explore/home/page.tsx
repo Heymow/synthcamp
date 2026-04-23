@@ -157,7 +157,7 @@ export default async function ExploreHomePage() {
                         by {party.release?.artist?.display_name ?? 'Unknown'}
                       </p>
                       <p className="font-mono text-xs text-white/60">
-                        {new Date(party.scheduled_at).toLocaleString('fr-FR')}
+                        {new Date(party.scheduled_at).toLocaleString('en-US')}
                       </p>
                     </>
                   ) : (

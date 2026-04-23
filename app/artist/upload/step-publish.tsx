@@ -58,13 +58,13 @@ export function StepPublish({ state, onBack }: StepPublishProps) {
 
   return (
     <GlassPanel className="space-y-4 p-6">
-      <h3 className="text-lg font-bold italic text-white">Prêt à publier ?</h3>
+      <h3 className="text-lg font-bold italic text-white">Ready to publish?</h3>
 
       <dl className="space-y-2 text-sm">
-        <Row label="Titre" value={state.title} />
+        <Row label="Title" value={state.title} />
         <Row label="Tracks" value={`${state.tracks.length} (${mm}:${ss})`} />
         <Row label="Format" value={getReleaseLabel(state.tracks.length)} />
-        <Row label="Prix min" value={`$${getPrice(state.tracks.length)}`} />
+        <Row label="Min price" value={`$${getPrice(state.tracks.length)}`} />
         <Row
           label="Credits"
           value={`${state.credits.category} ${state.credits.tags.length > 0 ? `(${state.credits.tags.join(', ')})` : ''}`}
@@ -72,21 +72,21 @@ export function StepPublish({ state, onBack }: StepPublishProps) {
         {state.party.enabled && state.party.scheduledAt && (
           <Row
             label="Party"
-            value={new Date(state.party.scheduledAt).toLocaleString('fr-FR', {
+            value={new Date(state.party.scheduledAt).toLocaleString('en-US', {
               dateStyle: 'short',
               timeStyle: 'short',
             })}
           />
         )}
         {!state.party.enabled && state.releaseDate.mode === 'immediate' && (
-          <Row label="Sortie" value="Immédiat" />
+          <Row label="Release" value="Immediate" />
         )}
         {!state.party.enabled &&
           state.releaseDate.mode === 'future' &&
           state.releaseDate.date && (
             <Row
-              label="Sortie"
-              value={new Date(state.releaseDate.date).toLocaleString('fr-FR', {
+              label="Release"
+              value={new Date(state.releaseDate.date).toLocaleString('en-US', {
                 dateStyle: 'short',
                 timeStyle: 'short',
               })}
@@ -98,7 +98,7 @@ export function StepPublish({ state, onBack }: StepPublishProps) {
 
       <div className="flex gap-3 pt-2">
         <Button variant="ghost" size="md" onClick={onBack} className="flex-1">
-          ← Retour
+          ← Back
         </Button>
         <Button
           variant="primary"
@@ -107,7 +107,7 @@ export function StepPublish({ state, onBack }: StepPublishProps) {
           disabled={submitting}
           className="flex-1"
         >
-          {submitting ? 'Publication...' : 'Publier'}
+          {submitting ? 'Publishing...' : 'Publish'}
         </Button>
       </div>
     </GlassPanel>

@@ -74,12 +74,11 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
     <GlassPanel className="space-y-5 p-6">
       <div className="space-y-2 rounded-xl bg-white/[0.03] p-4">
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-          Prix minimum
+          Minimum price
         </p>
         <p className="font-mono text-3xl font-black text-indigo-400">${priceMin}</p>
         <p className="text-xs italic text-white/60">
-          Formule : ceil({state.tracks.length} × 0.60) − 0.01. Les auditeurs peuvent payer plus
-          (tip).
+          Formula: ceil({state.tracks.length} × 0.60) − 0.01. Listeners can pay more (tip).
         </p>
       </div>
 
@@ -90,14 +89,14 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
           onChange={(e) => togglePartyEnabled(e.target.checked)}
           className="accent-indigo-500"
         />
-        <span className="text-sm text-white/90">Planifier une listening party</span>
+        <span className="text-sm text-white/90">Schedule a listening party</span>
       </label>
 
       {state.party.enabled ? (
         <div className="space-y-4">
           <div className="space-y-2">
             <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-              Choisis une room
+              Choose a room
             </p>
             <div className="grid grid-cols-3 gap-2">
               {rooms.map((room) => (
@@ -131,8 +130,8 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
 
           {state.party.scheduledAt && (
             <p className="rounded-xl bg-indigo-500/10 p-3 text-xs text-indigo-300">
-              Party programmée pour{' '}
-              {new Date(state.party.scheduledAt).toLocaleString('fr-FR', {
+              Party scheduled for{' '}
+              {new Date(state.party.scheduledAt).toLocaleString('en-US', {
                 dateStyle: 'full',
                 timeStyle: 'short',
               })}
@@ -141,7 +140,7 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
         </div>
       ) : (
         <div className="space-y-3 rounded-xl bg-white/[0.03] p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Sortie</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Release</p>
           <div className="flex gap-3">
             <label className="flex items-center gap-2 text-sm text-white/80">
               <input
@@ -155,7 +154,7 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
                 }
                 className="accent-indigo-500"
               />
-              Immédiat
+              Immediate
             </label>
             <label className="flex items-center gap-2 text-sm text-white/80">
               <input
@@ -169,7 +168,7 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
                 }
                 className="accent-indigo-500"
               />
-              Date future
+              Future date
             </label>
           </div>
           {state.releaseDate.mode === 'future' && (
@@ -193,7 +192,7 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
 
       <div className="flex gap-3 pt-2">
         <Button variant="ghost" size="md" onClick={onBack} className="flex-1">
-          ← Retour
+          ← Back
         </Button>
         <Button
           variant="primary"
@@ -202,7 +201,7 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
           disabled={!canProceed}
           className="flex-1"
         >
-          Suivant →
+          Next →
         </Button>
       </div>
 

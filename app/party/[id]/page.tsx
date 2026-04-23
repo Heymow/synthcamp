@@ -72,7 +72,7 @@ export default async function PartyPage({ params }: PartyPageProps) {
           {partyShape.status === 'scheduled' ? 'Scheduled for' : 'Status: ' + partyShape.status}
         </p>
         <p className="font-mono text-sm text-white">
-          {new Date(partyShape.scheduled_at).toLocaleString('fr-FR', {
+          {new Date(partyShape.scheduled_at).toLocaleString('en-US', {
             dateStyle: 'full',
             timeStyle: 'short',
           })}

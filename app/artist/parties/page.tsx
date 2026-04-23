@@ -36,11 +36,11 @@ export default async function ArtistPartiesPage() {
     <main className="view-enter mx-auto max-w-md space-y-6 px-6 pb-32">
       <div className="flex items-end justify-between">
         <h2 className="text-3xl leading-none font-black tracking-tighter text-white uppercase italic">
-          Mes parties
+          My Parties
         </h2>
         <Link href="/artist/upload">
           <Button variant="primary" size="sm">
-            + Nouvelle party
+            + New Party
           </Button>
         </Link>
       </div>
@@ -58,7 +58,7 @@ export default async function ArtistPartiesPage() {
                     {p.release.title}
                   </Link>
                 ) : (
-                  <span className="truncate font-bold text-white">Release supprimé</span>
+                  <span className="truncate font-bold text-white">Release deleted</span>
                 )}
                 <span
                   className={
@@ -77,7 +77,7 @@ export default async function ArtistPartiesPage() {
               </div>
               <p className="text-xs text-white/70">
                 {p.room?.name ?? 'Unknown room'} ·{' '}
-                {new Date(p.scheduled_at).toLocaleString('fr-FR', {
+                {new Date(p.scheduled_at).toLocaleString('en-US', {
                   dateStyle: 'short',
                   timeStyle: 'short',
                 })}
@@ -96,9 +96,9 @@ export default async function ArtistPartiesPage() {
       ) : (
         <GlassPanel className="p-6 text-center">
           <p className="text-sm text-white/60 italic">
-            Aucune party programmée.{' '}
+            No parties scheduled.{' '}
             <Link href="/artist/upload" className="text-indigo-400 hover:text-indigo-300">
-              Crée un release avec party
+              Create a release with a party
             </Link>
             .
           </p>

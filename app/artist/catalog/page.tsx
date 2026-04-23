@@ -65,9 +65,9 @@ export default async function ArtistCatalogPage() {
       ) : (
         <GlassPanel className="p-6 text-center">
           <p className="text-sm italic text-white/60">
-            Aucun release encore.{' '}
+            No releases yet.{' '}
             <Link href="/artist/upload" className="text-indigo-400 hover:text-indigo-300">
-              Crée ton premier
+              Create your first
             </Link>
             .
           </p>

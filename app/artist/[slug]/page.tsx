@@ -85,7 +85,7 @@ export default async function ArtistProfilePage({ params }: ArtistPageProps) {
           </div>
         ) : (
           <GlassPanel className="p-6 text-center">
-            <p className="text-sm italic text-white/60">Aucun release publié pour l&apos;instant.</p>
+            <p className="text-sm italic text-white/60">No releases published yet.</p>
           </GlassPanel>
         )}
       </section>

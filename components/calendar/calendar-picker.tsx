@@ -54,10 +54,10 @@ export function CalendarPicker({ roomId, durationSeconds, onPick }: CalendarPick
   }, [roomId, rangeFrom, rangeTo]);
 
   if (loading) {
-    return <p className="text-sm italic text-white/60">Chargement du calendrier…</p>;
+    return <p className="text-sm italic text-white/60">Loading calendar...</p>;
   }
   if (error) {
-    return <p className="text-sm italic text-red-400">Erreur : {error}</p>;
+    return <p className="text-sm italic text-red-400">Error: {error}</p>;
   }
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -86,7 +86,7 @@ export function CalendarPicker({ roomId, durationSeconds, onPick }: CalendarPick
           disabled={!canGoPrev}
           className="text-xs text-white/60 hover:text-white disabled:cursor-not-allowed disabled:text-white/20"
         >
-          ← Semaine précédente
+          ← Previous week
         </button>
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
           {format(days[0]!, 'dd MMM')} → {format(days[6]!, 'dd MMM')}
@@ -96,7 +96,7 @@ export function CalendarPicker({ roomId, durationSeconds, onPick }: CalendarPick
           onClick={() => setWeekStart(addDays(weekStart, 7))}
           className="text-xs text-white/60 hover:text-white"
         >
-          Semaine suivante →
+          Next week →
         </button>
       </div>
 

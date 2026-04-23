@@ -16,18 +16,18 @@ export default function ErrorPage({
       <GlassPanel className="flex flex-col items-center space-y-6 p-12 text-center">
         <LogoS size={48} />
         <h2 className="text-3xl leading-none font-black text-white uppercase italic">
-          Fréquence brouillée
+          Signal scrambled
         </h2>
         <p className="text-sm text-white/70 italic">
-          Une erreur inattendue est survenue pendant la lecture.
+          An unexpected error occurred during playback.
         </p>
         <div className="flex gap-3">
           <Button variant="primary" size="md" onClick={() => reset()}>
-            Réessayer
+            Retry
           </Button>
           <Link href="/explore/home">
             <Button variant="ghost" size="md">
-              Retour
+              Back
             </Button>
           </Link>
         </div>
