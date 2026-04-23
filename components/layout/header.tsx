@@ -6,13 +6,15 @@ import { Menu } from 'lucide-react';
 import { LogoS } from '@/components/branding/logo-s';
 import { ModeToggle, type Mode } from '@/components/ui/mode-toggle';
 import { Sidebar } from '@/components/layout/sidebar';
+import { NotificationsBell } from '@/components/notifications/notifications-bell';
 import type { Profile } from '@/lib/data/profile';
 
 interface HeaderProps {
   profile: Profile | null;
+  unreadCount: number;
 }
 
-export function Header({ profile }: HeaderProps) {
+export function Header({ profile, unreadCount }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -50,7 +52,10 @@ export function Header({ profile }: HeaderProps) {
               </div>
             </div>
           </div>
-          <ModeToggle mode={currentMode} onChange={handleModeChange} />
+          <div className="flex items-center gap-2">
+            {profile && <NotificationsBell initialUnread={unreadCount} />}
+            <ModeToggle mode={currentMode} onChange={handleModeChange} />
+          </div>
         </div>
       </header>
 

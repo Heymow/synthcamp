@@ -73,14 +73,22 @@ export async function POST(
     );
   }
 
+  const nextStatus = futureSchedule ? 'scheduled' : 'published';
   const { error: statusErr } = await supabase
     .from('releases')
     .update({
-      status: futureSchedule ? 'scheduled' : 'published',
+      status: nextStatus,
       release_date: rd.toISOString(),
     })
     .eq('id', id);
   if (statusErr) return NextResponse.json({ error: statusErr.message }, { status: 400 });
+
+  // Fan out notifications immediately when the release goes live now.
+  // Scheduled releases get their fan-out from cron_publish_future_releases
+  // (phase 4 task — cron will call the same RPC).
+  if (nextStatus === 'published') {
+    await supabase.rpc('fanout_release_notification', { p_release_id: id });
+  }
 
   return NextResponse.json({ ok: true });
 }

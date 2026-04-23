@@ -17,6 +17,7 @@ export type PartyStatus = 'scheduled' | 'live' | 'ended' | 'cancelled';
 export type RoomKind = 'global_master' | 'secondary';
 export type ReportTargetType = 'release' | 'profile' | 'party' | 'track';
 export type ReportStatus = 'open' | 'reviewed' | 'dismissed';
+export type NotificationKind = 'release_published' | 'party_scheduled' | 'follow';
 
 // ===== Main Database type =====
 
@@ -434,6 +435,41 @@ export interface Database {
           },
         ];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: NotificationKind;
+          payload: Json;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind: NotificationKind;
+          payload?: Json;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          kind?: NotificationKind;
+          payload?: Json;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+            isOneToOne: false;
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -477,6 +513,10 @@ export interface Database {
         Args: { p_track_id: string };
         Returns: undefined;
       };
+      fanout_release_notification: {
+        Args: { p_release_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       credit_category: CreditCategory;
@@ -507,3 +547,4 @@ export type PartyModerator = Tables<'party_moderators'>;
 export type Purchase = Tables<'purchases'>;
 export type Follow = Tables<'follows'>;
 export type Report = Tables<'reports'>;
+export type Notification = Tables<'notifications'>;
