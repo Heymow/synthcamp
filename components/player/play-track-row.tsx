@@ -3,9 +3,10 @@
 import { Pause, Play } from 'lucide-react';
 import { usePlayer, type PlayerTrack } from '@/components/player/mini-player-provider';
 import { cn } from '@/lib/cn';
+import { formatCount } from '@/lib/format';
 
 interface PlayTrackRowProps {
-  track: PlayerTrack & { trackNumber: number };
+  track: PlayerTrack & { trackNumber: number; playsCount?: number };
 }
 
 export function PlayTrackRow({ track }: PlayTrackRowProps) {
@@ -67,9 +68,16 @@ export function PlayTrackRow({ track }: PlayTrackRowProps) {
           {track.title}
         </span>
       </div>
-      <span className="font-mono text-xs text-white/60">
-        {mm}:{ss}
-      </span>
+      <div className="flex shrink-0 items-center gap-3 text-white/60">
+        {typeof track.playsCount === 'number' && track.playsCount > 0 && (
+          <span className="hidden font-mono text-[10px] sm:inline">
+            {formatCount(track.playsCount)} plays
+          </span>
+        )}
+        <span className="font-mono text-xs">
+          {mm}:{ss}
+        </span>
+      </div>
     </button>
   );
 }

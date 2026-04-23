@@ -25,11 +25,14 @@ interface PlayerContextType {
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
 
+const PLAY_THRESHOLD_SECONDS = 10;
+
 export function MiniPlayerProvider({ children }: { children: React.ReactNode }) {
   const [current, setCurrent] = useState<PlayerTrack | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionSeconds, setPositionSeconds] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const countedPlayRef = useRef<string | null>(null);
 
   // Sync <audio> element with track + play state. Falls back to a 1-second
   // fake interval when the track has no previewUrl (demo catalogue without
@@ -73,6 +76,16 @@ export function MiniPlayerProvider({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
+  // Count a play once the listener has crossed the threshold for the current
+  // track. Once per track id; resets when `current` changes.
+  useEffect(() => {
+    if (!current) return;
+    if (countedPlayRef.current === current.id) return;
+    if (positionSeconds < PLAY_THRESHOLD_SECONDS) return;
+    countedPlayRef.current = current.id;
+    void fetch(`/api/tracks/${current.id}/play`, { method: 'POST' }).catch(() => {});
+  }, [current, positionSeconds]);
+
   useEffect(() => {
     if (!isPlaying || !current || hasAudio) return;
     const id = setInterval(() => {
@@ -91,12 +104,14 @@ export function MiniPlayerProvider({ children }: { children: React.ReactNode }) 
     setCurrent(track);
     setPositionSeconds(0);
     setIsPlaying(true);
+    countedPlayRef.current = null;
   }, []);
 
   const cue = useCallback((track: PlayerTrack) => {
     setCurrent(track);
     setPositionSeconds(0);
     setIsPlaying(false);
+    countedPlayRef.current = null;
   }, []);
 
   const pause = useCallback(() => setIsPlaying(false), []);

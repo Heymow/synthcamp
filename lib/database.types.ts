@@ -177,6 +177,7 @@ export interface Database {
           hls_manifest_key: string | null;
           aes_key_id: string | null;
           preview_url: string | null;
+          plays_count: number;
           credit_category: CreditCategory | null;
           credit_tags: string[] | null;
           created_at: string;
@@ -191,6 +192,7 @@ export interface Database {
           hls_manifest_key?: string | null;
           aes_key_id?: string | null;
           preview_url?: string | null;
+          plays_count?: number;
           credit_category?: CreditCategory | null;
           credit_tags?: string[] | null;
           created_at?: string;
@@ -205,6 +207,7 @@ export interface Database {
           hls_manifest_key?: string | null;
           aes_key_id?: string | null;
           preview_url?: string | null;
+          plays_count?: number;
           credit_category?: CreditCategory | null;
           credit_tags?: string[] | null;
           created_at?: string;
@@ -428,6 +431,10 @@ export interface Database {
       };
       cron_publish_future_releases: {
         Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+      increment_track_play: {
+        Args: { p_track_id: string };
         Returns: undefined;
       };
     };

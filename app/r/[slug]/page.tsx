@@ -61,7 +61,7 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
     .select(
       `*,
        artist:profiles!releases_artist_id_fkey(display_name, slug, bio),
-       tracks(id, track_number, title, duration_seconds, preview_url),
+       tracks(id, track_number, title, duration_seconds, preview_url, plays_count),
        listening_parties(
          id, scheduled_at, status,
          room:rooms(name, slug)
@@ -88,6 +88,7 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
       title: string;
       duration_seconds: number;
       preview_url: string | null;
+      plays_count: number;
     }>;
     listening_parties: Array<{
       id: string;
@@ -165,7 +166,11 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
           {playerTracks.map((pt, i) => (
             <PlayTrackRow
               key={pt.id}
-              track={{ ...pt, trackNumber: tracks[i]!.track_number }}
+              track={{
+                ...pt,
+                trackNumber: tracks[i]!.track_number,
+                playsCount: tracks[i]!.plays_count,
+              }}
             />
           ))}
         </GlassPanel>
