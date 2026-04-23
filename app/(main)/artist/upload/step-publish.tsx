@@ -20,6 +20,8 @@ export function StepPublish({ state, onBack }: StepPublishProps) {
   const totalDuration = state.tracks.reduce((sum, t) => sum + t.duration_seconds, 0);
   const mm = Math.floor(totalDuration / 60);
   const ss = (totalDuration % 60).toString().padStart(2, '0');
+  const localTz =
+    typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC';
 
   const submit = async () => {
     if (!state.releaseId) return;
@@ -72,10 +74,11 @@ export function StepPublish({ state, onBack }: StepPublishProps) {
         {state.party.enabled && state.party.scheduledAt && (
           <Row
             label="Party"
-            value={new Date(state.party.scheduledAt).toLocaleString('en-US', {
+            value={`${new Date(state.party.scheduledAt).toLocaleString('en-US', {
+              timeZone: localTz,
               dateStyle: 'short',
               timeStyle: 'short',
-            })}
+            })} · ${localTz}`}
           />
         )}
         {!state.party.enabled && state.releaseDate.mode === 'immediate' && (
@@ -86,10 +89,11 @@ export function StepPublish({ state, onBack }: StepPublishProps) {
           state.releaseDate.date && (
             <Row
               label="Release"
-              value={new Date(state.releaseDate.date).toLocaleString('en-US', {
+              value={`${new Date(state.releaseDate.date).toLocaleString('en-US', {
+                timeZone: localTz,
                 dateStyle: 'short',
                 timeStyle: 'short',
-              })}
+              })} · ${localTz}`}
             />
           )}
       </dl>

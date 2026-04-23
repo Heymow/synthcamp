@@ -52,11 +52,17 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
       const publicUrl = `${supabaseUrl}/storage/v1/object/public/covers/${path}`;
 
       // Patch release with the public URL
-      await fetch(`/api/releases/${releaseId}`, {
+      const patchRes = await fetch(`/api/releases/${releaseId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cover_url: publicUrl }),
       });
+      if (!patchRes.ok) {
+        const body = (await patchRes.json().catch(() => ({
+          error: 'Failed to save cover URL',
+        }))) as { error?: string };
+        throw new Error(body.error ?? 'Failed to save cover URL');
+      }
 
       setState((prev) => ({ ...prev, coverUrl: publicUrl }));
     } catch (err) {

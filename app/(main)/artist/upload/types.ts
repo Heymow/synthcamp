@@ -50,7 +50,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   language: '',
   genres: [],
   tracks: [],
-  credits: { category: 'acoustic', tags: [], narrative: '', perTrack: false },
+  credits: { category: 'ai_crafted', tags: [], narrative: '', perTrack: false },
   party: { enabled: true, roomId: null, scheduledAt: null },
   releaseDate: { mode: 'immediate', date: null },
 };

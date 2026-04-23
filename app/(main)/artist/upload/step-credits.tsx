@@ -92,7 +92,7 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
               type="button"
               onClick={() => setCategory(c.value)}
               className={cn(
-                'flex flex-col items-center gap-1 rounded-xl p-3 text-xs font-bold uppercase tracking-widest transition',
+                'flex cursor-pointer flex-col items-center gap-1 rounded-xl p-3 text-xs font-bold uppercase tracking-widest transition',
                 state.credits.category === c.value
                   ? 'bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/50'
                   : 'bg-white/5 text-white/60 hover:bg-white/10',
@@ -107,7 +107,11 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
 
       <div className="space-y-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-          Optional tags
+          Human craft (optional)
+        </p>
+        <p className="text-xs text-white/60">
+          Tick anything you did yourself, outside AI tooling. Helps listeners see your
+          contribution.
         </p>
         <div className="flex flex-wrap gap-2">
           {TAG_OPTIONS.map((tag) => {
@@ -118,7 +122,7 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
                 type="button"
                 onClick={() => toggleTag(tag)}
                 className={cn(
-                  'rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition',
+                  'cursor-pointer rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition',
                   selected
                     ? 'bg-indigo-500/30 text-indigo-300 ring-1 ring-indigo-500/50'
                     : 'bg-white/5 text-white/60 hover:bg-white/10',
@@ -150,24 +154,6 @@ export function StepCredits({ state, setState, onNext, onBack }: StepCreditsProp
         />
         <span className="block text-right text-[9px] text-white/40">
           {state.credits.narrative.length}/280
-        </span>
-      </label>
-
-      <label className="flex items-center gap-3 rounded-xl bg-white/[0.03] p-3">
-        <input
-          type="checkbox"
-          checked={state.credits.perTrack}
-          onChange={(e) =>
-            setState((prev) => ({
-              ...prev,
-              credits: { ...prev.credits, perTrack: e.target.checked },
-            }))
-          }
-          className="accent-indigo-500"
-        />
-        <span className="text-xs text-white/80">
-          Customize credits per track (optional; Phase 2 MVP: tracks can have their own
-          credit_category + tags post-upload via SQL/API)
         </span>
       </label>
 

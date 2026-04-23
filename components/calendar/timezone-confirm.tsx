@@ -24,9 +24,9 @@ export function TimezoneConfirm({ scheduledAt, onConfirm, onCancel }: TimezoneCo
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
     >
-      <GlassPanel className="w-full max-w-md space-y-4 p-6">
+      <GlassPanel className="w-full max-w-md space-y-4 border border-white/10 bg-[#0b0b12] p-6 shadow-2xl">
         <h3 className="text-lg font-bold italic text-white">Confirm slot</h3>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">
