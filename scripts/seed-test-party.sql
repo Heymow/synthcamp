@@ -16,12 +16,12 @@ BEGIN
   SELECT lp.id, lp.room_id INTO v_party_id, v_room_id
   FROM listening_parties lp
   JOIN profiles p ON p.id = lp.artist_id
-  WHERE p.slug LIKE 'seed-%'
+  WHERE p.slug IN ('neon-shadow', 'luna-ostrakon', 'vector-pulse', 'moss-voltage')
   ORDER BY random()
   LIMIT 1;
 
   IF v_party_id IS NULL THEN
-    RAISE EXCEPTION 'No seed party found at all — run the seed script first';
+    RAISE EXCEPTION 'No dummy-artist party found';
   END IF;
 
   v_scheduled := date_trunc('hour', now())
