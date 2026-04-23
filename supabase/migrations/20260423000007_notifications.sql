@@ -1,9 +1,11 @@
--- SynthCamp — in-app notifications. Email delivery lands in phase 3 along
--- with user-level notification preferences.
+-- SynthCamp — in-app notifications (idempotent).
 
-CREATE TYPE notification_kind AS ENUM ('release_published', 'party_scheduled', 'follow');
+DO $$ BEGIN
+  CREATE TYPE notification_kind AS ENUM ('release_published', 'party_scheduled', 'follow');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   kind notification_kind NOT NULL,
@@ -12,25 +14,24 @@ CREATE TABLE public.notifications (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_notifications_user_created
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created
   ON public.notifications(user_id, created_at DESC);
 
-CREATE INDEX idx_notifications_user_unread
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
   ON public.notifications(user_id, created_at DESC)
   WHERE read_at IS NULL;
 
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS notifications_select_own ON public.notifications;
 CREATE POLICY notifications_select_own ON public.notifications FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS notifications_update_own ON public.notifications;
 CREATE POLICY notifications_update_own ON public.notifications FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Fan out a notification to every follower of the release's artist.
--- SECURITY DEFINER so the publishing artist can insert rows owned by
--- other users (each follower) without needing direct INSERT privilege.
 CREATE OR REPLACE FUNCTION public.fanout_release_notification(p_release_id uuid)
 RETURNS void
 LANGUAGE plpgsql
