@@ -15,6 +15,8 @@ export type CreditVerificationStatus = 'declared' | 'pending_review' | 'verified
 export type ReleaseStatus = 'draft' | 'scheduled' | 'published' | 'unlisted' | 'archived';
 export type PartyStatus = 'scheduled' | 'live' | 'ended' | 'cancelled';
 export type RoomKind = 'global_master' | 'secondary';
+export type ReportTargetType = 'release' | 'profile' | 'party' | 'track';
+export type ReportStatus = 'open' | 'reviewed' | 'dismissed';
 
 // ===== Main Database type =====
 
@@ -394,6 +396,44 @@ export interface Database {
           },
         ];
       };
+      reports: {
+        Row: {
+          id: string;
+          reporter_id: string;
+          target_type: ReportTargetType;
+          target_id: string;
+          reason: string;
+          status: ReportStatus;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reporter_id: string;
+          target_type: ReportTargetType;
+          target_id: string;
+          reason: string;
+          status?: ReportStatus;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          reporter_id?: string;
+          target_type?: ReportTargetType;
+          target_id?: string;
+          reason?: string;
+          status?: ReportStatus;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'reports_reporter_id_fkey';
+            columns: ['reporter_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+            isOneToOne: false;
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -466,3 +506,4 @@ export type ListeningParty = Tables<'listening_parties'>;
 export type PartyModerator = Tables<'party_moderators'>;
 export type Purchase = Tables<'purchases'>;
 export type Follow = Tables<'follows'>;
+export type Report = Tables<'reports'>;

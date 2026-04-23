@@ -9,6 +9,7 @@ import { PlayReleaseButton } from '@/components/player/play-release-button';
 import { PlayTrackRow } from '@/components/player/play-track-row';
 import type { PlayerTrack } from '@/components/player/mini-player-provider';
 import { EmbedButton } from '@/components/catalog/embed-button';
+import { ReportButton } from '@/components/social/report-button';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -157,6 +158,9 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
             Buy (Phase 3)
           </Button>
           <EmbedButton slug={slug} />
+          <div className="pt-2">
+            <ReportButton targetType="release" targetId={r.id} />
+          </div>
         </div>
       </section>
 
