@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { PlayReleaseButton } from '@/components/player/play-release-button';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -92,7 +93,18 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
               Listening Party on {party.room.name} · {new Date(party.scheduled_at).toLocaleString('en-US')}
             </Link>
           )}
-          <Button variant="primary" size="md" disabled className="w-full">
+          {tracks[0] && (
+            <PlayReleaseButton
+              track={{
+                id: tracks[0].id,
+                title: tracks[0].title,
+                artist: r.artist.display_name,
+                coverUrl: r.cover_url,
+                durationSeconds: tracks[0].duration_seconds,
+              }}
+            />
+          )}
+          <Button variant="ghost" size="md" disabled className="w-full">
             Buy (Phase 3)
           </Button>
         </div>

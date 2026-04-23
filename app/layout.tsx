@@ -3,6 +3,7 @@ import { Outfit } from 'next/font/google';
 import { Background3D } from '@/components/three/background-3d';
 import { Header } from '@/components/layout/header';
 import { MiniPlayer } from '@/components/player/mini-player';
+import { MiniPlayerProvider } from '@/components/player/mini-player-provider';
 import { getCurrentProfile } from '@/lib/data/profile';
 import './globals.css';
 
@@ -29,13 +30,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={outfit.variable}>
       <body>
-        <Background3D />
-        <div className="ui-overlay pb-32">
-          <Header profile={profile} />
-          <div className="h-40" aria-hidden="true" />
-          {children}
-        </div>
-        <MiniPlayer />
+        <MiniPlayerProvider>
+          <Background3D />
+          <div className="ui-overlay pb-32">
+            <Header profile={profile} />
+            <div className="h-40" aria-hidden="true" />
+            {children}
+          </div>
+          <MiniPlayer />
+        </MiniPlayerProvider>
       </body>
     </html>
   );
