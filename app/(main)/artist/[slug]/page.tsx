@@ -145,13 +145,10 @@ export default async function ArtistProfilePage({ params }: ArtistPageProps) {
         </div>
       </section>
 
-      {profile.banned_at && viewerIsAdmin && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs text-red-200">
-          <p className="font-bold uppercase tracking-widest">User banned</p>
-          {profile.banned_reason && (
-            <p className="mt-1 italic text-red-100">{profile.banned_reason}</p>
-          )}
-        </div>
+      {profile.banned_at && viewerIsAdmin && profile.banned_reason && (
+        <p className="text-[10px] italic text-red-300/80">
+          Ban reason: {profile.banned_reason}
+        </p>
       )}
 
       <section>

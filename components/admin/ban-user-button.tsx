@@ -2,13 +2,13 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { GlassPanel } from '@/components/ui/glass-panel';
 
 export interface BanUserButtonProps {
   userId: string;
   userName: string;
   initiallyBanned: boolean;
-  /** Optional: the reason already on record (shown while confirming unban). */
+  /** Optional: the reason already on record (shown as a tooltip). */
   initialReason?: string | null;
 }
 
@@ -65,82 +65,73 @@ export function BanUserButton({
 
   if (banned) {
     return (
-      <div className="flex flex-col items-start gap-1">
-        <Button
+      <span className="inline-flex items-center gap-2">
+        <button
           type="button"
-          variant="ghost"
-          size="sm"
           onClick={unbanUser}
           disabled={isPending}
+          title={initialReason ? `Reason: ${initialReason}` : undefined}
+          className="cursor-pointer rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isPending ? 'Unbanning…' : 'Unban user'}
-        </Button>
-        {initialReason && (
-          <span className="text-[10px] italic text-white/50">Reason: {initialReason}</span>
-        )}
+          {isPending ? 'Unbanning…' : 'Unban'}
+        </button>
         {error && <span className="text-[10px] italic text-red-400">{error}</span>}
-      </div>
+      </span>
     );
   }
 
   if (!confirming) {
     return (
-      <Button
+      <button
         type="button"
-        variant="ghost"
-        size="sm"
         onClick={() => setConfirming(true)}
-        className="border border-red-500/30 text-red-300 hover:bg-red-500/20"
+        className="cursor-pointer rounded-full bg-red-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-red-300 transition hover:bg-red-500/30"
       >
-        Ban user
-      </Button>
+        Ban
+      </button>
     );
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-red-500/30 bg-red-500/5 p-3">
+    <GlassPanel className="space-y-2 border border-red-500/30 bg-red-500/5 p-3">
       <p className="text-[10px] font-bold uppercase tracking-widest text-red-300">
         Ban {userName}?
       </p>
       <p className="text-[10px] italic text-white/60">
-        Archives every release, cancels every scheduled party, hides the
-        profile from all non-admin viewers. Reversible, but releases and
-        parties don&apos;t come back on their own.
+        Archives every release, cancels scheduled parties, hides the profile.
+        Reversible — unban restores everything.
       </p>
       <textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         maxLength={500}
         rows={2}
-        placeholder="Reason (visible to other admins)"
+        placeholder="Reason (shown to other admins)"
         className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
       />
-      <div className="flex gap-2">
-        <Button
+      <div className="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
+        <button
           type="button"
-          variant="ghost"
-          size="sm"
           onClick={() => {
             setConfirming(false);
             setReason('');
             setError(null);
           }}
           disabled={isPending}
+          className="cursor-pointer rounded-full bg-white/10 px-3 py-1 text-white/70 transition hover:bg-white/20 disabled:opacity-40"
         >
           Cancel
-        </Button>
-        <Button
+        </button>
+        <button
           type="button"
-          variant="primary"
-          size="sm"
           onClick={banUser}
           disabled={isPending}
-          className="bg-red-500 text-white hover:bg-red-400"
+          className="cursor-pointer rounded-full bg-red-500 px-3 py-1 text-white transition hover:bg-red-400 disabled:opacity-40"
         >
           {isPending ? 'Banning…' : 'Confirm ban'}
-        </Button>
+        </button>
       </div>
       {error && <p className="text-[10px] italic text-red-400">{error}</p>}
-    </div>
+    </GlassPanel>
   );
 }

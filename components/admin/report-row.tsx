@@ -173,7 +173,8 @@ export function ReportRow({
         </button>
       </div>
       {error && <p className="text-[10px] italic text-red-400">{error}</p>}
-      <div className="border-t border-white/5 pt-3">
+      <div className="flex items-center gap-2 pt-1 text-[10px] font-bold uppercase tracking-widest">
+        <span className="text-white/40">Reporter:</span>
         <BanUserButton
           userId={reporterId}
           userName={reporterName}
