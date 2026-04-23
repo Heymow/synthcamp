@@ -179,7 +179,7 @@ export default async function ExploreHomePage() {
             );
           })()}
           <div className="grid grid-cols-1 gap-4">
-            {secondaries.map((room) => {
+            {secondaries.map((room, i) => {
               const p = partiesByRoom.get(room.id) ?? null;
               return (
                 <RoomCompactCard
@@ -188,6 +188,7 @@ export default async function ExploreHomePage() {
                   party={p}
                   viewerIsAuthenticated={viewerIsAuthenticated}
                   initialSubscribed={p ? alertedPartyIds.has(p.id) : false}
+                  paletteIndex={i}
                 />
               );
             })}

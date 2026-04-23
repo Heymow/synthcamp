@@ -22,25 +22,41 @@ export interface RoomCompactCardProps {
   party: RoomCompactCardParty | null;
   viewerIsAuthenticated: boolean;
   initialSubscribed: boolean;
+  /** Decorative variant (0 or 1) to give each secondary a distinct palette. */
+  paletteIndex?: number;
 }
 
-// Placeholder listener data — phase 5 replaces with real counts + regions.
+// Placeholder listener data — phase 5 swaps for real counts / geo.
 const PLACEHOLDER_LISTENERS = {
-  live: { count: '840', label: 'listeners', region: 'Worldwide' },
-  scheduled: { count: '42', label: 'waiting', region: 'Worldwide' },
+  live: { count: '840', label: 'listeners' },
+  scheduled: { count: '42', label: 'waiting' },
 };
+
+const PLACEHOLDER_CITY_SETS = [
+  'France, UK, Germany',
+  'Japan, USA, Canada',
+] as const;
+
+// Decorative avatar seeds — offset per palette so secondaries look different.
+const AVATAR_SEEDS: Array<readonly number[]> = [
+  [21, 22, 23],
+  [31, 32, 33],
+];
 
 export function RoomCompactCard({
   roomName,
   party,
   viewerIsAuthenticated,
   initialSubscribed,
+  paletteIndex = 0,
 }: RoomCompactCardProps) {
   const release = party?.release ?? null;
   const artistName = release?.artist?.display_name ?? 'Unknown';
   const baseTime = party ? new Date(party.scheduled_at).getTime() : 0;
   const isCountdown = party?.status === 'scheduled';
   const listeners = party ? PLACEHOLDER_LISTENERS[party.status] : null;
+  const cities = PLACEHOLDER_CITY_SETS[paletteIndex % PLACEHOLDER_CITY_SETS.length]!;
+  const avatars = AVATAR_SEEDS[paletteIndex % AVATAR_SEEDS.length]!;
 
   const body = (
     <article
@@ -75,19 +91,33 @@ export function RoomCompactCard({
           </p>
         )}
 
-        <div className="pt-1">
-          {listeners ? (
-            <div className="flex min-w-0 items-center gap-2 text-[9px] font-bold tracking-[0.1em] text-white/70 uppercase">
-              <span className="whitespace-nowrap text-white">
-                {listeners.count} {listeners.label}
-              </span>
-              <span className="h-0.5 w-0.5 shrink-0 rounded-full bg-white/30" />
-              <span className="truncate italic">{listeners.region}</span>
+        {listeners ? (
+          <div className="space-y-1 pt-1">
+            <div className="flex items-center gap-2 text-[9px] font-bold tracking-[0.1em] text-white/70 uppercase">
+              <div className="flex -space-x-1.5">
+                {avatars.map((id) => (
+                  <Image
+                    key={id}
+                    src={`https://i.pravatar.cc/80?u=${id}`}
+                    alt=""
+                    width={18}
+                    height={18}
+                    className="rounded-full border border-black/40"
+                  />
+                ))}
+                <div className="flex h-[18px] min-w-[22px] items-center justify-center rounded-full border border-white/10 bg-white/20 px-1 text-[7px] font-bold backdrop-blur-md">
+                  +{listeners.count}
+                </div>
+              </div>
+              <span className="whitespace-nowrap text-white">{listeners.label}</span>
             </div>
-          ) : (
-            <p className="truncate text-[9px] italic text-white/50">No party scheduled</p>
-          )}
-        </div>
+            <span className="block truncate text-[8px] font-bold italic uppercase tracking-[0.1em] text-white/60">
+              {cities}
+            </span>
+          </div>
+        ) : (
+          <p className="truncate pt-1 text-[9px] italic text-white/50">No party scheduled</p>
+        )}
       </div>
 
       {party && (
