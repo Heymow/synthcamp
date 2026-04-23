@@ -94,7 +94,7 @@ export default async function ExploreHomePage() {
   const secondaries = roomList.filter((r) => r.kind !== 'global_master');
 
   return (
-    <main className="view-enter mx-auto max-w-4xl space-y-12 px-6 pb-32">
+    <main className="view-enter mx-auto max-w-4xl space-y-16 px-6 pb-32">
       {hero ? (
         <Link href={`/r/${hero.slug}`}>
           <HeroRelease
