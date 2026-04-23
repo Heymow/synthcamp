@@ -96,7 +96,7 @@ export default async function ExploreHomePage() {
   return (
     <main className="view-enter mx-auto max-w-4xl space-y-24 px-6 pb-32">
       {hero ? (
-        <Link href={`/r/${hero.slug}`}>
+        <Link href={`/r/${hero.slug}`} className="block">
           <HeroRelease
             release={{
               id: hero.id,
