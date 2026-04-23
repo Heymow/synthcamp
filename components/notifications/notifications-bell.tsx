@@ -38,6 +38,14 @@ function linkFor(n: NotificationRow): { href: string; label: string } {
       const slug = typeof p.follower_slug === 'string' ? p.follower_slug : '';
       return { href: slug ? `/artist/${slug}` : '#', label: 'New follower' };
     }
+    case 'report_created': {
+      const target = typeof p.target_type === 'string' ? p.target_type : 'content';
+      const reason = typeof p.reason === 'string' ? p.reason : '';
+      return {
+        href: '/admin/reports',
+        label: `New report · ${target}${reason ? ` — ${reason}` : ''}`,
+      };
+    }
   }
 }
 

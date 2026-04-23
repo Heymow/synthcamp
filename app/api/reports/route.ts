@@ -40,13 +40,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Reason must be 1-500 chars' }, { status: 400 });
   }
 
-  const { error } = await supabase.from('reports').insert({
-    reporter_id: user.id,
-    target_type: body.target_type as ReportTargetType,
-    target_id: body.target_id,
-    reason,
-  });
+  const { data: inserted, error } = await supabase
+    .from('reports')
+    .insert({
+      reporter_id: user.id,
+      target_type: body.target_type as ReportTargetType,
+      target_id: body.target_id,
+      reason,
+    })
+    .select('id')
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  // Fire-and-forget in-app notification to every admin; swallow failures
+  // so the reporter still gets a 201 on their submission.
+  if (inserted?.id) {
+    await supabase
+      .rpc('notify_admins_of_report', { p_report_id: inserted.id })
+      .catch(() => undefined);
+  }
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }
