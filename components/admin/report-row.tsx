@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { LocalDateTime } from '@/components/ui/local-datetime';
+import { BanUserButton } from '@/components/admin/ban-user-button';
 import type { ReportStatus, ReportTargetType } from '@/lib/database.types';
 
 interface ReportRowProps {
@@ -16,10 +17,13 @@ interface ReportRowProps {
   reason: string;
   status: ReportStatus;
   createdAt: string;
+  reporterId: string;
   reporterName: string;
   reporterHref?: string;
   /** Total reports from this reporter that have been dismissed. */
   reporterDismissed: number;
+  /** True if the reporter is currently banned. */
+  reporterBanned: boolean;
 }
 
 export function ReportRow({
@@ -31,9 +35,11 @@ export function ReportRow({
   reason,
   status,
   createdAt,
+  reporterId,
   reporterName,
   reporterHref,
   reporterDismissed,
+  reporterBanned,
 }: ReportRowProps) {
   const router = useRouter();
   const [current, setCurrent] = useState<ReportStatus>(status);
@@ -132,10 +138,15 @@ export function ReportRow({
             {reporterDismissed} dismissed
           </span>
         )}
+        {reporterBanned && (
+          <span className="rounded-full bg-red-500/30 px-2 py-0.5 font-bold uppercase tracking-widest text-red-200">
+            banned
+          </span>
+        )}
         <span>·</span>
         <LocalDateTime iso={createdAt} showTimezone={false} />
       </p>
-      <div className="flex items-center gap-2 pt-1 text-[10px] font-bold uppercase tracking-widest">
+      <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] font-bold uppercase tracking-widest">
         <button
           type="button"
           onClick={() => update('reviewed')}
@@ -162,6 +173,13 @@ export function ReportRow({
         </button>
       </div>
       {error && <p className="text-[10px] italic text-red-400">{error}</p>}
+      <div className="border-t border-white/5 pt-3">
+        <BanUserButton
+          userId={reporterId}
+          userName={reporterName}
+          initiallyBanned={reporterBanned}
+        />
+      </div>
     </GlassPanel>
   );
 }

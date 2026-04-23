@@ -53,6 +53,7 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
   // signal the admin can factor into their decision.
   const reporterIds = [...new Set(reports.map((r) => r.reporter_id))];
   const dismissCount = new Map<string, number>();
+  const bannedReporters = new Set<string>();
   if (reporterIds.length > 0) {
     const { data: dismissed } = await supabase
       .from('reports')
@@ -62,6 +63,12 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
     for (const row of dismissed ?? []) {
       dismissCount.set(row.reporter_id, (dismissCount.get(row.reporter_id) ?? 0) + 1);
     }
+    const { data: bans } = await supabase
+      .from('profiles')
+      .select('id')
+      .in('id', reporterIds)
+      .not('banned_at', 'is', null);
+    for (const row of bans ?? []) bannedReporters.add(row.id);
   }
 
   const filters: Array<{ key: ReportStatus; label: string }> = [
@@ -117,9 +124,11 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
                 reason={r.reason}
                 status={r.status}
                 createdAt={r.created_at}
+                reporterId={r.reporter_id}
                 reporterName={r.reporter?.display_name ?? 'Unknown'}
                 reporterHref={r.reporter?.slug ? `/artist/${r.reporter.slug}` : undefined}
                 reporterDismissed={dismissCount.get(r.reporter_id) ?? 0}
+                reporterBanned={bannedReporters.has(r.reporter_id)}
               />
             );
           })}

@@ -33,6 +33,8 @@ export interface Database {
           bio: string | null;
           is_artist: boolean;
           is_admin: boolean;
+          banned_at: string | null;
+          banned_reason: string | null;
           stripe_account_id: string | null;
           payout_enabled: boolean;
           created_at: string;
@@ -46,6 +48,8 @@ export interface Database {
           bio?: string | null;
           is_artist?: boolean;
           is_admin?: boolean;
+          banned_at?: string | null;
+          banned_reason?: string | null;
           stripe_account_id?: string | null;
           payout_enabled?: boolean;
           created_at?: string;
@@ -59,6 +63,8 @@ export interface Database {
           bio?: string | null;
           is_artist?: boolean;
           is_admin?: boolean;
+          banned_at?: string | null;
+          banned_reason?: string | null;
           stripe_account_id?: string | null;
           payout_enabled?: boolean;
           created_at?: string;
@@ -556,6 +562,18 @@ export interface Database {
       popular_genres: {
         Args: { p_limit?: number };
         Returns: { genre: string; c: number }[];
+      };
+      is_current_user_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      admin_ban_user: {
+        Args: { p_user_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      admin_unban_user: {
+        Args: { p_user_id: string };
+        Returns: undefined;
       };
     };
     Enums: {

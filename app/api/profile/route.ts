@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { requireActiveAccount } from '@/lib/api/require-active';
 import type { Database } from '@/lib/database.types';
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
@@ -17,6 +18,9 @@ export async function PATCH(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const suspended = await requireActiveAccount(supabase, user.id);
+  if (suspended) return suspended;
 
   const body = (await request.json().catch(() => null)) as PatchBody | null;
   if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
