@@ -14,11 +14,17 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: 'SynthCamp — The AI Music Marketplace',
   description: 'Marketplace where the creative process is celebrated, not hidden.',
+  appleWebApp: {
+    capable: true,
+    title: 'SynthCamp',
+    statusBarStyle: 'black-translucent',
+  },
 };
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#050507',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
