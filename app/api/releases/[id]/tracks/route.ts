@@ -29,21 +29,28 @@ export async function POST(
   if (limited) return limited;
 
   const body = (await request.json().catch(() => null)) as AddTrackBody | null;
-  if (
-    !body ||
-    !body.title ||
-    typeof body.track_number !== 'number' ||
-    typeof body.duration_seconds !== 'number'
-  ) {
+  if (!body || !body.title || typeof body.duration_seconds !== 'number') {
     return NextResponse.json(
-      { error: 'title, track_number, duration_seconds required' },
+      { error: 'title, duration_seconds required' },
       { status: 400 },
     );
   }
 
+  // Always compute the next track_number server-side. Any value sent by the
+  // client is ignored — prevents unique-constraint collisions when the
+  // wizard is resumed with a stale local state.
+  const { data: existing, error: lookupErr } = await supabase
+    .from('tracks')
+    .select('track_number')
+    .eq('release_id', releaseId)
+    .order('track_number', { ascending: false })
+    .limit(1);
+  if (lookupErr) return NextResponse.json({ error: lookupErr.message }, { status: 400 });
+  const nextNumber = (existing?.[0]?.track_number ?? 0) + 1;
+
   const insertPayload: TrackInsert = {
     release_id: releaseId,
-    track_number: body.track_number,
+    track_number: nextNumber,
     title: body.title,
     duration_seconds: body.duration_seconds,
     audio_source_key: body.audio_source_key ?? null,
@@ -54,7 +61,7 @@ export async function POST(
   const { data, error } = await supabase
     .from('tracks')
     .insert(insertPayload)
-    .select('id')
+    .select('id, track_number')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

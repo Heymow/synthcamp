@@ -44,15 +44,14 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
     try {
       const durationSeconds = await extractDurationSeconds(file);
       const defaultTitle = file.name.replace(/\.[^/.]+$/, '');
-      const trackNumber = state.tracks.length + 1;
 
-      // Create the track row first (so we have an id for the signed URL)
+      // Server assigns the track_number — avoids unique-constraint collisions
+      // when the wizard resumes with a stale local state.
       const createRes = await fetch(`/api/releases/${state.releaseId}/tracks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: defaultTitle,
-          track_number: trackNumber,
           duration_seconds: durationSeconds,
         }),
       });
@@ -62,7 +61,10 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
         };
         throw new Error(body.error ?? 'Create failed');
       }
-      const { id: trackId } = (await createRes.json()) as { id: string };
+      const { id: trackId, track_number: trackNumber } = (await createRes.json()) as {
+        id: string;
+        track_number: number;
+      };
 
       // Signed URL for R2
       const urlRes = await fetch(`/api/tracks/${trackId}/upload-url`, {
@@ -187,7 +189,7 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
         })}
       </div>
 
-      <div className="space-y-2">
+      <div className="flex flex-col items-start gap-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
           Add a track
         </span>
