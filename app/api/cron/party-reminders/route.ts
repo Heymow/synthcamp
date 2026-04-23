@@ -1,0 +1,132 @@
+import { NextResponse, type NextRequest } from 'next/server';
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/service';
+import { renderPartyReminderEmail, sendEmail } from '@/lib/mailer';
+
+export const dynamic = 'force-dynamic';
+
+const REMINDER_WINDOW_MIN = 30;
+
+interface PartyRow {
+  id: string;
+  scheduled_at: string;
+  release: {
+    title: string;
+    artist: { display_name: string } | null;
+  } | null;
+  room: { name: string } | null;
+}
+
+/**
+ * Cron endpoint — hit every 2–5 minutes by an external scheduler with the
+ * shared CRON_SECRET. Finds scheduled parties starting in <= REMINDER_WINDOW_MIN
+ * and notifies their alert subscribers (in-app + email), then marks the
+ * party so we don't re-fire.
+ *
+ * Set CRON_SECRET on Railway and hit:
+ *   POST https://synthcamp.net/api/cron/party-reminders
+ *   Header: X-Cron-Secret: <value>
+ */
+export async function POST(request: NextRequest) {
+  const secret = request.headers.get('x-cron-secret');
+  const expected = process.env.CRON_SECRET;
+  if (!expected || !secret || secret !== expected) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const supabase = getSupabaseServiceRoleClient();
+  const now = new Date();
+  const windowEnd = new Date(now.getTime() + REMINDER_WINDOW_MIN * 60 * 1000);
+
+  const { data: partiesRaw, error: partiesErr } = await supabase
+    .from('listening_parties')
+    .select(
+      `id, scheduled_at,
+       release:releases!listening_parties_release_id_fkey(
+         title,
+         artist:profiles!releases_artist_id_fkey(display_name)
+       ),
+       room:rooms(name)`,
+    )
+    .eq('status', 'scheduled')
+    .is('reminder_sent_at', null)
+    .gte('scheduled_at', now.toISOString())
+    .lte('scheduled_at', windowEnd.toISOString());
+  if (partiesErr) {
+    return NextResponse.json({ error: partiesErr.message }, { status: 500 });
+  }
+  const parties = (partiesRaw as unknown as PartyRow[] | null) ?? [];
+  if (parties.length === 0) {
+    return NextResponse.json({ ok: true, parties: 0, emails: 0 });
+  }
+
+  // One listUsers call; map user_id → email.
+  const { data: usersPage } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+  const emailById = new Map<string, string>();
+  for (const u of usersPage?.users ?? []) {
+    if (u.email) emailById.set(u.id, u.email);
+  }
+
+  let emailsSent = 0;
+
+  await Promise.all(
+    parties.map(async (p) => {
+      const minutesUntilStart = Math.max(
+        1,
+        Math.round((new Date(p.scheduled_at).getTime() - now.getTime()) / 60_000),
+      );
+      const artistName = p.release?.artist?.display_name ?? 'Unknown';
+      const releaseTitle = p.release?.title ?? 'Party';
+      const roomName = p.room?.name ?? 'SynthCamp';
+
+      const { data: subscribers } = await supabase
+        .from('party_alerts')
+        .select('user_id')
+        .eq('party_id', p.id);
+      const subIds = (subscribers ?? []).map((s) => s.user_id);
+
+      if (subIds.length > 0) {
+        // In-app notifications (one insert per subscriber).
+        await supabase.from('notifications').insert(
+          subIds.map((uid) => ({
+            user_id: uid,
+            kind: 'party_reminder' as const,
+            payload: {
+              party_id: p.id,
+              release_title: releaseTitle,
+              artist_name: artistName,
+              room_name: roomName,
+              scheduled_at: p.scheduled_at,
+              minutes_until_start: minutesUntilStart,
+            },
+          })),
+        );
+
+        const { subject, html, text } = renderPartyReminderEmail({
+          partyId: p.id,
+          artistName,
+          releaseTitle,
+          roomName,
+          scheduledAt: p.scheduled_at,
+          minutesUntilStart,
+        });
+
+        // Emails in parallel.
+        await Promise.all(
+          subIds.map(async (uid) => {
+            const to = emailById.get(uid);
+            if (!to) return;
+            await sendEmail({ to, subject, html, text });
+            emailsSent += 1;
+          }),
+        );
+      }
+
+      await supabase
+        .from('listening_parties')
+        .update({ reminder_sent_at: new Date().toISOString() })
+        .eq('id', p.id);
+    }),
+  );
+
+  return NextResponse.json({ ok: true, parties: parties.length, emails: emailsSent });
+}

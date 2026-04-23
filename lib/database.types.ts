@@ -21,7 +21,8 @@ export type NotificationKind =
   | 'release_published'
   | 'party_scheduled'
   | 'follow'
-  | 'report_created';
+  | 'report_created'
+  | 'party_reminder';
 
 // ===== Main Database type =====
 
@@ -248,6 +249,7 @@ export interface Database {
           duration_seconds: number;
           ends_at: string;
           status: PartyStatus;
+          reminder_sent_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -260,6 +262,7 @@ export interface Database {
           duration_seconds: number;
           ends_at?: string;
           status?: PartyStatus;
+          reminder_sent_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -272,6 +275,7 @@ export interface Database {
           duration_seconds?: number;
           ends_at?: string;
           status?: PartyStatus;
+          reminder_sent_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -46,6 +46,16 @@ function linkFor(n: NotificationRow): { href: string; label: string } {
         label: `New report · ${target}${reason ? ` — ${reason}` : ''}`,
       };
     }
+    case 'party_reminder': {
+      const id = typeof p.party_id === 'string' ? p.party_id : '';
+      const mins =
+        typeof p.minutes_until_start === 'number' ? p.minutes_until_start : 30;
+      const title = typeof p.release_title === 'string' ? p.release_title : 'Party';
+      return {
+        href: id ? `/party/${id}` : '#',
+        label: `Starts in ${mins} min · ${title}`,
+      };
+    }
   }
 }
 
