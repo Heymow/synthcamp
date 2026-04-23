@@ -1,10 +1,12 @@
+import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { GlassPanel } from '@/components/ui/glass-panel';
-import { LogoS } from '@/components/branding/logo-s';
 import { LiveStatus } from '@/components/party/live-status';
 import { WaitButton } from '@/components/party/wait-button';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import type { PartyStatus } from '@/lib/database.types';
+import { getReleaseLabel } from '@/lib/pricing';
 
 interface PartyPageProps {
   params: Promise<{ id: string }>;
@@ -17,11 +19,14 @@ export default async function PartyPage({ params }: PartyPageProps) {
   const { data: party } = await supabase
     .from('listening_parties')
     .select(
-      `id, scheduled_at, status,
+      `id, scheduled_at, status, duration_seconds,
        release:releases!listening_parties_release_id_fkey(
          title,
          slug,
-         artist:profiles!releases_artist_id_fkey(display_name, slug)
+         cover_url,
+         price_minimum,
+         tracks(count),
+         artist:profiles!releases_artist_id_fkey(display_name, slug, avatar_url)
        ),
        room:rooms(name, slug, kind)`,
     )
@@ -34,16 +39,25 @@ export default async function PartyPage({ params }: PartyPageProps) {
     id: string;
     scheduled_at: string;
     status: PartyStatus;
+    duration_seconds: number;
     release: {
       title: string;
       slug: string;
-      artist: { display_name: string; slug: string | null } | null;
+      cover_url: string;
+      price_minimum: number;
+      tracks: { count: number }[] | null;
+      artist: { display_name: string; slug: string | null; avatar_url: string | null } | null;
     } | null;
     room: { name: string; slug: string; kind: string } | null;
   };
 
   const release = partyShape.release;
   const room = partyShape.room;
+  const trackCount = Array.isArray(release?.tracks)
+    ? (release.tracks[0]?.count ?? 0)
+    : 0;
+  const durationMin = Math.round(partyShape.duration_seconds / 60);
+  const isGmc = room?.kind === 'global_master';
 
   // Alert subscription for the viewer (if logged in).
   let viewerId: string | null = null;
@@ -65,47 +79,111 @@ export default async function PartyPage({ params }: PartyPageProps) {
   }
 
   return (
-    <main className="view-enter mx-auto flex min-h-[60vh] max-w-md items-center justify-center px-6 pb-32">
-      <GlassPanel className="flex flex-col items-center space-y-4 p-10 text-center">
-        <LogoS size={48} />
-        {release ? (
-          <>
-            <h2 className="text-2xl font-black italic uppercase leading-none text-white">
-              {release.title}
-            </h2>
-            {release.artist && (
-              <p className="text-xs font-bold uppercase tracking-widest text-white/60">
-                by {release.artist.display_name}
-              </p>
-            )}
-          </>
-        ) : (
-          <h2 className="text-2xl font-black italic uppercase leading-none text-white">
-            Party
-          </h2>
-        )}
-        {room && (
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-indigo-400">
-            on {room.name}
-          </p>
-        )}
-        <LiveStatus
-          partyId={partyShape.id}
-          scheduledAt={partyShape.scheduled_at}
-          initialStatus={partyShape.status}
-        />
-        {partyShape.status === 'scheduled' && (
-          <WaitButton
-            partyId={partyShape.id}
-            initialSubscribed={isSubscribed}
-            isAuthenticated={viewerId !== null}
-            variant="primary"
+    <main className="view-enter mx-auto max-w-3xl space-y-8 px-6 pb-32">
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-white/10">
+        {release && (
+          <Image
+            src={release.cover_url}
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, 66vw"
+            className="absolute inset-0 object-cover opacity-25 blur-2xl mix-blend-screen"
+            priority
           />
         )}
-        <p className="mt-4 text-[10px] italic text-white/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/50 via-transparent to-transparent" />
+        <div className="grain" />
+
+        <div className="relative z-10 flex flex-col items-center gap-6 p-8 text-center md:p-12">
+          {room && (
+            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-400">
+              {isGmc ? 'Global Master Channel' : room.name}
+            </p>
+          )}
+
+          {release ? (
+            <Link href={`/r/${release.slug}`} className="block">
+              <div className="relative mx-auto h-32 w-32 overflow-hidden rounded-[1.5rem] md:h-40 md:w-40">
+                <Image
+                  src={release.cover_url}
+                  alt={release.title}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </Link>
+          ) : null}
+
+          <div className="space-y-2">
+            {release ? (
+              <>
+                <Link href={`/r/${release.slug}`}>
+                  <h1 className="text-3xl font-black italic uppercase leading-none tracking-tighter text-white md:text-4xl">
+                    {release.title}
+                  </h1>
+                </Link>
+                {release.artist && (
+                  <Link
+                    href={release.artist.slug ? `/artist/${release.artist.slug}` : '#'}
+                    className="inline-block text-xs font-bold uppercase tracking-widest text-indigo-300 hover:text-indigo-200"
+                  >
+                    by {release.artist.display_name}
+                  </Link>
+                )}
+              </>
+            ) : (
+              <h1 className="text-3xl font-black italic uppercase text-white">Party</h1>
+            )}
+          </div>
+
+          <LiveStatus
+            partyId={partyShape.id}
+            scheduledAt={partyShape.scheduled_at}
+            initialStatus={partyShape.status}
+          />
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/60">
+            <span>
+              {getReleaseLabel(trackCount)}
+            </span>
+            <span className="h-0.5 w-0.5 rounded-full bg-white/30" />
+            <span>{durationMin} min</span>
+            {release && (
+              <>
+                <span className="h-0.5 w-0.5 rounded-full bg-white/30" />
+                <span className="text-indigo-400">Min ${release.price_minimum.toFixed(2)}</span>
+              </>
+            )}
+          </div>
+
+          {partyShape.status === 'scheduled' && (
+            <WaitButton
+              partyId={partyShape.id}
+              initialSubscribed={isSubscribed}
+              isAuthenticated={viewerId !== null}
+              variant="primary"
+            />
+          )}
+          {release && partyShape.status === 'scheduled' && (
+            <Link
+              href={`/r/${release.slug}`}
+              className="text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white"
+            >
+              View release →
+            </Link>
+          )}
+        </div>
+      </section>
+
+      <GlassPanel className="p-5 text-center">
+        <p className="text-[11px] italic text-white/60">
           {partyShape.status === 'scheduled'
-            ? 'We\u2019ll notify you when it goes live. Real-time playback launches Phase 4.'
-            : 'Listening parties real-time execution launching Phase 4'}
+            ? "We'll notify every Wait subscriber the moment this party goes live. Real-time synchronized playback launches in Phase 4."
+            : partyShape.status === 'live'
+              ? 'Synchronized playback launches in Phase 4 — party tracking is live in the background.'
+              : partyShape.status === 'ended'
+                ? 'This party has ended. The release stays available on its page.'
+                : 'This party was cancelled.'}
         </p>
       </GlassPanel>
     </main>
