@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { enforceLimit } from '@/lib/api/limit';
 import type { Database } from '@/lib/database.types';
 
 type TrackInsert = Database['public']['Tables']['tracks']['Insert'];
@@ -23,6 +24,9 @@ export async function POST(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const limited = enforceLimit(`user:${user.id}:track:create`, 30, 60);
+  if (limited) return limited;
 
   const body = (await request.json().catch(() => null)) as AddTrackBody | null;
   if (

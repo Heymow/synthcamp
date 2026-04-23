@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { enforceLimit } from '@/lib/api/limit';
 import { slugify } from '@/lib/slug';
 import type { Database } from '@/lib/database.types';
 
@@ -23,6 +24,9 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const limited = enforceLimit(`user:${user.id}:release:create`, 10, 60);
+  if (limited) return limited;
 
   const body = (await request.json().catch(() => null)) as CreateReleaseBody | null;
   if (!body || !body.title || !body.cover_url) {

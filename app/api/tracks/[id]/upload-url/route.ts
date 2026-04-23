@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { enforceLimit } from '@/lib/api/limit';
 import { getR2Client, R2_BUCKET } from '@/lib/r2';
 
 interface TrackUploadBody {
@@ -18,6 +19,9 @@ export async function POST(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const limited = enforceLimit(`user:${user.id}:track:upload-url`, 30, 60);
+  if (limited) return limited;
 
   // Fetch track with its release to verify ownership
   const { data: track } = await supabase

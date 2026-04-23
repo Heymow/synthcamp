@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { enforceLimit } from '@/lib/api/limit';
 
 interface CreatePartyBody {
   release_id?: string;
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const limited = enforceLimit(`user:${user.id}:party:create`, 5, 60);
+  if (limited) return limited;
 
   const body = (await request.json().catch(() => null)) as CreatePartyBody | null;
   if (!body || !body.release_id || !body.room_id || !body.scheduled_at) {

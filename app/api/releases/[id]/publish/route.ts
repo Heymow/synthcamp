@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { enforceLimit } from '@/lib/api/limit';
 import { getPrice } from '@/lib/pricing';
 
 interface PublishBody {
@@ -20,6 +21,9 @@ export async function POST(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const limited = enforceLimit(`user:${user.id}:release:publish`, 5, 60);
+  if (limited) return limited;
 
   const body = (await request.json().catch(() => null)) as PublishBody | null;
   if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
