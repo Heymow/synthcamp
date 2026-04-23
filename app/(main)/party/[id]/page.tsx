@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { LogoS } from '@/components/branding/logo-s';
+import { LiveStatus } from '@/components/party/live-status';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import type { PartyStatus } from '@/lib/database.types';
 
 interface PartyPageProps {
   params: Promise<{ id: string }>;
@@ -27,11 +29,10 @@ export default async function PartyPage({ params }: PartyPageProps) {
 
   if (!party) notFound();
 
-  // Cast: Supabase's join typing returns nested objects.
   const partyShape = party as unknown as {
     id: string;
     scheduled_at: string;
-    status: string;
+    status: PartyStatus;
     release: {
       title: string;
       slug: string;
@@ -68,15 +69,11 @@ export default async function PartyPage({ params }: PartyPageProps) {
             on {room.name}
           </p>
         )}
-        <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">
-          {partyShape.status === 'scheduled' ? 'Scheduled for' : 'Status: ' + partyShape.status}
-        </p>
-        <p className="font-mono text-sm text-white">
-          {new Date(partyShape.scheduled_at).toLocaleString('en-US', {
-            dateStyle: 'full',
-            timeStyle: 'short',
-          })}
-        </p>
+        <LiveStatus
+          partyId={partyShape.id}
+          scheduledAt={partyShape.scheduled_at}
+          initialStatus={partyShape.status}
+        />
         <p className="mt-4 text-[10px] italic text-white/50">
           Listening parties real-time execution launching Phase 4
         </p>
