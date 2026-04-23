@@ -317,11 +317,23 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
           </div>
         </div>
 
+        {(!state.title.trim() || !state.coverUrl) && (
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">
+            Missing:{' '}
+            {[
+              !state.title.trim() && 'title',
+              !state.coverUrl && 'cover image',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        )}
+
         <Button
           type="submit"
           variant="primary"
           size="md"
-          disabled={submitting || uploading || !state.title || !state.coverUrl}
+          disabled={submitting || uploading || !state.title.trim() || !state.coverUrl}
           className="w-full"
         >
           {submitting ? 'Saving...' : 'Next →'}
