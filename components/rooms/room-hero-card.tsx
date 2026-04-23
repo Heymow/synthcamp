@@ -89,7 +89,9 @@ export function RoomHeroCard({ roomName, party }: RoomHeroCardProps) {
                   <LiveVisualizer />
                 </div>
               </div>
-              <div className="absolute top-1 right-1 h-3.5 w-3.5 animate-pulse rounded-full border-2 border-[#050507] bg-red-500 shadow-[0_0_10px_red]" />
+              {party?.status === 'live' && (
+                <div className="absolute top-1 right-1 h-3.5 w-3.5 animate-pulse rounded-full border-2 border-[#050507] bg-red-500 shadow-[0_0_10px_red]" />
+              )}
             </div>
             <div className="min-w-0 flex-1 space-y-1">
               <h3 className="text-2xl leading-[0.95] font-black tracking-tight text-white uppercase italic drop-shadow-lg md:text-3xl md:leading-none">
@@ -129,7 +131,7 @@ export function RoomHeroCard({ roomName, party }: RoomHeroCardProps) {
           </div>
           {party ? (
             <Button variant="primary" size="md" className="w-full shrink-0 md:w-auto">
-              {party.status === 'live' ? 'Enter Now' : 'View Party'}
+              {party.status === 'live' ? 'Enter Now' : 'Wait'}
             </Button>
           ) : null}
         </div>
