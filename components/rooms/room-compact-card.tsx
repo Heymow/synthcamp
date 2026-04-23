@@ -71,7 +71,7 @@ export function RoomCompactCard({ roomName, party }: RoomCompactCardProps) {
           </p>
           {party && (
             <Button variant="ghost" size="sm" className="shrink-0">
-              {party.status === 'live' ? 'Enter' : 'View'}
+              {party.status === 'live' ? 'Enter' : 'Wait'}
             </Button>
           )}
         </div>
