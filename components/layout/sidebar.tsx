@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Home, Search, Library, LayoutGrid, Upload, Users, DollarSign } from 'lucide-react';
 import { Sheet } from '@/components/ui/sheet';
 import { SidebarItem } from '@/components/layout/sidebar-item';
@@ -22,6 +23,8 @@ function getInitials(name: string): string {
 }
 
 export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
+  const t = useTranslations('nav');
+  const tAuth = useTranslations('auth');
   const pathname = usePathname();
   const router = useRouter();
   const isExplore = pathname.startsWith('/explore');
@@ -41,7 +44,7 @@ export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
               SynthCamp
             </h2>
             <p className="mt-1 text-[9px] leading-none font-bold tracking-[0.3em] text-white/60 uppercase italic">
-              Menu
+              {t('menu')}
             </p>
           </div>
         </div>
@@ -53,19 +56,19 @@ export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
             <>
               <SidebarItem
                 icon={<Home size={18} strokeWidth={2.5} />}
-                label="Home"
+                label={t('home')}
                 active={pathname === '/explore/home'}
                 onClick={() => go('/explore/home')}
               />
               <SidebarItem
                 icon={<Search size={18} strokeWidth={2.5} />}
-                label="Search"
+                label={t('search')}
                 active={pathname === '/explore/search'}
                 onClick={() => go('/explore/search')}
               />
               <SidebarItem
                 icon={<Library size={18} strokeWidth={2.5} />}
-                label="Library"
+                label={t('library')}
                 active={pathname === '/explore/library'}
                 onClick={() => go('/explore/library')}
               />
@@ -74,25 +77,25 @@ export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
             <>
               <SidebarItem
                 icon={<LayoutGrid size={18} strokeWidth={2.5} />}
-                label="My Music"
+                label={t('myMusic')}
                 active={pathname === '/artist/catalog'}
                 onClick={() => go('/artist/catalog')}
               />
               <SidebarItem
                 icon={<Upload size={18} strokeWidth={2.5} />}
-                label="New Release"
+                label={t('newRelease')}
                 active={pathname === '/artist/upload'}
                 onClick={() => go('/artist/upload')}
               />
               <SidebarItem
                 icon={<Users size={18} strokeWidth={2.5} />}
-                label="Live Parties"
+                label={t('liveParties')}
                 active={pathname === '/artist/parties'}
                 onClick={() => go('/artist/parties')}
               />
               <SidebarItem
                 icon={<DollarSign size={18} strokeWidth={2.5} />}
-                label="Dashboard"
+                label={t('dashboard')}
                 active={pathname === '/artist/sales'}
                 onClick={() => go('/artist/sales')}
               />
@@ -115,7 +118,7 @@ export function Sidebar({ open, onOpenChange, profile }: SidebarProps) {
                 type="submit"
                 className="w-full text-left text-[9px] font-bold tracking-[0.3em] text-white/40 uppercase hover:text-white/80"
               >
-                Sign out
+                {tAuth('signOut')}
               </button>
             </form>
           </div>

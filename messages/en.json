@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "menu": "Menu",
+    "home": "Home",
+    "search": "Search",
+    "library": "Library",
+    "myMusic": "My Music",
+    "newRelease": "New Release",
+    "liveParties": "Live Parties",
+    "dashboard": "Dashboard",
+    "skipToContent": "Skip to content"
+  },
+  "mode": {
+    "explore": "Explore",
+    "artist": "Artist",
+    "label": "Mode"
+  },
+  "auth": {
+    "signInHeading": "SynthCamp",
+    "welcome": "Welcome",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "emailPlaceholder": "your@email.com",
+    "sending": "Sending...",
+    "emailSent": "Email sent ✓",
+    "sendMagicLink": "Send magic link",
+    "checkInbox": "Check your inbox and click the link to sign in.",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "openMenu": "Open menu"
+  },
+  "player": {
+    "play": "Play",
+    "pause": "Pause",
+    "close": "Close",
+    "copyShareLink": "Copy share link",
+    "linkCopied": "Link copied",
+    "nowPlaying": "Now playing"
+  },
+  "release": {
+    "buyPhase3": "Buy (Phase 3)",
+    "copyEmbed": "Copy embed",
+    "embedCopied": "Embed copied",
+    "tracklist": "Tracklist",
+    "byArtist": "by {name}",
+    "listeningPartyOn": "Listening Party on {room} · {when}",
+    "noReleasesYet": "No releases published yet."
+  },
+  "social": {
+    "follow": "Follow",
+    "following": "Following",
+    "signInToFollow": "Sign in to follow",
+    "followerCountOne": "{count} follower",
+    "followerCountOther": "{count} followers",
+    "report": "Report",
+    "reportPlaceholder": "What's wrong with this content?",
+    "reportSubmit": "Submit",
+    "reportSubmitting": "Sending…",
+    "reportSubmitted": "Submitted ✓",
+    "cancel": "Cancel"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "loading": "Loading…",
+    "empty": "No notifications yet.",
+    "bellLabel": "Notifications",
+    "bellLabelUnread": "Notifications ({count} unread)"
+  },
+  "search": {
+    "heading": "Search",
+    "placeholder": "Search artists, releases…",
+    "startTyping": "Start typing or pick a genre.",
+    "noResults": "No results for your filters.",
+    "sort": "Sort",
+    "sortNewest": "Newest",
+    "sortTitle": "A → Z",
+    "genres": "Genres",
+    "apply": "Apply",
+    "artists": "Artists",
+    "releases": "Releases"
+  },
+  "library": {
+    "heading": "Library",
+    "subheading": "Releases and parties from the artists you follow.",
+    "notFollowing": "You're not following anyone yet.",
+    "discoverHint": "Discover artists on {explore} and tap Follow on their profile.",
+    "upcomingParties": "Upcoming parties",
+    "newReleases": "New releases",
+    "noUpcomingParties": "No upcoming parties from the people you follow.",
+    "noReleases": "No published releases from the people you follow yet.",
+    "enter": "Enter",
+    "signInSubheading": "Sign in to see your library"
+  },
+  "errors": {
+    "signalScrambled": "Signal scrambled",
+    "playbackError": "An unexpected error occurred during playback.",
+    "retry": "Retry",
+    "back": "Back",
+    "signalLost": "Signal lost",
+    "frequencyNotFound": "This frequency doesn't exist.",
+    "backToExplore": "Back to Explore"
+  }
+}

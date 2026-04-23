@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { LogoS } from '@/components/branding/logo-s';
@@ -12,11 +13,10 @@ interface SignInGateProps {
   redirectTo?: string;
 }
 
-export function SignInGate({
-  heading = 'SynthCamp',
-  subheading = 'Welcome',
-  redirectTo,
-}: SignInGateProps) {
+export function SignInGate({ heading, subheading, redirectTo }: SignInGateProps) {
+  const t = useTranslations('auth');
+  const resolvedHeading = heading ?? t('signInHeading');
+  const resolvedSubheading = subheading ?? t('welcome');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -58,20 +58,20 @@ export function SignInGate({
         <div className="flex flex-col items-center gap-3">
           <LogoS size={48} />
           <h1 className="text-2xl font-black italic uppercase leading-none tracking-tighter text-white">
-            {heading}
+            {resolvedHeading}
           </h1>
           <p className="text-center text-[10px] font-bold uppercase tracking-[0.3em] text-white/60">
-            {subheading}
+            {resolvedSubheading}
           </p>
         </div>
 
         <Button variant="ghost" size="lg" onClick={submitGoogle} className="w-full">
-          Continue with Google
+          {t('continueWithGoogle')}
         </Button>
 
         <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/50">
           <div className="h-[1px] flex-1 bg-white/10" />
-          <span>or</span>
+          <span>{t('or')}</span>
           <div className="h-[1px] flex-1 bg-white/10" />
         </div>
 
@@ -84,7 +84,7 @@ export function SignInGate({
             inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
+            placeholder={t('emailPlaceholder')}
             aria-label="Email address"
             className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-indigo-500 focus:outline-none"
             disabled={status === 'sending' || status === 'sent'}
@@ -97,17 +97,15 @@ export function SignInGate({
             disabled={status === 'sending' || status === 'sent'}
           >
             {status === 'sending'
-              ? 'Sending...'
+              ? t('sending')
               : status === 'sent'
-                ? 'Email sent ✓'
-                : 'Send magic link'}
+                ? t('emailSent')
+                : t('sendMagicLink')}
           </Button>
         </form>
 
         {status === 'sent' && (
-          <p className="text-center text-xs italic text-white/70">
-            Check your inbox and click the link to sign in.
-          </p>
+          <p className="text-center text-xs italic text-white/70">{t('checkInbox')}</p>
         )}
 
         {error && <p className="text-center text-xs italic text-red-400">{error}</p>}

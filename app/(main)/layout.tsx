@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { Background3D } from '@/components/three/background-3d';
 import { Header } from '@/components/layout/header';
 import { MiniPlayer } from '@/components/player/mini-player';
@@ -6,6 +7,7 @@ import { getCurrentProfile } from '@/lib/data/profile';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
+  const t = await getTranslations('nav');
   const profile = await getCurrentProfile();
 
   let unreadCount = 0;
@@ -25,7 +27,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-indigo-500 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
       >
-        Skip to content
+        {t('skipToContent')}
       </a>
       <Background3D />
       <div className="ui-overlay pb-32">
