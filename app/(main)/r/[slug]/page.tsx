@@ -93,6 +93,13 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
 
   if (!release) notFound();
 
+  type Party = {
+    id: string;
+    scheduled_at: string;
+    status: string;
+    room: { name: string; slug: string } | null;
+  };
+
   const r = release as unknown as {
     id: string;
     title: string;
@@ -112,21 +119,23 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
       preview_url: string | null;
       plays_count: number;
     }>;
-    listening_parties: Array<{
-      id: string;
-      scheduled_at: string;
-      status: string;
-      room: { name: string; slug: string } | null;
-    }> | null;
+    // UNIQUE(release_id) on listening_parties means PostgREST sometimes
+    // collapses this to a single object. Normalize below.
+    listening_parties: Party[] | Party | null;
   };
 
   // Owner must also be able to view drafts; non-owners hit 404 on drafts.
   const isOwner = viewer?.id === r.artist_id;
   if (r.status === 'draft' && !isOwner) notFound();
 
+  const rawParties = r.listening_parties;
+  const parties: Party[] = Array.isArray(rawParties)
+    ? rawParties
+    : rawParties
+      ? [rawParties]
+      : [];
   // Prefer an active party (scheduled/live). Fall back to the most recent
   // cancelled/ended party so the owner still sees history on their draft.
-  const parties = r.listening_parties ?? [];
   const party =
     parties.find((p) => p.status === 'scheduled' || p.status === 'live') ?? parties[0] ?? null;
   const tracks = [...r.tracks].sort((a, b) => a.track_number - b.track_number);
