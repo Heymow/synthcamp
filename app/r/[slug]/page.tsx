@@ -4,8 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { AutoCue } from '@/components/player/auto-cue';
 import { PlayReleaseButton } from '@/components/player/play-release-button';
 import { PlayTrackRow } from '@/components/player/play-track-row';
+import type { PlayerTrack } from '@/components/player/mini-player-provider';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -98,6 +100,16 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
   const party = r.listening_parties?.[0] ?? null;
   const tracks = [...r.tracks].sort((a, b) => a.track_number - b.track_number);
 
+  const playerTracks: PlayerTrack[] = tracks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    artist: r.artist.display_name,
+    coverUrl: r.cover_url,
+    durationSeconds: t.duration_seconds,
+    previewUrl: t.preview_url,
+    releaseSlug: slug,
+  }));
+
   return (
     <main className="view-enter mx-auto max-w-4xl space-y-8 px-6 pb-32">
       <section className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_1.5fr]">
@@ -138,18 +150,7 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
               Listening Party on {party.room.name} · {new Date(party.scheduled_at).toLocaleString('en-US')}
             </Link>
           )}
-          {tracks[0] && (
-            <PlayReleaseButton
-              track={{
-                id: tracks[0].id,
-                title: tracks[0].title,
-                artist: r.artist.display_name,
-                coverUrl: r.cover_url,
-                durationSeconds: tracks[0].duration_seconds,
-                previewUrl: tracks[0].preview_url,
-              }}
-            />
-          )}
+          {playerTracks[0] && <PlayReleaseButton track={playerTracks[0]} />}
           <Button variant="ghost" size="md" disabled className="w-full">
             Buy (Phase 3)
           </Button>
@@ -161,22 +162,16 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
           Tracklist
         </h2>
         <GlassPanel className="divide-y divide-white/5 p-0">
-          {tracks.map((t) => (
+          {playerTracks.map((pt, i) => (
             <PlayTrackRow
-              key={t.id}
-              track={{
-                id: t.id,
-                title: t.title,
-                artist: r.artist.display_name,
-                coverUrl: r.cover_url,
-                durationSeconds: t.duration_seconds,
-                previewUrl: t.preview_url,
-                trackNumber: t.track_number,
-              }}
+              key={pt.id}
+              track={{ ...pt, trackNumber: tracks[i]!.track_number }}
             />
           ))}
         </GlassPanel>
       </section>
+
+      <AutoCue tracks={playerTracks} />
     </main>
   );
 }

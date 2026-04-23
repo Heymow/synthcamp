@@ -9,6 +9,7 @@ export interface PlayerTrack {
   coverUrl: string;
   durationSeconds: number;
   previewUrl?: string | null;
+  releaseSlug?: string | null;
 }
 
 interface PlayerContextType {
@@ -16,6 +17,7 @@ interface PlayerContextType {
   isPlaying: boolean;
   positionSeconds: number;
   play: (track: PlayerTrack) => void;
+  cue: (track: PlayerTrack) => void;
   pause: () => void;
   resume: () => void;
   stop: () => void;
@@ -91,6 +93,12 @@ export function MiniPlayerProvider({ children }: { children: React.ReactNode }) 
     setIsPlaying(true);
   }, []);
 
+  const cue = useCallback((track: PlayerTrack) => {
+    setCurrent(track);
+    setPositionSeconds(0);
+    setIsPlaying(false);
+  }, []);
+
   const pause = useCallback(() => setIsPlaying(false), []);
 
   const resume = useCallback(() => {
@@ -113,7 +121,7 @@ export function MiniPlayerProvider({ children }: { children: React.ReactNode }) 
 
   return (
     <PlayerContext.Provider
-      value={{ current, isPlaying, positionSeconds, play, pause, resume, stop }}
+      value={{ current, isPlaying, positionSeconds, play, cue, pause, resume, stop }}
     >
       {children}
       <audio ref={audioRef} preload="none" aria-hidden="true" />

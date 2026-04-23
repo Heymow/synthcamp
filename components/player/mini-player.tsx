@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
-import { Pause, Play, X } from 'lucide-react';
+import { Check, Link2, Pause, Play, X } from 'lucide-react';
 import { usePlayer } from '@/components/player/mini-player-provider';
 
 function formatClock(totalSeconds: number): string {
@@ -14,9 +15,23 @@ function formatClock(totalSeconds: number): string {
 
 export function MiniPlayer() {
   const { current, isPlaying, positionSeconds, pause, resume, stop } = usePlayer();
+  const [copied, setCopied] = useState(false);
   if (!current) return null;
 
   const progress = Math.min(100, (positionSeconds / current.durationSeconds) * 100);
+  const canShare = Boolean(current.releaseSlug);
+
+  const handleShare = async () => {
+    if (!current.releaseSlug) return;
+    const url = `${window.location.origin}/r/${current.releaseSlug}?t=${current.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // Clipboard blocked; nothing we can do silently.
+    }
+  };
 
   return (
     <div
@@ -65,6 +80,17 @@ export function MiniPlayer() {
           {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
         </button>
 
+        {canShare && (
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label={copied ? 'Link copied' : 'Copy share link'}
+            title={copied ? 'Link copied' : 'Copy share link'}
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full text-white/60 transition hover:bg-white/5 hover:text-white sm:flex"
+          >
+            {copied ? <Check size={18} className="text-emerald-400" /> : <Link2 size={18} />}
+          </button>
+        )}
         <button
           type="button"
           onClick={stop}
