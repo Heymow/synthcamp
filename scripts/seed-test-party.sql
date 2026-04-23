@@ -17,12 +17,11 @@ BEGIN
   FROM listening_parties lp
   JOIN profiles p ON p.id = lp.artist_id
   WHERE p.slug LIKE 'seed-%'
-    AND lp.status = 'scheduled'
   ORDER BY random()
   LIMIT 1;
 
   IF v_party_id IS NULL THEN
-    RAISE EXCEPTION 'No scheduled seed party found';
+    RAISE EXCEPTION 'No seed party found at all — run the seed script first';
   END IF;
 
   v_scheduled := date_trunc('hour', now())
@@ -41,6 +40,7 @@ BEGIN
   UPDATE listening_parties
   SET scheduled_at = v_scheduled,
       ends_at = v_scheduled + (duration_seconds || ' seconds')::interval,
+      status = 'scheduled',
       reminder_sent_at = NULL,
       updated_at = now()
   WHERE id = v_party_id;
