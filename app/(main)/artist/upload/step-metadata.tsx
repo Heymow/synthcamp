@@ -224,26 +224,39 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
           />
         </label>
 
-        <div className="space-y-1">
+        <div className="space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
             Cover *
           </span>
-          {state.coverUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={state.coverUrl}
-              alt="cover"
-              className="h-40 w-40 rounded-2xl object-cover"
-            />
-          ) : null}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleCoverChange}
-            disabled={uploading}
-            className="block w-full text-xs text-white/80 file:mr-3 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:text-white hover:file:bg-white/20"
-          />
-          {uploading && <p className="text-xs italic text-white/60">Uploading...</p>}
+          <div className="flex items-center gap-4">
+            {state.coverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={state.coverUrl}
+                alt="cover"
+                className="h-24 w-24 rounded-2xl object-cover"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-dashed border-white/15 text-[9px] font-bold uppercase tracking-widest text-white/40">
+                No cover
+              </div>
+            )}
+            <label
+              className={
+                'inline-flex cursor-pointer items-center justify-center rounded-xl bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-white/20 ' +
+                (uploading ? 'pointer-events-none opacity-50' : '')
+              }
+            >
+              {uploading ? 'Uploading...' : state.coverUrl ? 'Replace' : 'Choose image'}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleCoverChange}
+                disabled={uploading}
+                className="sr-only"
+              />
+            </label>
+          </div>
         </div>
 
         <label className="block space-y-1">
