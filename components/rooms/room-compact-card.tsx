@@ -57,7 +57,7 @@ export function RoomCompactCard({
         <LiveVisualizer />
       </div>
 
-      <div className="relative z-10 min-w-0 flex-1 space-y-1 pr-16">
+      <div className="relative z-10 min-w-0 flex-1 space-y-1 pr-24 md:pr-28">
         <div className="flex items-baseline gap-3">
           <h4 className="line-clamp-2 min-w-0 text-base leading-tight font-bold text-white italic md:text-lg">
             {release?.title ?? roomName}
@@ -75,7 +75,7 @@ export function RoomCompactCard({
           </p>
         )}
 
-        <div className="flex items-center justify-between gap-2 pt-1">
+        <div className="pt-1">
           {listeners ? (
             <div className="flex min-w-0 items-center gap-2 text-[9px] font-bold tracking-[0.1em] text-white/70 uppercase">
               <span className="whitespace-nowrap text-white">
@@ -87,22 +87,26 @@ export function RoomCompactCard({
           ) : (
             <p className="truncate text-[9px] italic text-white/50">No party scheduled</p>
           )}
-          {party &&
-            (party.status === 'live' ? (
-              <Button variant="ghost" size="sm" className="shrink-0">
-                Enter
-              </Button>
-            ) : (
-              <WaitButton
-                partyId={party.id}
-                initialSubscribed={initialSubscribed}
-                isAuthenticated={viewerIsAuthenticated}
-                variant="ghost"
-                className="shrink-0"
-              />
-            ))}
         </div>
       </div>
+
+      {party && (
+        <div className="absolute right-4 top-1/2 z-10 -translate-y-1/2 md:right-5">
+          {party.status === 'live' ? (
+            <Button variant="ghost" size="sm" className="shrink-0">
+              Enter
+            </Button>
+          ) : (
+            <WaitButton
+              partyId={party.id}
+              initialSubscribed={initialSubscribed}
+              isAuthenticated={viewerIsAuthenticated}
+              variant="ghost"
+              className="shrink-0"
+            />
+          )}
+        </div>
+      )}
     </article>
   );
 
