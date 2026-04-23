@@ -32,7 +32,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       <Background3D />
       <div className="ui-overlay pb-32">
         <Header profile={profile} unreadCount={unreadCount} />
-        <div className="h-40" aria-hidden="true" />
+        <div className="h-24 md:h-40" aria-hidden="true" />
         <div id="main-content" tabIndex={-1}>
           {children}
         </div>

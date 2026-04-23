@@ -27,7 +27,6 @@ export interface RoomCompactCardProps {
   paletteIndex?: number;
 }
 
-// Placeholder listener data — phase 5 swaps for real counts / geo.
 const PLACEHOLDER_LISTENERS = {
   live: { count: '840', label: 'listeners' },
   scheduled: { count: '42', label: 'waiting' },
@@ -38,7 +37,6 @@ const PLACEHOLDER_CITY_SETS = [
   'Japan, USA, Canada',
 ] as const;
 
-// Decorative avatar seeds — offset per palette so secondaries look different.
 const AVATAR_SEEDS: Array<readonly number[]> = [
   [21, 22, 23],
   [31, 32, 33],
@@ -62,75 +60,82 @@ export function RoomCompactCard({
   const body = (
     <article
       className={
-        'glass-panel group relative flex min-h-[95px] items-center gap-3 overflow-hidden rounded-[1.5rem] border-white/5 p-4 transition-colors md:gap-5 md:rounded-[2rem] md:p-5 ' +
+        'glass-panel group relative overflow-hidden rounded-[1.5rem] border-white/5 p-4 transition-colors md:rounded-[2rem] md:p-5 ' +
         (party ? 'cursor-pointer hover:bg-white/[0.05]' : 'opacity-70')
       }
     >
       {party && <StatusTimer baseTime={baseTime} isCountdown={isCountdown} small />}
-      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 md:h-14 md:w-14">
-        {release && (
-          <Image src={release.cover_url} alt="" fill className="object-cover opacity-20" />
-        )}
-        <div className="relative z-10">
-          {party?.status === 'live' ? (
-            <LiveVisualizer />
-          ) : (
-            <Hourglass size={16} strokeWidth={2} className="text-white/70" />
-          )}
-        </div>
-      </div>
 
-      <div className="relative z-10 min-w-0 flex-1 space-y-1 pr-28 md:pr-32">
-        <div className="flex items-baseline gap-3">
-          <h4 className="line-clamp-2 min-w-0 text-base leading-tight font-bold text-white italic md:text-lg">
-            {release?.title ?? roomName}
-          </h4>
+      <div className="flex items-start gap-3 md:items-center md:gap-5">
+        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 md:h-14 md:w-14">
           {release && (
-            <p className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-indigo-400">
-              by {artistName}
+            <Image src={release.cover_url} alt="" fill className="object-cover opacity-20" />
+          )}
+          <div className="relative z-10">
+            {party?.status === 'live' ? (
+              <LiveVisualizer />
+            ) : (
+              <Hourglass size={16} strokeWidth={2} className="text-white/70" />
+            )}
+          </div>
+        </div>
+
+        <div className="relative z-10 min-w-0 flex-1 space-y-1 pr-16 md:pr-32">
+          {/* Title stacks above byline on mobile so line-clamp has the full
+              width; goes back to one baseline row on md+. */}
+          <div className="flex flex-col gap-0.5 md:flex-row md:items-baseline md:gap-3">
+            <h4 className="line-clamp-2 min-w-0 text-base leading-tight font-bold text-white italic md:text-lg">
+              {release?.title ?? roomName}
+            </h4>
+            {release && (
+              <p className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-indigo-400">
+                by {artistName}
+              </p>
+            )}
+          </div>
+
+          {!release && (
+            <p className="truncate text-[10px] font-bold uppercase tracking-widest text-white/40">
+              {roomName}
             </p>
           )}
-        </div>
 
-        {!release && (
-          <p className="truncate text-[10px] font-bold uppercase tracking-widest text-white/40">
-            {roomName}
-          </p>
-        )}
-
-        {listeners ? (
-          <div className="space-y-1 pt-1">
-            <div className="flex items-center gap-2 text-[9px] font-bold tracking-[0.1em] text-white/70 uppercase">
-              <div className="flex -space-x-1.5">
-                {avatars.map((id) => (
-                  <Image
-                    key={id}
-                    src={`https://i.pravatar.cc/80?u=${id}`}
-                    alt=""
-                    width={18}
-                    height={18}
-                    className="rounded-full border border-black/40"
-                  />
-                ))}
-                <div className="flex h-[18px] min-w-[22px] items-center justify-center rounded-full border border-indigo-400/40 bg-indigo-500/30 px-1 text-[7px] font-bold text-white backdrop-blur-md">
-                  +{listeners.count}
+          {listeners ? (
+            <div className="space-y-1 pt-2">
+              <div className="flex items-center gap-2 text-[9px] font-bold tracking-[0.1em] text-white/70 uppercase">
+                <div className="flex -space-x-1.5">
+                  {avatars.map((id) => (
+                    <Image
+                      key={id}
+                      src={`https://i.pravatar.cc/80?u=${id}`}
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="rounded-full border border-black/40"
+                    />
+                  ))}
+                  <div className="flex h-[18px] min-w-[22px] items-center justify-center rounded-full border border-indigo-400/40 bg-indigo-500/30 px-1 text-[7px] font-bold text-white backdrop-blur-md">
+                    +{listeners.count}
+                  </div>
                 </div>
+                <span className="whitespace-nowrap text-white">{listeners.label}</span>
               </div>
-              <span className="whitespace-nowrap text-white">{listeners.label}</span>
+              <span className="block truncate text-[8px] font-bold italic uppercase tracking-[0.1em] text-white/60">
+                {cities}
+              </span>
             </div>
-            <span className="block truncate text-[8px] font-bold italic uppercase tracking-[0.1em] text-white/60">
-              {cities}
-            </span>
-          </div>
-        ) : (
-          <p className="truncate pt-1 text-[9px] italic text-white/50">No party scheduled</p>
-        )}
+          ) : (
+            <p className="truncate pt-2 text-[9px] italic text-white/50">No party scheduled</p>
+          )}
+        </div>
       </div>
 
+      {/* Mobile: button in-flow below content. Desktop: floated bottom-right
+          clear of both timer and content. */}
       {party && (
-        <div className="absolute right-4 bottom-4 z-10 md:right-5 md:bottom-5">
+        <div className="mt-3 flex justify-end md:absolute md:right-5 md:bottom-5 md:mt-0">
           {party.status === 'live' ? (
-            <Button variant="ghost" size="sm" className="shrink-0">
+            <Button variant="ghost" size="sm" className="w-full md:w-auto">
               Enter
             </Button>
           ) : (
@@ -139,7 +144,7 @@ export function RoomCompactCard({
               initialSubscribed={initialSubscribed}
               isAuthenticated={viewerIsAuthenticated}
               variant="ghost"
-              className="shrink-0"
+              className="w-full md:w-auto"
             />
           )}
         </div>
