@@ -105,8 +105,8 @@ export function RoomHeroCard({
               <span className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-400">
                 {stateLabel}
               </span>
-              <div className="h-[1px] w-6 bg-white/30" />
-              <span className="text-[9px] font-bold uppercase tracking-widest text-white/80">
+              <div className="hidden h-[1px] w-6 bg-white/30 md:block" />
+              <span className="hidden text-[9px] font-bold uppercase tracking-widest text-white/80 md:inline">
                 {roomName}
               </span>
             </div>
