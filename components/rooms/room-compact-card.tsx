@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { LiveVisualizer } from '@/components/visualizers/live-visualizer';
 import { StatusTimer } from '@/components/visualizers/status-timer';
 import { Button } from '@/components/ui/button';
+import { WaitButton } from '@/components/party/wait-button';
 
 export interface RoomCompactCardParty {
   id: string;
@@ -19,6 +20,8 @@ export interface RoomCompactCardParty {
 export interface RoomCompactCardProps {
   roomName: string;
   party: RoomCompactCardParty | null;
+  viewerIsAuthenticated: boolean;
+  initialSubscribed: boolean;
 }
 
 // Placeholder listener data — phase 5 replaces with real counts + regions.
@@ -27,7 +30,12 @@ const PLACEHOLDER_LISTENERS = {
   scheduled: { count: '42', label: 'waiting', region: 'Worldwide' },
 };
 
-export function RoomCompactCard({ roomName, party }: RoomCompactCardProps) {
+export function RoomCompactCard({
+  roomName,
+  party,
+  viewerIsAuthenticated,
+  initialSubscribed,
+}: RoomCompactCardProps) {
   const release = party?.release ?? null;
   const artistName = release?.artist?.display_name ?? 'Unknown';
   const baseTime = party ? new Date(party.scheduled_at).getTime() : 0;
@@ -78,11 +86,20 @@ export function RoomCompactCard({ roomName, party }: RoomCompactCardProps) {
           ) : (
             <p className="truncate text-[9px] italic text-white/50">No party scheduled</p>
           )}
-          {party && (
-            <Button variant="ghost" size="sm" className="shrink-0">
-              {party.status === 'live' ? 'Enter' : 'Wait'}
-            </Button>
-          )}
+          {party &&
+            (party.status === 'live' ? (
+              <Button variant="ghost" size="sm" className="shrink-0">
+                Enter
+              </Button>
+            ) : (
+              <WaitButton
+                partyId={party.id}
+                initialSubscribed={initialSubscribed}
+                isAuthenticated={viewerIsAuthenticated}
+                variant="ghost"
+                className="shrink-0"
+              />
+            ))}
         </div>
       </div>
     </article>

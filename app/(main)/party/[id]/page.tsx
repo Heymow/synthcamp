@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { LogoS } from '@/components/branding/logo-s';
 import { LiveStatus } from '@/components/party/live-status';
+import { WaitButton } from '@/components/party/wait-button';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import type { PartyStatus } from '@/lib/database.types';
 
@@ -44,6 +45,25 @@ export default async function PartyPage({ params }: PartyPageProps) {
   const release = partyShape.release;
   const room = partyShape.room;
 
+  // Alert subscription for the viewer (if logged in).
+  let viewerId: string | null = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    viewerId = data.user?.id ?? null;
+  } catch {
+    viewerId = null;
+  }
+  let isSubscribed = false;
+  if (viewerId && partyShape.status === 'scheduled') {
+    const { data: alert } = await supabase
+      .from('party_alerts')
+      .select('party_id')
+      .eq('party_id', partyShape.id)
+      .eq('user_id', viewerId)
+      .maybeSingle();
+    isSubscribed = Boolean(alert);
+  }
+
   return (
     <main className="view-enter mx-auto flex min-h-[60vh] max-w-md items-center justify-center px-6 pb-32">
       <GlassPanel className="flex flex-col items-center space-y-4 p-10 text-center">
@@ -74,8 +94,18 @@ export default async function PartyPage({ params }: PartyPageProps) {
           scheduledAt={partyShape.scheduled_at}
           initialStatus={partyShape.status}
         />
+        {partyShape.status === 'scheduled' && (
+          <WaitButton
+            partyId={partyShape.id}
+            initialSubscribed={isSubscribed}
+            isAuthenticated={viewerId !== null}
+            variant="primary"
+          />
+        )}
         <p className="mt-4 text-[10px] italic text-white/50">
-          Listening parties real-time execution launching Phase 4
+          {partyShape.status === 'scheduled'
+            ? 'We\u2019ll notify you when it goes live. Real-time playback launches Phase 4.'
+            : 'Listening parties real-time execution launching Phase 4'}
         </p>
       </GlassPanel>
     </main>

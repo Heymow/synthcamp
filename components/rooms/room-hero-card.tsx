@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { LiveVisualizer } from '@/components/visualizers/live-visualizer';
 import { StatusTimer } from '@/components/visualizers/status-timer';
 import { Button } from '@/components/ui/button';
+import { WaitButton } from '@/components/party/wait-button';
 
 export interface RoomHeroCardParty {
   id: string;
@@ -19,13 +20,20 @@ export interface RoomHeroCardParty {
 export interface RoomHeroCardProps {
   roomName: string;
   party: RoomHeroCardParty | null;
+  viewerIsAuthenticated: boolean;
+  initialSubscribed: boolean;
 }
 
 // Decorative avatar ids; phase 5 swaps these for real followed-listener avatars.
 const DECOR_AVATARS = [11, 12, 13, 14] as const;
 const PLACEHOLDER_CITIES = 'London, Paris, Tokyo, Berlin, NYC…';
 
-export function RoomHeroCard({ roomName, party }: RoomHeroCardProps) {
+export function RoomHeroCard({
+  roomName,
+  party,
+  viewerIsAuthenticated,
+  initialSubscribed,
+}: RoomHeroCardProps) {
   const release = party?.release ?? null;
   const artistName = release?.artist?.display_name ?? 'Unknown';
   const baseTime = party ? new Date(party.scheduled_at).getTime() : 0;
@@ -54,14 +62,14 @@ export function RoomHeroCard({ roomName, party }: RoomHeroCardProps) {
       }
     >
       {party && <StatusTimer baseTime={baseTime} isCountdown={isCountdown} />}
-      <div className="absolute inset-0 z-0 bg-gradient-to-br from-indigo-900/40 via-transparent to-transparent" />
+      <div className="gmc-backdrop absolute inset-0 z-0" />
       {release && (
         <Image
           src={release.cover_url}
           alt=""
           fill
           sizes="(max-width: 768px) 100vw, 66vw"
-          className="z-0 object-cover opacity-40 mix-blend-screen blur-2xl transition-transform duration-1000 group-hover:scale-110"
+          className="z-0 object-cover opacity-25 mix-blend-screen blur-2xl transition-transform duration-1000 group-hover:scale-110"
         />
       )}
       <div className="grain z-0" />
@@ -134,9 +142,19 @@ export function RoomHeroCard({ roomName, party }: RoomHeroCardProps) {
           </div>
         </div>
         {party ? (
-          <Button variant="primary" size="md" className="w-full shrink-0 md:w-auto">
-            {party.status === 'live' ? 'Enter Now' : 'Wait'}
-          </Button>
+          party.status === 'live' ? (
+            <Button variant="primary" size="md" className="w-full shrink-0 md:w-auto">
+              Enter Now
+            </Button>
+          ) : (
+            <WaitButton
+              partyId={party.id}
+              initialSubscribed={initialSubscribed}
+              isAuthenticated={viewerIsAuthenticated}
+              variant="primary"
+              className="shrink-0"
+            />
+          )
         ) : null}
       </div>
     </article>

@@ -99,6 +99,15 @@
     box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
   }
 
+  .gmc-backdrop {
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(234, 88, 12, 0.22), transparent 55%),
+      radial-gradient(ellipse at 85% 90%, rgba(234, 88, 12, 0.15), transparent 60%),
+      linear-gradient(135deg, rgba(49, 46, 129, 0.55) 0%, rgba(15, 10, 30, 0.7) 50%, rgba(49, 46, 129, 0.45) 100%);
+    background-size: 200% 200%, 200% 200%, 300% 300%;
+    animation: gmc-gradient-shift 18s ease-in-out infinite;
+  }
+
   .grain {
     pointer-events: none;
     position: absolute;
@@ -124,6 +133,15 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes gmc-gradient-shift {
+  0%, 100% {
+    background-position: 0% 0%, 100% 100%, 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%, 0% 50%, 100% 50%;
   }
 }
 

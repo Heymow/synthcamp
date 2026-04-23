@@ -87,6 +87,26 @@ export default async function ExploreHomePage() {
     if (!partiesByRoom.has(p.room_id)) partiesByRoom.set(p.room_id, p);
   }
 
+  // Does the viewer have an active alert for any of the rendered parties?
+  let viewerId: string | null = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    viewerId = data.user?.id ?? null;
+  } catch {
+    viewerId = null;
+  }
+  const alertedPartyIds = new Set<string>();
+  if (viewerId && partiesByRoom.size > 0) {
+    const partyIds = [...partiesByRoom.values()].map((p) => p.id);
+    const { data: alerts } = await supabase
+      .from('party_alerts')
+      .select('party_id')
+      .eq('user_id', viewerId)
+      .in('party_id', partyIds);
+    for (const a of alerts ?? []) alertedPartyIds.add(a.party_id);
+  }
+  const viewerIsAuthenticated = viewerId !== null;
+
   const heroTracksCount = hero?.tracks?.[0]?.count ?? 0;
 
   const roomList = rooms ?? [];
@@ -147,20 +167,30 @@ export default async function ExploreHomePage() {
       <section className="pb-20">
         <SectionHeader title="Active Sound Rooms" />
         <div className="space-y-6">
-          {gmc && (
-            <RoomHeroCard
-              roomName={gmc.name}
-              party={partiesByRoom.get(gmc.id) ?? null}
-            />
-          )}
-          <div className="grid grid-cols-1 gap-4">
-            {secondaries.map((room) => (
-              <RoomCompactCard
-                key={room.id}
-                roomName={room.name}
-                party={partiesByRoom.get(room.id) ?? null}
+          {gmc && (() => {
+            const p = partiesByRoom.get(gmc.id) ?? null;
+            return (
+              <RoomHeroCard
+                roomName={gmc.name}
+                party={p}
+                viewerIsAuthenticated={viewerIsAuthenticated}
+                initialSubscribed={p ? alertedPartyIds.has(p.id) : false}
               />
-            ))}
+            );
+          })()}
+          <div className="grid grid-cols-1 gap-4">
+            {secondaries.map((room) => {
+              const p = partiesByRoom.get(room.id) ?? null;
+              return (
+                <RoomCompactCard
+                  key={room.id}
+                  roomName={room.name}
+                  party={p}
+                  viewerIsAuthenticated={viewerIsAuthenticated}
+                  initialSubscribed={p ? alertedPartyIds.has(p.id) : false}
+                />
+              );
+            })}
           </div>
         </div>
       </section>

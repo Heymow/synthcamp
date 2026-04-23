@@ -435,6 +435,39 @@ export interface Database {
           },
         ];
       };
+      party_alerts: {
+        Row: {
+          party_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          party_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          party_id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'party_alerts_party_id_fkey';
+            columns: ['party_id'];
+            referencedRelation: 'listening_parties';
+            referencedColumns: ['id'];
+            isOneToOne: false;
+          },
+          {
+            foreignKeyName: 'party_alerts_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+            isOneToOne: false;
+          },
+        ];
+      };
       notifications: {
         Row: {
           id: string;
@@ -552,3 +585,4 @@ export type Purchase = Tables<'purchases'>;
 export type Follow = Tables<'follows'>;
 export type Report = Tables<'reports'>;
 export type Notification = Tables<'notifications'>;
+export type PartyAlert = Tables<'party_alerts'>;
