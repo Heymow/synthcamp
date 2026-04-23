@@ -157,7 +157,7 @@ export function RoomHeroCard({
               initialSubscribed={initialSubscribed}
               isAuthenticated={viewerIsAuthenticated}
               variant="primary"
-              className="shrink-0"
+              className="shrink-0 md:mt-6"
             />
           )
         ) : null}
