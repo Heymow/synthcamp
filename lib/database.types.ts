@@ -32,6 +32,7 @@ export interface Database {
           avatar_url: string | null;
           bio: string | null;
           is_artist: boolean;
+          is_admin: boolean;
           stripe_account_id: string | null;
           payout_enabled: boolean;
           created_at: string;
@@ -44,6 +45,7 @@ export interface Database {
           avatar_url?: string | null;
           bio?: string | null;
           is_artist?: boolean;
+          is_admin?: boolean;
           stripe_account_id?: string | null;
           payout_enabled?: boolean;
           created_at?: string;
@@ -56,6 +58,7 @@ export interface Database {
           avatar_url?: string | null;
           bio?: string | null;
           is_artist?: boolean;
+          is_admin?: boolean;
           stripe_account_id?: string | null;
           payout_enabled?: boolean;
           created_at?: string;
