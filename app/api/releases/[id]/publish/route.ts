@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceLimit } from '@/lib/api/limit';
 import { getPrice } from '@/lib/pricing';
+import { renderReleasePublishedEmail, sendEmail } from '@/lib/mailer';
 
 interface PublishBody {
   party?: {
@@ -88,7 +89,66 @@ export async function POST(
   // (phase 4 task — cron will call the same RPC).
   if (nextStatus === 'published') {
     await supabase.rpc('fanout_release_notification', { p_release_id: id });
+    await sendReleasePublishedEmails(supabase, id);
   }
 
   return NextResponse.json({ ok: true });
+}
+
+async function sendReleasePublishedEmails(
+  supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
+  releaseId: string,
+): Promise<void> {
+  try {
+    // Fetch the release + artist profile (needed for email content).
+    const { data: rel } = await supabase
+      .from('releases')
+      .select(
+        'title, slug, artist:profiles!releases_artist_id_fkey(id, display_name, slug)',
+      )
+      .eq('id', releaseId)
+      .single();
+    if (!rel) return;
+    const r = rel as unknown as {
+      title: string;
+      slug: string;
+      artist: { id: string; display_name: string; slug: string | null } | null;
+    };
+    if (!r.artist) return;
+
+    // Query the artist's followers' emails via admin API — SELECT on
+    // auth.users isn't exposed through PostgREST. We fan out via the
+    // already-existing notification rows (which have user_id) and look
+    // up emails in batch using supabase.auth.admin.
+    const { data: followers } = await supabase
+      .from('follows')
+      .select('follower_id')
+      .eq('followed_id', r.artist.id);
+    if (!followers || followers.length === 0) return;
+
+    const { subject, html, text } = renderReleasePublishedEmail({
+      artistName: r.artist.display_name,
+      artistSlug: r.artist.slug,
+      releaseTitle: r.title,
+      releaseSlug: r.slug,
+    });
+
+    // Pull emails from auth.users via the admin API (service-role cookie-
+    // backed client already has the power). We use listUsers once and map.
+    const { data: usersPage } = await supabase.auth.admin.listUsers({
+      perPage: 1000,
+    });
+    const byId = new Map<string, string | undefined>();
+    for (const u of usersPage?.users ?? []) byId.set(u.id, u.email ?? undefined);
+
+    await Promise.all(
+      followers.map(async (f) => {
+        const email = byId.get(f.follower_id);
+        if (!email) return;
+        await sendEmail({ to: email, subject, html, text });
+      }),
+    );
+  } catch (err) {
+    console.error('[publish] email fanout failed:', err);
+  }
 }
