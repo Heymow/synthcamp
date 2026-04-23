@@ -59,14 +59,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, parties: 0, emails: 0 });
   }
 
-  // One listUsers call; map user_id → email.
-  const { data: usersPage } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-  const emailById = new Map<string, string>();
-  for (const u of usersPage?.users ?? []) {
-    if (u.email) emailById.set(u.id, u.email);
-  }
-
-  let emailsSent = 0;
+  // Collect email jobs to dispatch after we respond so the HTTP response
+  // doesn't wait on SMTP (cron-job.org free tier cuts at ~30s).
+  const emailJobs: Array<{ to: string; subject: string; html: string; text: string }> = [];
 
   await Promise.all(
     parties.map(async (p) => {
@@ -85,7 +80,6 @@ export async function POST(request: NextRequest) {
       const subIds = (subscribers ?? []).map((s) => s.user_id);
 
       if (subIds.length > 0) {
-        // In-app notifications (one insert per subscriber).
         await supabase.from('notifications').insert(
           subIds.map((uid) => ({
             user_id: uid,
@@ -101,6 +95,14 @@ export async function POST(request: NextRequest) {
           })),
         );
 
+        // Resolve emails only for this party's subscribers.
+        const emails = await Promise.all(
+          subIds.map(async (uid) => {
+            const { data } = await supabase.auth.admin.getUserById(uid);
+            return data.user?.email ?? null;
+          }),
+        );
+
         const { subject, html, text } = renderPartyReminderEmail({
           partyId: p.id,
           artistName,
@@ -110,15 +112,9 @@ export async function POST(request: NextRequest) {
           minutesUntilStart,
         });
 
-        // Emails in parallel.
-        await Promise.all(
-          subIds.map(async (uid) => {
-            const to = emailById.get(uid);
-            if (!to) return;
-            await sendEmail({ to, subject, html, text });
-            emailsSent += 1;
-          }),
-        );
+        for (const to of emails) {
+          if (to) emailJobs.push({ to, subject, html, text });
+        }
       }
 
       await supabase
@@ -128,5 +124,12 @@ export async function POST(request: NextRequest) {
     }),
   );
 
-  return NextResponse.json({ ok: true, parties: parties.length, emails: emailsSent });
+  // Fire-and-forget: sendEmail has its own try/catch, errors won't crash.
+  void Promise.all(emailJobs.map((job) => sendEmail(job)));
+
+  return NextResponse.json({
+    ok: true,
+    parties: parties.length,
+    emails_queued: emailJobs.length,
+  });
 }
