@@ -60,7 +60,7 @@ export function RoomCompactCard({
   const body = (
     <article
       className={
-        'glass-panel group relative overflow-hidden rounded-[1.5rem] border-white/5 p-4 transition-colors md:rounded-[2rem] md:p-5 ' +
+        'glass-panel group relative min-h-[125px] overflow-hidden rounded-[1.5rem] border-white/5 p-4 transition-colors md:min-h-[110px] md:rounded-[2rem] md:p-5 ' +
         (party ? 'cursor-pointer hover:bg-white/[0.05]' : 'opacity-70')
       }
     >
@@ -130,12 +130,13 @@ export function RoomCompactCard({
         </div>
       </div>
 
-      {/* Mobile: button in-flow below content. Desktop: floated bottom-right
-          clear of both timer and content. */}
+      {/* Floated bottom-right on both breakpoints — min-h on the article
+          gives enough vertical room so it never collides with the timer
+          chip at top-right. */}
       {party && (
-        <div className="mt-3 flex justify-end md:absolute md:right-5 md:bottom-5 md:mt-0">
+        <div className="absolute right-4 bottom-4 z-10 md:right-5 md:bottom-5">
           {party.status === 'live' ? (
-            <Button variant="ghost" size="sm" className="w-full md:w-auto">
+            <Button variant="ghost" size="sm" className="shrink-0">
               Enter
             </Button>
           ) : (
@@ -144,7 +145,7 @@ export function RoomCompactCard({
               initialSubscribed={initialSubscribed}
               isAuthenticated={viewerIsAuthenticated}
               variant="ghost"
-              className="w-full md:w-auto"
+              className="shrink-0"
             />
           )}
         </div>
