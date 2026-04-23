@@ -1,10 +1,10 @@
-import { redirect } from 'next/navigation';
+import { SignInGate } from '@/components/auth/sign-in-gate';
 import { getCurrentProfile } from '@/lib/data/profile';
 import { ProfileForm } from './profile-form';
 
 export default async function ProfileSettingsPage() {
   const profile = await getCurrentProfile();
-  if (!profile) redirect('/auth/login');
+  if (!profile) return <SignInGate subheading="Sign in to edit your profile" />;
 
   return (
     <main className="view-enter mx-auto max-w-md space-y-8 px-6 pb-32">

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { SignInGate } from '@/components/auth/sign-in-gate';
 import { getCurrentProfile } from '@/lib/data/profile';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -16,7 +17,7 @@ interface PartyRow {
 
 export default async function ArtistPartiesPage() {
   const profile = await getCurrentProfile();
-  if (!profile) redirect('/auth/login');
+  if (!profile) return <SignInGate subheading="Sign in to manage your parties" />;
   if (!profile.is_artist) redirect('/settings/profile');
 
   const supabase = await getSupabaseServerClient();

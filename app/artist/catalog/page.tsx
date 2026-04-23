@@ -3,13 +3,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { GlassPanel } from '@/components/ui/glass-panel';
 import { Button } from '@/components/ui/button';
+import { SignInGate } from '@/components/auth/sign-in-gate';
 import { getPrice, getReleaseLabel } from '@/lib/pricing';
 import { getCurrentProfile } from '@/lib/data/profile';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function ArtistCatalogPage() {
   const profile = await getCurrentProfile();
-  if (!profile) redirect('/auth/login');
+  if (!profile) return <SignInGate subheading="Sign in to see your catalog" />;
   if (!profile.is_artist) redirect('/settings/profile');
 
   const supabase = await getSupabaseServerClient();
