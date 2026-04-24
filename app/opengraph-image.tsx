@@ -2,9 +2,36 @@ import { ImageResponse } from 'next/og';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-export const alt = 'SynthCamp — The AI Music Marketplace';
+export const alt = 'SynthCamp · The AI Music Marketplace';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
+
+/**
+ * Pull Outfit from Google Fonts. Satori only renders TTF/OTF, not WOFF2,
+ * so we spoof an old UA to force the CSS API into serving the TTF URL.
+ */
+async function loadOutfit(weight: number): Promise<ArrayBuffer | null> {
+  try {
+    const cssRes = await fetch(
+      `https://fonts.googleapis.com/css2?family=Outfit:wght@${weight}`,
+      {
+        headers: {
+          'User-Agent':
+            'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)',
+        },
+      },
+    );
+    if (!cssRes.ok) return null;
+    const css = await cssRes.text();
+    const match = css.match(/src:\s*url\((https:\/\/[^)]+\.(?:ttf|otf))\)/);
+    if (!match) return null;
+    const fontRes = await fetch(match[1]!);
+    if (!fontRes.ok) return null;
+    return fontRes.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Root Open Graph image. Keeps the hero photo as the backdrop and overlays
@@ -15,7 +42,10 @@ export const contentType = 'image/png';
  * twitter:image, overriding any manual values declared in app/layout.tsx.
  */
 export default async function OpengraphImage() {
-  const heroBuffer = await readFile(join(process.cwd(), 'public/mock-covers/hero.jpg'));
+  const [heroBuffer, outfitBlack] = await Promise.all([
+    readFile(join(process.cwd(), 'public/mock-covers/hero.jpg')),
+    loadOutfit(900),
+  ]);
   const heroBase64 = `data:image/jpeg;base64,${heroBuffer.toString('base64')}`;
 
   return new ImageResponse(
@@ -27,7 +57,7 @@ export default async function OpengraphImage() {
           display: 'flex',
           position: 'relative',
           background: '#050507',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontFamily: 'Outfit, system-ui, -apple-system, sans-serif',
         }}
       >
         {/* Hero photo backdrop */}
@@ -113,6 +143,11 @@ export default async function OpengraphImage() {
         </div>
       </div>
     ),
-    { ...size },
+    {
+      ...size,
+      fonts: outfitBlack
+        ? [{ name: 'Outfit', data: outfitBlack, style: 'normal', weight: 900 }]
+        : undefined,
+    },
   );
 }

@@ -173,7 +173,7 @@ export default async function ExploreHomePage() {
       ) : (
         <GlassPanel className="p-12 text-center">
           <p className="text-sm italic text-white/60">
-            No releases yet — be the first to publish!
+            No releases yet. Be the first to publish!
           </p>
         </GlassPanel>
       )}

@@ -198,7 +198,7 @@ export default async function PartyPage({ params }: PartyPageProps) {
           {partyShape.status === 'scheduled'
             ? "We'll notify every Wait subscriber the moment this party goes live. Real-time synchronized playback launches in Phase 4."
             : partyShape.status === 'live'
-              ? 'Synchronized playback launches in Phase 4 — party tracking is live in the background.'
+              ? 'Synchronized playback launches in Phase 4. Party tracking is live in the background.'
               : partyShape.status === 'ended'
                 ? 'This party has ended. The release stays available on its page.'
                 : 'This party was cancelled.'}

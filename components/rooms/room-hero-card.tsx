@@ -59,7 +59,7 @@ export function RoomHeroCard({
     ? 'Experience the master cut with 1.2k listeners'
     : party
       ? 'Next listening party on the global master channel.'
-      : 'The flagship channel — premium parties, one per artist per month.';
+      : 'The flagship channel. Premium parties, one per artist per month.';
   const worldLabel = party?.status === 'live'
     ? 'Live Worldwide'
     : party

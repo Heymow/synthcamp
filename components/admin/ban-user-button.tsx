@@ -99,7 +99,7 @@ export function BanUserButton({
       </p>
       <p className="text-[10px] italic text-white/60">
         Archives every release, cancels scheduled parties, hides the profile.
-        Reversible — unban restores everything.
+        Reversible. Unban restores everything.
       </p>
       <textarea
         value={reason}

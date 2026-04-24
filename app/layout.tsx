@@ -12,7 +12,7 @@ const outfit = Outfit({
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://synthcamp.net';
-const DEFAULT_TITLE = 'SynthCamp — The AI Music Marketplace';
+const DEFAULT_TITLE = 'SynthCamp · The AI Music Marketplace';
 const DEFAULT_DESCRIPTION =
   'Marketplace where the creative process is celebrated, not hidden.';
 
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: DEFAULT_TITLE,
-    template: '%s — SynthCamp',
+    template: '%s · SynthCamp',
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: 'SynthCamp',

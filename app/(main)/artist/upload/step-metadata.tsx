@@ -267,7 +267,7 @@ export function StepMetadata({ state, setState, onNext }: StepMetadataProps) {
 
         <label className="flex flex-col gap-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-            Language (ISO 639-1, e.g. fr, en) — optional
+            Language (ISO 639-1, e.g. fr, en) · optional
           </span>
           <input
             type="text"

@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: ArtistPageProps): Promise<Met
     .select('display_name, bio, avatar_url, is_artist')
     .eq('slug', slug)
     .single();
-  if (!data || !data.is_artist) return { title: 'Artist not found — SynthCamp' };
-  const title = `${data.display_name} — SynthCamp`;
+  if (!data || !data.is_artist) return { title: 'Artist not found · SynthCamp' };
+  const title = `${data.display_name} · SynthCamp`;
   const description = data.bio ?? `Discover ${data.display_name}'s releases on SynthCamp.`;
   const images = data.avatar_url
     ? [{ url: data.avatar_url, width: 400, height: 400, alt: data.display_name }]

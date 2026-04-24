@@ -105,7 +105,7 @@ export default async function ArtistDashboardPage() {
             Recent sales
           </h3>
           <p className="text-sm italic text-white/60">
-            No sales yet — payments and purchase history ship in Phase 3.
+            No sales yet. Payments and purchase history ship in Phase 3.
           </p>
         </GlassPanel>
       </section>

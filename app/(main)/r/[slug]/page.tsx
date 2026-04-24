@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: ReleasePageProps): Promise<Me
     .eq('slug', slug)
     .in('status', ['published', 'unlisted', 'scheduled'])
     .single();
-  if (!data) return { title: 'Release not found — SynthCamp' };
+  if (!data) return { title: 'Release not found · SynthCamp' };
   const row = data as unknown as {
     title: string;
     description: string | null;
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: ReleasePageProps): Promise<Me
     artist: { display_name: string } | null;
   };
   const artistName = row.artist?.display_name ?? 'SynthCamp';
-  const title = `${row.title} — ${artistName}`;
+  const title = `${row.title} · ${artistName}`;
   const description = row.description ?? `Listen to ${row.title} by ${artistName} on SynthCamp.`;
   return {
     title,

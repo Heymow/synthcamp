@@ -43,7 +43,7 @@ function linkFor(n: NotificationRow): { href: string; label: string } {
       const reason = typeof p.reason === 'string' ? p.reason : '';
       return {
         href: '/admin/reports',
-        label: `New report · ${target}${reason ? ` — ${reason}` : ''}`,
+        label: `New report · ${target}${reason ? `: ${reason}` : ''}`,
       };
     }
     case 'party_reminder': {
