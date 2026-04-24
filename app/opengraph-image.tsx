@@ -7,27 +7,13 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 /**
- * Pull Outfit from Google Fonts. Satori only renders TTF/OTF, not WOFF2,
- * so we spoof an old UA to force the CSS API into serving the TTF URL.
+ * Read Outfit-Black.ttf from the repo. Committed locally so OG generation
+ * stays deterministic and offline — fetching Google Fonts at request time
+ * was unreliable (CDN would serve WOFF2 which satori can't render).
  */
-async function loadOutfit(weight: number): Promise<ArrayBuffer | null> {
+async function loadOutfit(): Promise<Buffer | null> {
   try {
-    const cssRes = await fetch(
-      `https://fonts.googleapis.com/css2?family=Outfit:wght@${weight}`,
-      {
-        headers: {
-          'User-Agent':
-            'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)',
-        },
-      },
-    );
-    if (!cssRes.ok) return null;
-    const css = await cssRes.text();
-    const match = css.match(/src:\s*url\((https:\/\/[^)]+\.(?:ttf|otf))\)/);
-    if (!match) return null;
-    const fontRes = await fetch(match[1]!);
-    if (!fontRes.ok) return null;
-    return fontRes.arrayBuffer();
+    return await readFile(join(process.cwd(), 'public/fonts/Outfit-Black.ttf'));
   } catch {
     return null;
   }
@@ -44,7 +30,7 @@ async function loadOutfit(weight: number): Promise<ArrayBuffer | null> {
 export default async function OpengraphImage() {
   const [heroBuffer, outfitBlack] = await Promise.all([
     readFile(join(process.cwd(), 'public/mock-covers/hero.jpg')),
-    loadOutfit(900),
+    loadOutfit(),
   ]);
   const heroBase64 = `data:image/jpeg;base64,${heroBuffer.toString('base64')}`;
 
