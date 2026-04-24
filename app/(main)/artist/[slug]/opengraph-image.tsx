@@ -128,6 +128,7 @@ export default async function ArtistOG({ params }: ArtistOGParams) {
         >
           <div
             style={{
+              display: 'flex',
               fontSize: 16,
               letterSpacing: '0.35em',
               fontWeight: 900,
@@ -196,6 +197,7 @@ export default async function ArtistOG({ params }: ArtistOGParams) {
           </svg>
           <div
             style={{
+              display: 'flex',
               fontSize: 22,
               fontWeight: 900,
               letterSpacing: '-0.02em',

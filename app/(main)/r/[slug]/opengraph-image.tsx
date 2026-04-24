@@ -116,6 +116,7 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
         >
           <div
             style={{
+              display: 'flex',
               fontSize: 18,
               letterSpacing: '0.3em',
               fontWeight: 900,
@@ -144,6 +145,7 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
           </div>
           <div
             style={{
+              display: 'flex',
               fontSize: 30,
               fontWeight: 700,
               letterSpacing: '0.18em',
@@ -181,6 +183,7 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
           </svg>
           <div
             style={{
+              display: 'flex',
               fontSize: 22,
               fontWeight: 900,
               letterSpacing: '-0.02em',
