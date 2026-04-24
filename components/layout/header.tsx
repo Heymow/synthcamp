@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { LogoS } from '@/components/branding/logo-s';
@@ -38,7 +39,11 @@ export function Header({ profile, unreadCount }: HeaderProps) {
             >
               <Menu size={20} strokeWidth={2.5} />
             </button>
-            <div className="flex min-w-0 items-start gap-2 md:gap-4">
+            <Link
+              href={currentMode === 'artist' ? '/artist/catalog' : '/explore/home'}
+              aria-label="Go to home"
+              className="flex min-w-0 items-start gap-2 md:gap-4"
+            >
               <div className="mt-0.5 shrink-0">
                 <LogoS size={28} className="md:scale-[1.14]" />
               </div>
@@ -50,7 +55,7 @@ export function Header({ profile, unreadCount }: HeaderProps) {
                   <span className="hidden sm:inline">The </span>AI Music Marketplace
                 </p>
               </div>
-            </div>
+            </Link>
           </div>
           <div className="flex items-center gap-2">
             {profile && <NotificationsBell initialUnread={unreadCount} />}
