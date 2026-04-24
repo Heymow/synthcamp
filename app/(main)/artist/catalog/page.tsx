@@ -52,7 +52,7 @@ export default async function ArtistCatalogPage() {
             return (
               <GlassPanel
                 key={r.id}
-                className="flex items-center gap-5 p-4 transition-colors hover:bg-white/[0.05]"
+                className="flex items-center gap-3 p-4 transition-colors hover:bg-white/[0.05]"
               >
                 <Link
                   href={isDraft ? `/artist/upload?draftId=${r.id}` : `/r/${r.slug}`}
@@ -67,15 +67,15 @@ export default async function ArtistCatalogPage() {
                       {getReleaseLabel(count)} · {isDraft ? 'draft · tap to resume' : r.status}
                     </p>
                   </div>
-                  <span className="shrink-0 font-mono text-xs text-indigo-400">
-                    ${getPrice(count)}
-                  </span>
                 </Link>
-                {isDraft ? (
-                  <DeleteDraftButton releaseId={r.id} releaseTitle={r.title} />
-                ) : (
-                  <ArchiveReleaseButton releaseId={r.id} releaseTitle={r.title} />
-                )}
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <span className="font-mono text-xs text-indigo-400">${getPrice(count)}</span>
+                  {isDraft ? (
+                    <DeleteDraftButton releaseId={r.id} releaseTitle={r.title} />
+                  ) : (
+                    <ArchiveReleaseButton releaseId={r.id} releaseTitle={r.title} />
+                  )}
+                </div>
               </GlassPanel>
             );
           })}
