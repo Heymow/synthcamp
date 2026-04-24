@@ -77,9 +77,7 @@ export function StepPricingParty({ state, setState, onNext, onBack }: StepPricin
           Minimum price
         </p>
         <p className="font-mono text-3xl font-black text-indigo-400">${priceMin}</p>
-        <p className="text-xs italic text-white/60">
-          Formula: ceil({state.tracks.length} × 0.60) − 0.01. Listeners can pay more (tip).
-        </p>
+        <p className="text-xs italic text-white/60">Listeners can pay more (tip).</p>
       </div>
 
       <label className="flex items-center gap-3 rounded-xl bg-white/[0.03] p-3">
