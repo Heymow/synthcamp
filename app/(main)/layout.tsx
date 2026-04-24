@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { Background3D } from '@/components/three/background-3d';
+import { Background3DLazy } from '@/components/three/background-3d-lazy';
 import { Header } from '@/components/layout/header';
 import { MiniPlayer } from '@/components/player/mini-player';
 import { MiniPlayerProvider } from '@/components/player/mini-player-provider';
@@ -29,7 +29,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       >
         {t('skipToContent')}
       </a>
-      <Background3D />
+      <Background3DLazy />
       <div className="ui-overlay pb-32">
         <Header profile={profile} unreadCount={unreadCount} />
         <div className="h-24 md:h-40" aria-hidden="true" />
