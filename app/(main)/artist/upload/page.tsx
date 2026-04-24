@@ -87,11 +87,13 @@ export default async function UploadPage({ searchParams }: UploadPageProps) {
       : { mode: 'immediate', date: null },
   };
 
-  // Pick the earliest step where something's clearly missing. If tracks are
-  // empty, jump to tracks. If everything's present, start on Publish so the
-  // artist can just push it out.
-  const initialStep =
-    tracks.length === 0 ? 1 : !release.credit_narrative && release.credit_category === 'ai_crafted' ? 2 : 4;
+  // Pick the earliest step where something's clearly missing.
+  const MIN_TRACKS = 3;
+  const initialStep = (() => {
+    if (!release.title || !release.cover_url) return 0;
+    if (tracks.length < MIN_TRACKS) return 1;
+    return 4;
+  })();
 
   return (
     <UploadWizard artistId={profile.id} initialState={initialState} initialStep={initialStep} />
