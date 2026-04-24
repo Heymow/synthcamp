@@ -5,6 +5,7 @@ import { GlassPanel } from '@/components/ui/glass-panel';
 import { Button } from '@/components/ui/button';
 import { SignInGate } from '@/components/auth/sign-in-gate';
 import { ArchiveReleaseButton } from '@/components/catalog/archive-release-button';
+import { DeleteDraftButton } from '@/components/catalog/delete-draft-button';
 import { getPrice, getReleaseLabel } from '@/lib/pricing';
 import { getCurrentProfile } from '@/lib/data/profile';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -47,13 +48,14 @@ export default async function ArtistCatalogPage() {
         <div className="space-y-4">
           {releases.map((r) => {
             const count = r.tracks?.[0]?.count ?? 0;
+            const isDraft = r.status === 'draft';
             return (
               <GlassPanel
                 key={r.id}
                 className="flex items-center gap-5 p-4 transition-colors hover:bg-white/[0.05]"
               >
                 <Link
-                  href={`/r/${r.slug}`}
+                  href={isDraft ? `/artist/upload?draftId=${r.id}` : `/r/${r.slug}`}
                   className="flex flex-1 cursor-pointer items-center gap-5 overflow-hidden"
                 >
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl">
@@ -62,14 +64,18 @@ export default async function ArtistCatalogPage() {
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <h3 className="truncate text-sm font-bold italic text-white">{r.title}</h3>
                     <p className="text-[9px] uppercase tracking-widest text-white/60">
-                      {getReleaseLabel(count)} · {r.status}
+                      {getReleaseLabel(count)} · {isDraft ? 'draft · tap to resume' : r.status}
                     </p>
                   </div>
                   <span className="shrink-0 font-mono text-xs text-indigo-400">
                     ${getPrice(count)}
                   </span>
                 </Link>
-                <ArchiveReleaseButton releaseId={r.id} releaseTitle={r.title} />
+                {isDraft ? (
+                  <DeleteDraftButton releaseId={r.id} releaseTitle={r.title} />
+                ) : (
+                  <ArchiveReleaseButton releaseId={r.id} releaseTitle={r.title} />
+                )}
               </GlassPanel>
             );
           })}

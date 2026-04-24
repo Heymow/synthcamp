@@ -8,9 +8,15 @@ import { StepPricingParty } from './step-pricing-party';
 import { StepPublish } from './step-publish';
 import { INITIAL_WIZARD_STATE, STEP_LABELS, type WizardState } from './types';
 
-export function UploadWizard({ artistId }: { artistId: string }) {
-  const [step, setStep] = useState(0);
-  const [state, setState] = useState<WizardState>(INITIAL_WIZARD_STATE);
+interface UploadWizardProps {
+  artistId: string;
+  initialState?: WizardState;
+  initialStep?: number;
+}
+
+export function UploadWizard({ artistId, initialState, initialStep = 0 }: UploadWizardProps) {
+  const [step, setStep] = useState(initialStep);
+  const [state, setState] = useState<WizardState>(initialState ?? INITIAL_WIZARD_STATE);
 
   const steps = [
     <StepMetadata
@@ -44,11 +50,13 @@ export function UploadWizard({ artistId }: { artistId: string }) {
     <StepPublish key="publish" state={state} onBack={() => setStep(3)} />,
   ];
 
+  const isResume = Boolean(initialState?.releaseId);
+
   return (
     <main className="view-enter mx-auto max-w-lg space-y-6 px-6 pb-32">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-black italic uppercase leading-none tracking-tighter text-white">
-          New Release
+          {isResume ? 'Continue Draft' : 'New Release'}
         </h2>
         <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
           {step + 1} / {steps.length} · {STEP_LABELS[step]}

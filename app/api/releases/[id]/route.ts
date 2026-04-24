@@ -56,3 +56,47 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true });
 }
+
+/**
+ * Hard-delete a draft release. Only the owner can delete, and only while the
+ * release is still in draft — anything past that (scheduled/published/etc.)
+ * must go through archive instead, so we never lose audit history on sold
+ * or streamed content.
+ */
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const { data: release, error: fetchErr } = await supabase
+    .from('releases')
+    .select('id, artist_id, status')
+    .eq('id', id)
+    .single();
+  if (fetchErr || !release) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (release.artist_id !== user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  if (release.status !== 'draft') {
+    return NextResponse.json(
+      { error: 'Only drafts can be deleted; archive non-draft releases instead' },
+      { status: 400 },
+    );
+  }
+
+  // Explicit ordered deletes — FK cascades may or may not be set depending on
+  // when the tables were created, and some rows (party_alerts, notifications)
+  // reference tracks/parties, so do them in dependency order.
+  await supabase.from('listening_parties').delete().eq('release_id', id);
+  await supabase.from('tracks').delete().eq('release_id', id);
+  const { error: delErr } = await supabase.from('releases').delete().eq('id', id);
+  if (delErr) return NextResponse.json({ error: delErr.message }, { status: 400 });
+
+  return NextResponse.json({ ok: true });
+}

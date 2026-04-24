@@ -12,6 +12,7 @@ import { EmbedButton } from '@/components/catalog/embed-button';
 import { ReportButton } from '@/components/social/report-button';
 import { CancelPartyButton } from '@/components/party/cancel-party-button';
 import { ArchiveReleaseButton } from '@/components/catalog/archive-release-button';
+import { DeleteDraftButton } from '@/components/catalog/delete-draft-button';
 import { LocalDateTime } from '@/components/ui/local-datetime';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -242,10 +243,25 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
             </div>
           )}
 
-          {isOwner && r.status === 'draft' && !party && (
-            <p className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[11px] italic text-white/60">
-              Draft preview — visible only to you. Finish the wizard to publish.
-            </p>
+          {isOwner && r.status === 'draft' && (
+            <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <p className="text-[11px] italic text-white/60">
+                Draft preview. Visible only to you.
+              </p>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/artist/upload?draftId=${r.id}`}
+                  className="inline-flex cursor-pointer items-center rounded-lg border border-indigo-300/40 bg-indigo-500/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-100 transition hover:bg-indigo-500/30"
+                >
+                  Continue draft
+                </Link>
+                <DeleteDraftButton
+                  releaseId={r.id}
+                  releaseTitle={r.title}
+                  redirectTo="/artist/catalog"
+                />
+              </div>
+            </div>
           )}
           {playerTracks[0] && <PlayReleaseButton track={playerTracks[0]} />}
           <Button variant="ghost" size="md" disabled className="w-full">
