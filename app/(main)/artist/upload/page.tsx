@@ -87,11 +87,18 @@ export default async function UploadPage({ searchParams }: UploadPageProps) {
       : { mode: 'immediate', date: null },
   };
 
-  // Pick the earliest step where something's clearly missing.
+  // Land on the first step the artist still has required input for.
+  // Step indices: 0 Metadata · 1 Tracks · 2 Credits · 3 Pricing & Party · 4 Publish
+  // - Metadata: title + cover_url are required
+  // - Tracks: EP/Album minimum is 3
+  // - Credits: always has defaults (category=ai_crafted), never blocks
+  // - Pricing & Party: no persisted state short of a listening_parties row
+  //   means the artist has to pick party-vs-release-date again on resume
   const MIN_TRACKS = 3;
   const initialStep = (() => {
     if (!release.title || !release.cover_url) return 0;
     if (tracks.length < MIN_TRACKS) return 1;
+    if (!party) return 3;
     return 4;
   })();
 
