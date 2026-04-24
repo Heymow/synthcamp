@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     language: body.language ?? null,
     genres: body.genres ?? [],
     price_minimum: 0, // recomputed at publish
-    credit_category: body.credit_category ?? 'acoustic',
+    credit_category: body.credit_category ?? 'ai_crafted',
     credit_tags: body.credit_tags ?? [],
     credit_narrative: body.credit_narrative ?? null,
     credits_per_track: body.credits_per_track ?? false,
