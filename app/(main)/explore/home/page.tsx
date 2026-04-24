@@ -21,6 +21,7 @@ type PartyRow = {
   scheduled_at: string;
   status: 'scheduled' | 'live';
   room_id: string;
+  artist_id: string;
   release: {
     title: string;
     slug: string;
@@ -28,6 +29,15 @@ type PartyRow = {
     artist: { display_name: string } | null;
   } | null;
 };
+
+interface SocialSignal {
+  viewerFollowsArtist: boolean;
+  followedWaitingCount: number;
+}
+
+function socialWeight(s: SocialSignal): number {
+  return (s.viewerFollowsArtist ? 10 : 0) + s.followedWaitingCount * 3;
+}
 
 export default async function ExploreHomePage() {
   const supabase = await getSupabaseServerClient();
@@ -71,7 +81,7 @@ export default async function ExploreHomePage() {
   const { data: partiesRaw } = await supabase
     .from('listening_parties')
     .select(
-      `id, scheduled_at, status, room_id,
+      `id, scheduled_at, status, room_id, artist_id,
        release:releases!listening_parties_release_id_fkey(
          title, slug, cover_url,
          artist:profiles!releases_artist_id_fkey(display_name)
@@ -96,14 +106,34 @@ export default async function ExploreHomePage() {
     viewerId = null;
   }
   const alertedPartyIds = new Set<string>();
+  const followedIds = new Set<string>();
+  const signals = new Map<string, SocialSignal>();
   if (viewerId && partiesByRoom.size > 0) {
     const partyIds = [...partiesByRoom.values()].map((p) => p.id);
-    const { data: alerts } = await supabase
-      .from('party_alerts')
-      .select('party_id')
-      .eq('user_id', viewerId)
-      .in('party_id', partyIds);
-    for (const a of alerts ?? []) alertedPartyIds.add(a.party_id);
+
+    const [alertsRes, followsRes] = await Promise.all([
+      supabase
+        .from('party_alerts')
+        .select('party_id, user_id')
+        .in('party_id', partyIds),
+      supabase.from('follows').select('followed_id').eq('follower_id', viewerId),
+    ]);
+
+    const ownAlerts = (alertsRes.data ?? []).filter((a) => a.user_id === viewerId);
+    for (const a of ownAlerts) alertedPartyIds.add(a.party_id);
+    for (const f of followsRes.data ?? []) followedIds.add(f.followed_id);
+
+    // Compute per-party social signal.
+    for (const party of partiesByRoom.values()) {
+      const viewerFollowsArtist = followedIds.has(party.artist_id);
+      let followedWaitingCount = 0;
+      for (const a of alertsRes.data ?? []) {
+        if (a.party_id === party.id && a.user_id !== viewerId && followedIds.has(a.user_id)) {
+          followedWaitingCount += 1;
+        }
+      }
+      signals.set(party.id, { viewerFollowsArtist, followedWaitingCount });
+    }
   }
   const viewerIsAuthenticated = viewerId !== null;
 
@@ -111,7 +141,16 @@ export default async function ExploreHomePage() {
 
   const roomList = rooms ?? [];
   const gmc = roomList.find((r) => r.kind === 'global_master');
-  const secondaries = roomList.filter((r) => r.kind !== 'global_master');
+  const secondariesUnsorted = roomList.filter((r) => r.kind !== 'global_master');
+  // GMC stays pinned; secondaries re-order by social weight (tie-breaker
+  // preserves original display_order).
+  const secondaries = [...secondariesUnsorted].sort((a, b) => {
+    const pa = partiesByRoom.get(a.id);
+    const pb = partiesByRoom.get(b.id);
+    const wa = pa ? socialWeight(signals.get(pa.id) ?? { viewerFollowsArtist: false, followedWaitingCount: 0 }) : 0;
+    const wb = pb ? socialWeight(signals.get(pb.id) ?? { viewerFollowsArtist: false, followedWaitingCount: 0 }) : 0;
+    return wb - wa;
+  });
 
   return (
     <main className="view-enter mx-auto max-w-4xl space-y-12 px-6 pb-32">
@@ -175,6 +214,7 @@ export default async function ExploreHomePage() {
                 party={p}
                 viewerIsAuthenticated={viewerIsAuthenticated}
                 initialSubscribed={p ? alertedPartyIds.has(p.id) : false}
+                socialSignal={p ? signals.get(p.id) ?? null : null}
               />
             );
           })()}
@@ -189,6 +229,7 @@ export default async function ExploreHomePage() {
                   viewerIsAuthenticated={viewerIsAuthenticated}
                   initialSubscribed={p ? alertedPartyIds.has(p.id) : false}
                   paletteIndex={i}
+                  socialSignal={p ? signals.get(p.id) ?? null : null}
                 />
               );
             })}

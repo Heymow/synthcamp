@@ -18,11 +18,17 @@ export interface RoomHeroCardParty {
   } | null;
 }
 
+export interface RoomHeroSocialSignal {
+  viewerFollowsArtist: boolean;
+  followedWaitingCount: number;
+}
+
 export interface RoomHeroCardProps {
   roomName: string;
   party: RoomHeroCardParty | null;
   viewerIsAuthenticated: boolean;
   initialSubscribed: boolean;
+  socialSignal?: RoomHeroSocialSignal | null;
 }
 
 // Decorative avatar ids; phase 5 swaps these for real followed-listener avatars.
@@ -34,7 +40,12 @@ export function RoomHeroCard({
   party,
   viewerIsAuthenticated,
   initialSubscribed,
+  socialSignal,
 }: RoomHeroCardProps) {
+  const hasSocial = Boolean(
+    socialSignal &&
+      (socialSignal.viewerFollowsArtist || socialSignal.followedWaitingCount > 0),
+  );
   const release = party?.release ?? null;
   const artistName = release?.artist?.display_name ?? 'Unknown';
   const baseTime = party ? new Date(party.scheduled_at).getTime() : 0;
@@ -59,7 +70,8 @@ export function RoomHeroCard({
     <article
       className={
         'glass-panel group relative overflow-hidden rounded-[2.5rem] border-white/10 p-1 transition-transform duration-500 ' +
-        (party ? 'cursor-pointer active:scale-[0.99]' : '')
+        (party ? 'cursor-pointer active:scale-[0.99] ' : '') +
+        (hasSocial ? 'social-wick ' : '')
       }
     >
       {party && <StatusTimer baseTime={baseTime} isCountdown={isCountdown} />}
@@ -117,6 +129,20 @@ export function RoomHeroCard({
               <p className="pt-0.5 text-[13px] font-bold uppercase tracking-[0.2em] text-indigo-300">
                 by {artistName}
               </p>
+            )}
+            {socialSignal && (socialSignal.viewerFollowsArtist || socialSignal.followedWaitingCount > 0) && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                {socialSignal.viewerFollowsArtist && (
+                  <span className="rounded-full border border-indigo-300/40 bg-indigo-500/20 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-indigo-100">
+                    You follow
+                  </span>
+                )}
+                {socialSignal.followedWaitingCount > 0 && (
+                  <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white/80">
+                    {socialSignal.followedWaitingCount} friend{socialSignal.followedWaitingCount > 1 ? 's' : ''} waiting
+                  </span>
+                )}
+              </div>
             )}
             <p className="pt-0.5 text-sm font-medium italic text-white">{tagline}</p>
             <div className="space-y-1.5 pt-2">

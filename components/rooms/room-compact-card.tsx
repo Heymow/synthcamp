@@ -18,6 +18,11 @@ export interface RoomCompactCardParty {
   } | null;
 }
 
+export interface RoomCompactSocialSignal {
+  viewerFollowsArtist: boolean;
+  followedWaitingCount: number;
+}
+
 export interface RoomCompactCardProps {
   roomName: string;
   party: RoomCompactCardParty | null;
@@ -25,6 +30,7 @@ export interface RoomCompactCardProps {
   initialSubscribed: boolean;
   /** Decorative variant (0 or 1) to give each secondary a distinct palette. */
   paletteIndex?: number;
+  socialSignal?: RoomCompactSocialSignal | null;
 }
 
 const PLACEHOLDER_LISTENERS = {
@@ -48,6 +54,7 @@ export function RoomCompactCard({
   viewerIsAuthenticated,
   initialSubscribed,
   paletteIndex = 0,
+  socialSignal,
 }: RoomCompactCardProps) {
   const release = party?.release ?? null;
   const artistName = release?.artist?.display_name ?? 'Unknown';
@@ -56,12 +63,17 @@ export function RoomCompactCard({
   const listeners = party ? PLACEHOLDER_LISTENERS[party.status] : null;
   const cities = PLACEHOLDER_CITY_SETS[paletteIndex % PLACEHOLDER_CITY_SETS.length]!;
   const avatars = AVATAR_SEEDS[paletteIndex % AVATAR_SEEDS.length]!;
+  const hasSocial = Boolean(
+    socialSignal &&
+      (socialSignal.viewerFollowsArtist || socialSignal.followedWaitingCount > 0),
+  );
 
   const body = (
     <article
       className={
         'glass-panel group relative min-h-[125px] overflow-hidden rounded-[1.5rem] border-white/5 p-4 transition-colors md:min-h-[110px] md:rounded-[2rem] md:p-5 ' +
-        (party ? 'cursor-pointer hover:bg-white/[0.05]' : 'opacity-70')
+        (party ? 'cursor-pointer hover:bg-white/[0.05] ' : 'opacity-70 ') +
+        (hasSocial ? 'social-wick ' : '')
       }
     >
       {party && <StatusTimer baseTime={baseTime} isCountdown={isCountdown} small />}
@@ -98,6 +110,21 @@ export function RoomCompactCard({
             <p className="truncate text-[10px] font-bold uppercase tracking-widest text-white/40">
               {roomName}
             </p>
+          )}
+
+          {socialSignal && (socialSignal.viewerFollowsArtist || socialSignal.followedWaitingCount > 0) && (
+            <div className="flex flex-wrap items-center gap-1 pt-1">
+              {socialSignal.viewerFollowsArtist && (
+                <span className="rounded-full border border-indigo-300/40 bg-indigo-500/20 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-indigo-100">
+                  You follow
+                </span>
+              )}
+              {socialSignal.followedWaitingCount > 0 && (
+                <span className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-white/80">
+                  {socialSignal.followedWaitingCount} friend{socialSignal.followedWaitingCount > 1 ? 's' : ''} waiting
+                </span>
+              )}
+            </div>
           )}
 
           {listeners ? (
