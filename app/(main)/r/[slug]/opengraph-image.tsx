@@ -154,7 +154,7 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
               transform: 'skewX(-10deg)',
             }}
           >
-            by {artistName}
+            {`by ${artistName}`}
           </div>
         </div>
 
