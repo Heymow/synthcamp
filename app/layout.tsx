@@ -35,13 +35,13 @@ export const metadata: Metadata = {
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
     url: SITE_URL,
-    images: [{ url: '/mock-covers/hero.jpg', width: 1200, height: 630, alt: 'SynthCamp' }],
+    // og:image is supplied by app/opengraph-image.tsx
   },
   twitter: {
     card: 'summary_large_image',
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
-    images: ['/mock-covers/hero.jpg'],
+    // twitter:image falls back to the opengraph-image by convention
   },
 };
 
