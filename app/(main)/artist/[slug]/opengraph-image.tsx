@@ -71,25 +71,40 @@ export default async function ArtistOG({ params }: ArtistOGParams) {
           fontFamily: 'Outfit, system-ui, sans-serif',
         }}
       >
-        {/* Bicolor backdrop: dark left, indigo right, separated by a soft
-            vertical bezier curve so the OG doesn't feel flat. */}
+        {/* Aurora backdrop: overlapping soft radial gradients in the site's
+            indigo palette with warm accents, matching the GMC flame glow. */}
         <svg
           width={1200}
           height={630}
           style={{ position: 'absolute', inset: 0 }}
         >
           <defs>
-            <linearGradient id="og-bg-grad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#1e1b4b" />
-              <stop offset="100%" stopColor="#312e81" />
-            </linearGradient>
-            <radialGradient id="og-glow" cx="0.18" cy="0.85" r="0.55">
-              <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.4" />
+            <radialGradient id="aurora-1" cx="0.25" cy="0.3" r="0.55">
+              <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.55" />
               <stop offset="100%" stopColor="#4f46e5" stopOpacity="0" />
             </radialGradient>
+            <radialGradient id="aurora-2" cx="0.72" cy="0.65" r="0.55">
+              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="aurora-3" cx="0.58" cy="0.45" r="0.35">
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="aurora-warm-1" cx="0.15" cy="0.8" r="0.35">
+              <stop offset="0%" stopColor="#ea580c" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="#ea580c" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="aurora-warm-2" cx="0.85" cy="0.2" r="0.3">
+              <stop offset="0%" stopColor="#fb923c" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#fb923c" stopOpacity="0" />
+            </radialGradient>
           </defs>
-          <path d="M 470,0 C 620,200 400,440 500,630 L 1200,630 L 1200,0 Z" fill="url(#og-bg-grad)" />
-          <circle cx="260" cy="470" r="320" fill="url(#og-glow)" />
+          <rect width="1200" height="630" fill="url(#aurora-1)" />
+          <rect width="1200" height="630" fill="url(#aurora-2)" />
+          <rect width="1200" height="630" fill="url(#aurora-3)" />
+          <rect width="1200" height="630" fill="url(#aurora-warm-1)" />
+          <rect width="1200" height="630" fill="url(#aurora-warm-2)" />
         </svg>
 
         {/* Avatar circle on the left */}
