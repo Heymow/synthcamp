@@ -1,25 +1,5 @@
-import nodemailer, { type Transporter } from 'nodemailer';
-
 export function isMailerConfigured(): boolean {
-  return Boolean(
-    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS,
-  );
-}
-
-let cachedTransporter: Transporter | null = null;
-
-function getTransporter(): Transporter {
-  if (cachedTransporter) return cachedTransporter;
-  cachedTransporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-  return cachedTransporter;
+  return Boolean(process.env.BREVO_API_KEY && process.env.SMTP_ADMIN_EMAIL);
 }
 
 export interface SendEmailOptions {
@@ -30,21 +10,38 @@ export interface SendEmailOptions {
 }
 
 /**
- * Fire-and-forget email send. Swallows errors internally so a failing SMTP
- * transaction never bubbles up to block a user action. Logs to console so
- * failures surface in Railway logs.
+ * Send a transactional email via Brevo's HTTP API. We used to use SMTP via
+ * nodemailer, but Railway's outbound :587 is unreliable toward Brevo — the
+ * HTTP API works from any egress.
  */
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions): Promise<void> {
   if (!isMailerConfigured()) {
-    console.warn('[mailer] skipping email (SMTP not configured):', subject);
+    console.warn('[mailer] skipping email (BREVO_API_KEY or SMTP_ADMIN_EMAIL missing):', subject);
     return;
   }
-  const from = process.env.SMTP_ADMIN_EMAIL
-    ? `${process.env.SMTP_SENDER_NAME ?? 'SynthCamp'} <${process.env.SMTP_ADMIN_EMAIL}>`
-    : process.env.SMTP_USER;
+  const fromName = process.env.SMTP_SENDER_NAME ?? 'SynthCamp';
+  const fromEmail = process.env.SMTP_ADMIN_EMAIL!;
+  const apiKey = process.env.BREVO_API_KEY!;
   try {
-    const transporter = getTransporter();
-    await transporter.sendMail({ from, to, subject, html, text });
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: fromName, email: fromEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error(`[mailer] Brevo ${res.status}:`, body.slice(0, 300));
+    }
   } catch (err) {
     console.error('[mailer] send failed:', err);
   }
