@@ -40,8 +40,12 @@ export async function generateMetadata({ params }: ReleasePageProps): Promise<Me
     artist: { display_name: string } | null;
   };
   const artistName = row.artist?.display_name ?? 'SynthCamp';
-  const title = `${row.title} · ${artistName}`;
-  const description = row.description ?? `Listen to ${row.title} by ${artistName} on SynthCamp.`;
+  const title = `${row.title} by ${artistName} · Listen on SynthCamp`;
+  const userDesc = row.description?.trim();
+  const description =
+    userDesc && userDesc.length >= 80
+      ? userDesc
+      : `${userDesc ? userDesc + ' ' : ''}Stream ${row.title} by ${artistName} on SynthCamp, the AI Music Marketplace where artists share their creative process.`;
   return {
     title,
     description,

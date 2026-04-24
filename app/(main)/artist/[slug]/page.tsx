@@ -24,8 +24,12 @@ export async function generateMetadata({ params }: ArtistPageProps): Promise<Met
     .eq('slug', slug)
     .single();
   if (!data || !data.is_artist) return { title: 'Artist not found · SynthCamp' };
-  const title = `${data.display_name} · SynthCamp`;
-  const description = data.bio ?? `Discover ${data.display_name}'s releases on SynthCamp.`;
+  const title = `${data.display_name} · Music & Listening Parties on SynthCamp`;
+  const userBio = data.bio?.trim();
+  const description =
+    userBio && userBio.length >= 80
+      ? userBio
+      : `${userBio ? userBio + ' ' : ''}${data.display_name} shares AI-crafted music on SynthCamp. Discover releases, join live listening parties, and follow the creative process.`;
   return {
     title,
     description,
