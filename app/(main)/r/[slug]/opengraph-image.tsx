@@ -77,11 +77,31 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
           height: '100%',
           display: 'flex',
           position: 'relative',
-          background:
-            'linear-gradient(120deg, #050507 0%, #0a0a1f 55%, #1e1b4b 100%)',
+          background: '#050507',
           fontFamily: 'Outfit, system-ui, sans-serif',
         }}
       >
+        {/* Bicolor backdrop: dark left, indigo right, separated by a soft
+            vertical bezier curve so the OG doesn't feel flat. */}
+        <svg
+          width={1200}
+          height={630}
+          style={{ position: 'absolute', inset: 0 }}
+        >
+          <defs>
+            <linearGradient id="og-bg-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#1e1b4b" />
+              <stop offset="100%" stopColor="#312e81" />
+            </linearGradient>
+            <radialGradient id="og-glow" cx="0.2" cy="0.85" r="0.55">
+              <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#4f46e5" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <path d="M 560,0 C 720,200 480,430 580,630 L 1200,630 L 1200,0 Z" fill="url(#og-bg-grad)" />
+          <circle cx="240" cy="540" r="320" fill="url(#og-glow)" />
+        </svg>
+
         {/* Poster cover on the left */}
         {coverDataUrl && (
           <img
