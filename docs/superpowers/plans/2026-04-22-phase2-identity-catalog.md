@@ -23,26 +23,26 @@ These tasks require UI/web-console actions. Collect credentials for Milestone 1.
 
 ### Task 0.1: Create Resend account + API key
 
-- [ ] **Step 1:** Go to https://resend.com, sign up (free tier 3000 emails/month).
-- [ ] **Step 2:** In dashboard → **API Keys** → create one named `synthcamp-phase2`, scope `Sending access`.
-- [ ] **Step 3:** Save the API key (starts with `re_...`) — it's only shown once. Paste in password manager.
-- [ ] **Step 4:** Add domain verification in **Domains** (use your actual domain or skip for testing with `onboarding@resend.dev`).
-- [ ] **Step 5:** No commit for this step.
+- [x] **Step 1:** Go to https://resend.com, sign up (free tier 3000 emails/month).
+- [x] **Step 2:** In dashboard → **API Keys** → create one named `synthcamp-phase2`, scope `Sending access`.
+- [x] **Step 3:** Save the API key (starts with `re_...`) — it's only shown once. Paste in password manager.
+- [x] **Step 4:** Add domain verification in **Domains** (use your actual domain or skip for testing with `onboarding@resend.dev`).
+- [x] **Step 5:** No commit for this step.
 
 ### Task 0.2: Create Google OAuth app
 
-- [ ] **Step 1:** Go to https://console.cloud.google.com, create a new project `synthcamp`.
-- [ ] **Step 2:** **APIs & Services** → **OAuth consent screen** → configure external, app name `SynthCamp`, support email, dev contact email. Scope: `openid`, `email`, `profile`. Save.
-- [ ] **Step 3:** **Credentials** → Create OAuth Client ID → Type **Web application** → Name `synthcamp-phase2`.
-- [ ] **Step 4:** Authorized redirect URI: leave blank for now (will add in Task 1.5 once Supabase URL is known).
-- [ ] **Step 5:** Save `CLIENT_ID` and `CLIENT_SECRET` in password manager.
+- [x] **Step 1:** Go to https://console.cloud.google.com, create a new project `synthcamp`.
+- [x] **Step 2:** **APIs & Services** → **OAuth consent screen** → configure external, app name `SynthCamp`, support email, dev contact email. Scope: `openid`, `email`, `profile`. Save.
+- [x] **Step 3:** **Credentials** → Create OAuth Client ID → Type **Web application** → Name `synthcamp-phase2`.
+- [x] **Step 4:** Authorized redirect URI: leave blank for now (will add in Task 1.5 once Supabase URL is known).
+- [x] **Step 5:** Save `CLIENT_ID` and `CLIENT_SECRET` in password manager.
 
 ### Task 0.3: Create Cloudflare R2 bucket
 
-- [ ] **Step 1:** Cloudflare Dashboard → **R2** → **Create bucket** → name `synthcamp-audio-source` → Location `Automatic` → Enable public access: **NO**.
-- [ ] **Step 2:** **Manage R2 API Tokens** → Create token → name `synthcamp-phase2-server` → Permissions **Object Read & Write** on `synthcamp-audio-source` → TTL: default.
-- [ ] **Step 3:** Save `Access Key ID`, `Secret Access Key`, `Account ID` (visible on R2 overview page).
-- [ ] **Step 4:** Note the S3-compatible endpoint URL: `https://<account-id>.r2.cloudflarestorage.com`.
+- [x] **Step 1:** Cloudflare Dashboard → **R2** → **Create bucket** → name `synthcamp-audio-source` → Location `Automatic` → Enable public access: **NO**.
+- [x] **Step 2:** **Manage R2 API Tokens** → Create token → name `synthcamp-phase2-server` → Permissions **Object Read & Write** on `synthcamp-audio-source` → TTL: default.
+- [x] **Step 3:** Save `Access Key ID`, `Secret Access Key`, `Account ID` (visible on R2 overview page).
+- [x] **Step 4:** Note the S3-compatible endpoint URL: `https://<account-id>.r2.cloudflarestorage.com`.
 
 ---
 
@@ -55,7 +55,7 @@ Realistic: 4-8 hours debugging. Use the official docker-compose.
 **Files:**
 - Create: `supabase-selfhost/` (sibling directory to Next.js app, OR separate folder pushed to its own Railway service — recommended separate folder for isolation)
 
-- [ ] **Step 1:** Create a new directory for the Supabase config. From project root:
+- [x] **Step 1:** Create a new directory for the Supabase config. From project root:
 
 ```bash
 mkdir -p supabase-selfhost
@@ -64,9 +64,9 @@ curl -L https://github.com/supabase/supabase/raw/master/docker/docker-compose.ym
 curl -L https://github.com/supabase/supabase/raw/master/docker/.env.example -o .env.example
 ```
 
-- [ ] **Step 2:** In `supabase-selfhost/docker-compose.yml`, **remove or comment out** the `realtime` service block (not needed until Phase 4, saves resources).
+- [x] **Step 2:** In `supabase-selfhost/docker-compose.yml`, **remove or comment out** the `realtime` service block (not needed until Phase 4, saves resources).
 
-- [ ] **Step 3:** Create `supabase-selfhost/.env` from `.env.example` and fill in (paste your values, DO NOT commit):
+- [x] **Step 3:** Create `supabase-selfhost/.env` from `.env.example` and fill in (paste your values, DO NOT commit):
 
 ```bash
 POSTGRES_PASSWORD=<generate 32 chars via `openssl rand -base64 32`>
@@ -90,7 +90,7 @@ ENABLE_PHONE_SIGNUP=false
 ENABLE_ANONYMOUS_USERS=false
 ```
 
-- [ ] **Step 4:** Add `.env` to `.gitignore` at repo root:
+- [x] **Step 4:** Add `.env` to `.gitignore` at repo root:
 
 ```bash
 cd /c/Projets/SynthCamp-marketplace
@@ -99,7 +99,7 @@ echo "supabase-selfhost/volumes/" >> .gitignore
 git add .gitignore
 ```
 
-- [ ] **Step 5:** Commit the scaffold:
+- [x] **Step 5:** Commit the scaffold:
 
 ```bash
 git add supabase-selfhost/docker-compose.yml supabase-selfhost/.env.example
@@ -108,32 +108,32 @@ git commit -m "chore(supabase): scaffold self-host docker-compose (realtime disa
 
 ### Task 1.2: Deploy Supabase stack to Railway
 
-- [ ] **Step 1:** Railway dashboard → same project `synthcamp` → **New Service** → **Deploy from GitHub** → pick repo `Heymow/synthcamp` → **Root Directory**: `supabase-selfhost`.
+- [x] **Step 1:** Railway dashboard → same project `synthcamp` → **New Service** → **Deploy from GitHub** → pick repo `Heymow/synthcamp` → **Root Directory**: `supabase-selfhost`.
 
-- [ ] **Step 2:** Railway detects docker-compose. Name the service `supabase-stack`.
+- [x] **Step 2:** Railway detects docker-compose. Name the service `supabase-stack`.
 
-- [ ] **Step 3:** **Variables** tab → paste all contents of `supabase-selfhost/.env` (don't commit these).
+- [x] **Step 3:** **Variables** tab → paste all contents of `supabase-selfhost/.env` (don't commit these).
 
-- [ ] **Step 4:** **Volumes** tab → add volume `postgres-data` mounted at `/var/lib/postgresql/data`.
+- [x] **Step 4:** **Volumes** tab → add volume `postgres-data` mounted at `/var/lib/postgresql/data`.
 
-- [ ] **Step 5:** **Networking** tab → generate public domain for the service (e.g., `supabase-stack-production.up.railway.app`).
+- [x] **Step 5:** **Networking** tab → generate public domain for the service (e.g., `supabase-stack-production.up.railway.app`).
 
-- [ ] **Step 6:** Update `.env` values on Railway Variables: `SITE_URL`, `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL` all set to the generated URL.
+- [x] **Step 6:** Update `.env` values on Railway Variables: `SITE_URL`, `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL` all set to the generated URL.
 
-- [ ] **Step 7:** Deploy. Wait ~5-10 min for initial start. Check logs — expect errors about missing Postgres initially (self-resolves), then stabilization.
+- [x] **Step 7:** Deploy. Wait ~5-10 min for initial start. Check logs — expect errors about missing Postgres initially (self-resolves), then stabilization.
 
-- [ ] **Step 8:** Verify Kong gateway responds: `curl https://<supabase-url>/auth/v1/health` → expect `{"version":"v...","name":"GoTrue","description":"...","full_description":"..."}`.
+- [x] **Step 8:** Verify Kong gateway responds: `curl https://<supabase-url>/auth/v1/health` → expect `{"version":"v...","name":"GoTrue","description":"...","full_description":"..."}`.
 
-- [ ] **Step 9:** Verify Postgres via Studio: open `https://<supabase-url>` in browser, login with `DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD`. Studio should load.
+- [x] **Step 9:** Verify Postgres via Studio: open `https://<supabase-url>` in browser, login with `DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD`. Studio should load.
 
 No git commit (Railway config lives in Railway's UI, not git).
 
 ### Task 1.3: Finalize Google OAuth redirect URI
 
-- [ ] **Step 1:** Go back to Google Cloud Console OAuth credentials from Task 0.2.
-- [ ] **Step 2:** Add authorized redirect URI: `https://<supabase-url>/auth/v1/callback`.
-- [ ] **Step 3:** Save.
-- [ ] **Step 4:** On Railway `supabase-stack` Variables, add:
+- [x] **Step 1:** Go back to Google Cloud Console OAuth credentials from Task 0.2.
+- [x] **Step 2:** Add authorized redirect URI: `https://<supabase-url>/auth/v1/callback`.
+- [x] **Step 3:** Save.
+- [x] **Step 4:** On Railway `supabase-stack` Variables, add:
 
 ```
 GOTRUE_EXTERNAL_GOOGLE_ENABLED=true
@@ -142,8 +142,8 @@ GOTRUE_EXTERNAL_GOOGLE_SECRET=<google-client-secret>
 GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI=https://<supabase-url>/auth/v1/callback
 ```
 
-- [ ] **Step 5:** Redeploy `supabase-stack`. Wait for restart.
-- [ ] **Step 6:** Verify: `curl https://<supabase-url>/auth/v1/settings` → should list `google` in `external` providers.
+- [x] **Step 5:** Redeploy `supabase-stack`. Wait for restart.
+- [x] **Step 6:** Verify: `curl https://<supabase-url>/auth/v1/settings` → should list `google` in `external` providers.
 
 ---
 
@@ -155,7 +155,7 @@ GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI=https://<supabase-url>/auth/v1/callback
 - Create: `supabase/config.toml`
 - Create: `supabase/migrations/` (empty dir)
 
-- [ ] **Step 1:** Install CLI globally:
+- [x] **Step 1:** Install CLI globally:
 
 ```bash
 pnpm add -g supabase
@@ -164,7 +164,7 @@ supabase --version
 
 Expected: `2.x.x` or higher.
 
-- [ ] **Step 2:** From project root `/c/Projets/SynthCamp-marketplace/`:
+- [x] **Step 2:** From project root `/c/Projets/SynthCamp-marketplace/`:
 
 ```bash
 supabase init
@@ -172,7 +172,7 @@ supabase init
 
 This creates `supabase/config.toml` and `supabase/migrations/`.
 
-- [ ] **Step 3:** Commit scaffold:
+- [x] **Step 3:** Commit scaffold:
 
 ```bash
 git add supabase/
@@ -181,7 +181,7 @@ git commit -m "chore(db): init supabase CLI config"
 
 ### Task 2.2: Link CLI to self-hosted Supabase
 
-- [ ] **Step 1:** The self-host Supabase doesn't use Supabase Cloud project IDs. Instead, we use direct Postgres URL for migrations.
+- [x] **Step 1:** The self-host Supabase doesn't use Supabase Cloud project IDs. Instead, we use direct Postgres URL for migrations.
 
 Get the Postgres connection string from Railway `supabase-stack` Variables → it's derived from `POSTGRES_PASSWORD` + the internal Postgres service. Expose it:
 
@@ -189,13 +189,13 @@ Railway `supabase-stack` service → under Postgres service (auto-provisioned in
 
 Alternative: add a new Railway service `postgres-direct` that proxies port 5432, OR use `railway run` from your local machine which tunnels into the private network.
 
-- [ ] **Step 2:** Save the connection string locally (DO NOT commit):
+- [x] **Step 2:** Save the connection string locally (DO NOT commit):
 
 ```bash
 echo 'DATABASE_URL="postgresql://postgres:<password>@<host>:5432/postgres"' >> .env.local
 ```
 
-- [ ] **Step 3:** Test connection:
+- [x] **Step 3:** Test connection:
 
 ```bash
 supabase db remote commit --db-url "$DATABASE_URL" --message "test connection"
@@ -203,14 +203,14 @@ supabase db remote commit --db-url "$DATABASE_URL" --message "test connection"
 
 If it fails, debug. Common issues: wrong password, port not exposed, SSL required. Add `?sslmode=require` if needed.
 
-- [ ] **Step 4:** No commit yet — config lives in `.env.local`.
+- [x] **Step 4:** No commit yet — config lives in `.env.local`.
 
 ### Task 2.3: First migration — extensions and enums
 
 **Files:**
 - Create: `supabase/migrations/20260422000001_extensions_enums.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000001_extensions_enums.sql
@@ -227,7 +227,7 @@ CREATE TYPE party_status AS ENUM ('scheduled', 'live', 'ended', 'cancelled');
 CREATE TYPE room_kind AS ENUM ('global_master', 'secondary');
 ```
 
-- [ ] **Step 2:** Apply migration:
+- [x] **Step 2:** Apply migration:
 
 ```bash
 supabase db push --db-url "$DATABASE_URL"
@@ -235,9 +235,9 @@ supabase db push --db-url "$DATABASE_URL"
 
 Expected: `Applying migration 20260422000001_extensions_enums.sql... Success`.
 
-- [ ] **Step 3:** Verify on Studio UI → **Database** → **Extensions** → `btree_gist` and `pg_cron` should show `installed`.
+- [x] **Step 3:** Verify on Studio UI → **Database** → **Extensions** → `btree_gist` and `pg_cron` should show `installed`.
 
-- [ ] **Step 4:** Commit:
+- [x] **Step 4:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000001_extensions_enums.sql
@@ -253,7 +253,7 @@ git commit -m "db: install btree_gist + pg_cron extensions and phase2 enums"
 **Files:**
 - Create: `supabase/migrations/20260422000002_profiles.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000002_profiles.sql
@@ -303,15 +303,15 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 ```
 
-- [ ] **Step 2:** Apply:
+- [x] **Step 2:** Apply:
 
 ```bash
 supabase db push --db-url "$DATABASE_URL"
 ```
 
-- [ ] **Step 3:** Verify on Studio → Tables → `profiles` exists with columns + RLS enabled badge.
+- [x] **Step 3:** Verify on Studio → Tables → `profiles` exists with columns + RLS enabled badge.
 
-- [ ] **Step 4:** Commit:
+- [x] **Step 4:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000002_profiles.sql
@@ -323,7 +323,7 @@ git commit -m "db: add profiles table with RLS and auto-create trigger"
 **Files:**
 - Create: `supabase/migrations/20260422000003_rooms.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000003_rooms.sql
@@ -348,15 +348,15 @@ CREATE POLICY rooms_select_public ON public.rooms FOR SELECT USING (true);
 -- No INSERT/UPDATE/DELETE policies — only admin via service_role can modify
 ```
 
-- [ ] **Step 2:** Apply:
+- [x] **Step 2:** Apply:
 
 ```bash
 supabase db push --db-url "$DATABASE_URL"
 ```
 
-- [ ] **Step 3:** Verify: `SELECT * FROM public.rooms;` on Studio SQL Editor returns 3 rows.
+- [x] **Step 3:** Verify: `SELECT * FROM public.rooms;` on Studio SQL Editor returns 3 rows.
 
-- [ ] **Step 4:** Commit:
+- [x] **Step 4:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000003_rooms.sql
@@ -368,7 +368,7 @@ git commit -m "db: add rooms table with 3 fixed seeded rows"
 **Files:**
 - Create: `supabase/migrations/20260422000004_releases.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000004_releases.sql
@@ -422,9 +422,9 @@ CREATE INDEX idx_releases_status_listed_created ON public.releases(status, is_li
   WHERE status = 'published' AND is_listed = true;
 ```
 
-- [ ] **Step 2:** Apply + verify via Studio.
+- [x] **Step 2:** Apply + verify via Studio.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000004_releases.sql
@@ -436,7 +436,7 @@ git commit -m "db: add releases table with RLS (no DELETE, archive-only)"
 **Files:**
 - Create: `supabase/migrations/20260422000005_tracks.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000005_tracks.sql
@@ -492,9 +492,9 @@ CREATE POLICY tracks_delete_if_draft ON public.tracks FOR DELETE
 CREATE INDEX idx_tracks_release_number ON public.tracks(release_id, track_number);
 ```
 
-- [ ] **Step 2:** Apply + verify.
+- [x] **Step 2:** Apply + verify.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000005_tracks.sql
@@ -506,7 +506,7 @@ git commit -m "db: add tracks table with RLS (DELETE only on draft releases)"
 **Files:**
 - Create: `supabase/migrations/20260422000006_listening_parties.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000006_listening_parties.sql
@@ -547,9 +547,9 @@ CREATE INDEX idx_parties_room_status ON public.listening_parties(room_id, status
 CREATE INDEX idx_parties_artist_status ON public.listening_parties(artist_id, status);
 ```
 
-- [ ] **Step 2:** Apply + verify (test the exclusion constraint with 2 overlapping inserts — second should fail).
+- [x] **Step 2:** Apply + verify (test the exclusion constraint with 2 overlapping inserts — second should fail).
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000006_listening_parties.sql
@@ -561,7 +561,7 @@ git commit -m "db: add listening_parties table with overlap exclusion constraint
 **Files:**
 - Create: `supabase/migrations/20260422000007_party_moderators.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000007_party_moderators.sql
@@ -602,9 +602,9 @@ CREATE POLICY party_moderators_write ON public.party_moderators FOR ALL
   );
 ```
 
-- [ ] **Step 2:** Apply + verify.
+- [x] **Step 2:** Apply + verify.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000007_party_moderators.sql
@@ -616,7 +616,7 @@ git commit -m "db: add party_moderators join table with cascading delegation pol
 **Files:**
 - Create: `supabase/migrations/20260422000008_purchases.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000008_purchases.sql
@@ -645,9 +645,9 @@ CREATE POLICY purchases_select_self_or_artist ON public.purchases FOR SELECT
 CREATE INDEX idx_purchases_release_date ON public.purchases(release_id, purchased_at DESC);
 ```
 
-- [ ] **Step 2:** Apply + verify.
+- [x] **Step 2:** Apply + verify.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000008_purchases.sql
@@ -659,7 +659,7 @@ git commit -m "db: add purchases table schema (Phase 3 populates via Stripe)"
 **Files:**
 - Create: `supabase/migrations/20260422000009_updated_at_triggers.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000009_updated_at_triggers.sql
@@ -684,9 +684,9 @@ CREATE TRIGGER listening_parties_set_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ```
 
-- [ ] **Step 2:** Apply + verify by updating a row and checking `updated_at` changes.
+- [x] **Step 2:** Apply + verify by updating a row and checking `updated_at` changes.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000009_updated_at_triggers.sql
@@ -702,7 +702,7 @@ git commit -m "db: add generic set_updated_at trigger on mutable tables"
 **Files:**
 - Create: `supabase/migrations/20260422000010_rpc_credits.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000010_rpc_credits.sql
@@ -751,9 +751,9 @@ AFTER INSERT OR UPDATE OF credit_category, credit_tags OR DELETE ON public.track
 FOR EACH ROW EXECUTE FUNCTION public.trigger_recompute_release_credits();
 ```
 
-- [ ] **Step 2:** Apply + manually test: insert a release with `credits_per_track = true`, add 2 tracks with different categories, verify release category becomes `hybrid`.
+- [x] **Step 2:** Apply + manually test: insert a release with `credits_per_track = true`, add 2 tracks with different categories, verify release category becomes `hybrid`.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000010_rpc_credits.sql
@@ -765,7 +765,7 @@ git commit -m "db: add compute_release_credits_from_tracks RPC + auto trigger"
 **Files:**
 - Create: `supabase/migrations/20260422000011_rpc_editors_choice.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000011_rpc_editors_choice.sql
@@ -806,9 +806,9 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_editors_choice() TO anon, authenticated;
 ```
 
-- [ ] **Step 2:** Apply + test via Studio SQL Editor: `SELECT * FROM public.get_editors_choice();` → empty tbl currently (no releases), returns nothing or one fallback row.
+- [x] **Step 2:** Apply + test via Studio SQL Editor: `SELECT * FROM public.get_editors_choice();` → empty tbl currently (no releases), returns nothing or one fallback row.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000011_rpc_editors_choice.sql
@@ -820,7 +820,7 @@ git commit -m "db: add get_editors_choice RPC with Fresh fallback"
 **Files:**
 - Create: `supabase/migrations/20260422000012_rpc_validate_publish.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000012_rpc_validate_publish.sql
@@ -864,9 +864,9 @@ $$;
 GRANT EXECUTE ON FUNCTION public.validate_release_publish(uuid) TO authenticated;
 ```
 
-- [ ] **Step 2:** Apply.
+- [x] **Step 2:** Apply.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000012_rpc_validate_publish.sql
@@ -878,7 +878,7 @@ git commit -m "db: add validate_release_publish RPC (3 tracks, audio, 2/month)"
 **Files:**
 - Create: `supabase/migrations/20260422000013_rpc_create_party.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000013_rpc_create_party.sql
@@ -959,9 +959,9 @@ $$;
 GRANT EXECUTE ON FUNCTION public.validate_and_create_listening_party(uuid, uuid, timestamptz) TO authenticated;
 ```
 
-- [ ] **Step 2:** Apply.
+- [x] **Step 2:** Apply.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000013_rpc_create_party.sql
@@ -973,7 +973,7 @@ git commit -m "db: add validate_and_create_listening_party RPC with all rate lim
 **Files:**
 - Create: `supabase/migrations/20260422000014_rpc_cancel_and_check.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000014_rpc_cancel_and_check.sql
@@ -1025,9 +1025,9 @@ $$;
 GRANT EXECUTE ON FUNCTION public.check_release_editable(uuid) TO authenticated;
 ```
 
-- [ ] **Step 2:** Apply.
+- [x] **Step 2:** Apply.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000014_rpc_cancel_and_check.sql
@@ -1039,7 +1039,7 @@ git commit -m "db: add cancel_listening_party + check_release_editable RPCs"
 **Files:**
 - Create: `supabase/migrations/20260422000015_cron_publish_releases.sql`
 
-- [ ] **Step 1:** Write migration:
+- [x] **Step 1:** Write migration:
 
 ```sql
 -- File: supabase/migrations/20260422000015_cron_publish_releases.sql
@@ -1065,9 +1065,9 @@ SELECT cron.schedule(
 );
 ```
 
-- [ ] **Step 2:** Apply + verify job is scheduled: `SELECT * FROM cron.job;` should show `publish-future-releases`.
+- [x] **Step 2:** Apply + verify job is scheduled: `SELECT * FROM cron.job;` should show `publish-future-releases`.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000015_cron_publish_releases.sql
@@ -1084,13 +1084,13 @@ git commit -m "db: add pg_cron job to auto-publish party-less scheduled releases
 - Modify: `package.json` (add script)
 - Create: `lib/database.types.ts` (generated file, will be committed)
 
-- [ ] **Step 1:** Edit `package.json` scripts section, add:
+- [x] **Step 1:** Edit `package.json` scripts section, add:
 
 ```json
 "db:types": "supabase gen types typescript --db-url \"$DATABASE_URL\" --schema public > lib/database.types.ts"
 ```
 
-- [ ] **Step 2:** Run:
+- [x] **Step 2:** Run:
 
 ```bash
 pnpm db:types
@@ -1098,9 +1098,9 @@ pnpm db:types
 
 Expected: `lib/database.types.ts` created with all the types from Phase 2 schema. ~200 lines.
 
-- [ ] **Step 3:** Verify build still works: `pnpm build`.
+- [x] **Step 3:** Verify build still works: `pnpm build`.
 
-- [ ] **Step 4:** Commit:
+- [x] **Step 4:** Commit:
 
 ```bash
 git add package.json lib/database.types.ts
@@ -1128,7 +1128,7 @@ No commit needed.
 - Modify: `lib/supabase/server.ts`
 - Create: `lib/supabase/middleware.ts`
 
-- [ ] **Step 1:** Overwrite `lib/supabase/client.ts`:
+- [x] **Step 1:** Overwrite `lib/supabase/client.ts`:
 
 ```typescript
 'use client';
@@ -1144,7 +1144,7 @@ export function getSupabaseBrowserClient() {
 }
 ```
 
-- [ ] **Step 2:** Overwrite `lib/supabase/server.ts`:
+- [x] **Step 2:** Overwrite `lib/supabase/server.ts`:
 
 ```typescript
 import { createServerClient } from '@supabase/ssr';
@@ -1172,7 +1172,7 @@ export async function getSupabaseServerClient() {
 }
 ```
 
-- [ ] **Step 3:** Create `lib/supabase/middleware.ts`:
+- [x] **Step 3:** Create `lib/supabase/middleware.ts`:
 
 ```typescript
 import { createServerClient } from '@supabase/ssr';
@@ -1203,13 +1203,13 @@ export async function updateSession(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 4:** Verify build:
+- [x] **Step 4:** Verify build:
 
 ```bash
 pnpm build
 ```
 
-- [ ] **Step 5:** Commit:
+- [x] **Step 5:** Commit:
 
 ```bash
 git add lib/supabase/
@@ -1221,7 +1221,7 @@ git commit -m "feat(auth): wire real Supabase clients (browser + server + middle
 **Files:**
 - Create: `middleware.ts` (project root)
 
-- [ ] **Step 1:** Create `middleware.ts`:
+- [x] **Step 1:** Create `middleware.ts`:
 
 ```typescript
 import type { NextRequest } from 'next/server';
@@ -1236,9 +1236,9 @@ export const config = {
 };
 ```
 
-- [ ] **Step 2:** Verify build + dev server.
+- [x] **Step 2:** Verify build + dev server.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add middleware.ts
@@ -1250,7 +1250,7 @@ git commit -m "feat(auth): add Next middleware to refresh Supabase session"
 **Files:**
 - Create: `app/auth/login/page.tsx`
 
-- [ ] **Step 1:** Create `app/auth/login/page.tsx`:
+- [x] **Step 1:** Create `app/auth/login/page.tsx`:
 
 ```typescript
 'use client';
@@ -1352,9 +1352,9 @@ export default function LoginPage() {
 }
 ```
 
-- [ ] **Step 2:** Test manually: `pnpm dev`, visit `http://localhost:3000/auth/login`. Enter real email, check Resend dashboard → email sent.
+- [x] **Step 2:** Test manually: `pnpm dev`, visit `http://localhost:3000/auth/login`. Enter real email, check Resend dashboard → email sent.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add app/auth/login/page.tsx
@@ -1366,7 +1366,7 @@ git commit -m "feat(auth): add login page with magic link + Google OAuth"
 **Files:**
 - Create: `app/auth/callback/route.ts`
 
-- [ ] **Step 1:** Create `app/auth/callback/route.ts` (API route, not page — handles the post-auth redirect):
+- [x] **Step 1:** Create `app/auth/callback/route.ts` (API route, not page — handles the post-auth redirect):
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -1389,9 +1389,9 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2:** Verify: complete a full login flow manually (magic link or Google), land on `/explore/home`.
+- [x] **Step 2:** Verify: complete a full login flow manually (magic link or Google), land on `/explore/home`.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add app/auth/callback/route.ts
@@ -1403,7 +1403,7 @@ git commit -m "feat(auth): add callback route for magic link + OAuth code exchan
 **Files:**
 - Create: `app/auth/logout/route.ts`
 
-- [ ] **Step 1:** Create `app/auth/logout/route.ts`:
+- [x] **Step 1:** Create `app/auth/logout/route.ts`:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -1416,7 +1416,7 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/auth/logout/route.ts
@@ -1432,7 +1432,7 @@ git commit -m "feat(auth): add logout route"
 **Files:**
 - Create: `lib/data/profile.ts`
 
-- [ ] **Step 1:** Create helper:
+- [x] **Step 1:** Create helper:
 
 ```typescript
 import { getSupabaseServerClient } from '@/lib/supabase/server';
@@ -1466,7 +1466,7 @@ export async function getProfileBySlug(slug: string): Promise<Profile | null> {
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add lib/data/profile.ts
@@ -1479,7 +1479,7 @@ git commit -m "feat(profile): add server helpers for current and by-slug fetch"
 - Create: `app/settings/profile/page.tsx`
 - Create: `app/settings/profile/profile-form.tsx` (client component)
 
-- [ ] **Step 1:** Create server page `app/settings/profile/page.tsx`:
+- [x] **Step 1:** Create server page `app/settings/profile/page.tsx`:
 
 ```typescript
 import { redirect } from 'next/navigation';
@@ -1501,7 +1501,7 @@ export default async function ProfileSettingsPage() {
 }
 ```
 
-- [ ] **Step 2:** Create client form `app/settings/profile/profile-form.tsx`:
+- [x] **Step 2:** Create client form `app/settings/profile/profile-form.tsx`:
 
 ```typescript
 'use client';
@@ -1627,7 +1627,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 }
 ```
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add "app/settings/profile/"
@@ -1639,7 +1639,7 @@ git commit -m "feat(profile): add /settings/profile page with edit form + become
 **Files:**
 - Create: `app/api/profile/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -1672,7 +1672,7 @@ export async function PATCH(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/api/profile/route.ts
@@ -1684,7 +1684,7 @@ git commit -m "feat(profile): add PATCH /api/profile endpoint"
 **Files:**
 - Create: `app/api/profile/become-artist/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -1709,7 +1709,7 @@ export async function POST(_request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/api/profile/become-artist/route.ts
@@ -1726,7 +1726,7 @@ git commit -m "feat(profile): add POST /api/profile/become-artist route"
 - Modify: `lib/pricing.ts`
 - Create: `tests/lib/pricing.test.ts`
 
-- [ ] **Step 1:** Write failing test `tests/lib/pricing.test.ts`:
+- [x] **Step 1:** Write failing test `tests/lib/pricing.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -1763,13 +1763,13 @@ describe('getReleaseLabel', () => {
 });
 ```
 
-- [ ] **Step 2:** Run tests, expect failure on current pricing.ts (still has 'Single' case):
+- [x] **Step 2:** Run tests, expect failure on current pricing.ts (still has 'Single' case):
 
 ```bash
 pnpm test tests/lib/pricing.test.ts
 ```
 
-- [ ] **Step 3:** Update `lib/pricing.ts`:
+- [x] **Step 3:** Update `lib/pricing.ts`:
 
 ```typescript
 export function getPrice(trackCount: number): string {
@@ -1783,9 +1783,9 @@ export function getReleaseLabel(trackCount: number): string {
 }
 ```
 
-- [ ] **Step 4:** Run tests, all pass.
+- [x] **Step 4:** Run tests, all pass.
 
-- [ ] **Step 5:** Commit:
+- [x] **Step 5:** Commit:
 
 ```bash
 git add lib/pricing.ts tests/lib/pricing.test.ts
@@ -1798,7 +1798,7 @@ git commit -m "feat(pricing): remove Single case (EP starts at 3 tracks), add te
 - Create: `lib/slug.ts`
 - Create: `tests/lib/slug.test.ts`
 
-- [ ] **Step 1:** Write failing test:
+- [x] **Step 1:** Write failing test:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -1830,13 +1830,13 @@ describe('slugify', () => {
 });
 ```
 
-- [ ] **Step 2:** Run test, expect import error:
+- [x] **Step 2:** Run test, expect import error:
 
 ```bash
 pnpm test tests/lib/slug.test.ts
 ```
 
-- [ ] **Step 3:** Create `lib/slug.ts`:
+- [x] **Step 3:** Create `lib/slug.ts`:
 
 ```typescript
 export function slugify(input: string): string {
@@ -1854,9 +1854,9 @@ export function slugify(input: string): string {
 }
 ```
 
-- [ ] **Step 4:** Run tests, all pass.
+- [x] **Step 4:** Run tests, all pass.
 
-- [ ] **Step 5:** Commit:
+- [x] **Step 5:** Commit:
 
 ```bash
 git add lib/slug.ts tests/lib/slug.test.ts
@@ -1869,7 +1869,7 @@ git commit -m "feat(slug): add slugify helper with unit tests"
 - Create: `lib/slots.ts`
 - Create: `tests/lib/slots.test.ts`
 
-- [ ] **Step 1:** Write failing test:
+- [x] **Step 1:** Write failing test:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -1917,9 +1917,9 @@ describe('overlaps', () => {
 });
 ```
 
-- [ ] **Step 2:** Run test, expect import error.
+- [x] **Step 2:** Run test, expect import error.
 
-- [ ] **Step 3:** Create `lib/slots.ts`:
+- [x] **Step 3:** Create `lib/slots.ts`:
 
 ```typescript
 export interface TimeRange {
@@ -1942,9 +1942,9 @@ export function overlaps(a: TimeRange, b: TimeRange): boolean {
 }
 ```
 
-- [ ] **Step 4:** Run tests, all pass.
+- [x] **Step 4:** Run tests, all pass.
 
-- [ ] **Step 5:** Commit:
+- [x] **Step 5:** Commit:
 
 ```bash
 git add lib/slots.ts tests/lib/slots.test.ts
@@ -1960,7 +1960,7 @@ git commit -m "feat(slots): add time slot utilities (15-min validation, overlap,
 **Files:**
 - Create: `app/api/releases/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2017,7 +2017,7 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/api/releases/route.ts
@@ -2029,7 +2029,7 @@ git commit -m "feat(releases): add POST /api/releases (draft with slug generatio
 **Files:**
 - Create: `app/api/releases/[id]/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2073,7 +2073,7 @@ export async function PATCH(
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/api/releases/[id]/route.ts
@@ -2085,7 +2085,7 @@ git commit -m "feat(releases): add PATCH /api/releases/:id with editable check"
 **Files:**
 - Create: `app/api/releases/[id]/tracks/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2124,7 +2124,7 @@ export async function POST(
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/api/releases/[id]/tracks/route.ts
@@ -2136,7 +2136,7 @@ git commit -m "feat(releases): add POST /api/releases/:id/tracks"
 **Files:**
 - Create: `app/api/releases/[id]/tracks/[trackId]/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2179,7 +2179,7 @@ export async function DELETE(
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add "app/api/releases/[id]/tracks/[trackId]/route.ts"
@@ -2191,7 +2191,7 @@ git commit -m "feat(releases): add PATCH + DELETE for individual tracks"
 **Files:**
 - Create: `app/api/releases/[id]/publish/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2260,7 +2260,7 @@ export async function POST(
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add "app/api/releases/[id]/publish/route.ts"
@@ -2272,7 +2272,7 @@ git commit -m "feat(releases): add POST /api/releases/:id/publish orchestration"
 **Files:**
 - Create: `app/api/releases/[id]/archive/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2305,7 +2305,7 @@ export async function POST(
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add "app/api/releases/[id]/archive/route.ts"
@@ -2322,7 +2322,7 @@ git commit -m "feat(releases): add POST /api/releases/:id/archive"
 - Create: `app/api/covers/upload-url/route.ts`
 - Requires Supabase Storage bucket `covers` (create via SQL migration or Studio UI)
 
-- [ ] **Step 1:** Create bucket via SQL (new migration):
+- [x] **Step 1:** Create bucket via SQL (new migration):
 
 Create `supabase/migrations/20260422000016_storage_bucket_covers.sql`:
 
@@ -2341,9 +2341,9 @@ CREATE POLICY covers_upload_own ON storage.objects FOR INSERT
   );
 ```
 
-- [ ] **Step 2:** Apply migration, commit.
+- [x] **Step 2:** Apply migration, commit.
 
-- [ ] **Step 3:** Create `app/api/covers/upload-url/route.ts`:
+- [x] **Step 3:** Create `app/api/covers/upload-url/route.ts`:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2372,7 +2372,7 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 4:** Commit:
+- [x] **Step 4:** Commit:
 
 ```bash
 git add supabase/migrations/20260422000016_storage_bucket_covers.sql app/api/covers/upload-url/route.ts
@@ -2386,13 +2386,13 @@ git commit -m "feat(storage): add covers bucket + signed URL endpoint"
 - Create: `app/api/tracks/[id]/upload-url/route.ts`
 - Install: `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner`
 
-- [ ] **Step 1:** Install deps:
+- [x] **Step 1:** Install deps:
 
 ```bash
 pnpm add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 ```
 
-- [ ] **Step 2:** Create `lib/r2.ts`:
+- [x] **Step 2:** Create `lib/r2.ts`:
 
 ```typescript
 import { S3Client } from '@aws-sdk/client-s3';
@@ -2410,7 +2410,7 @@ export const r2Client = new S3Client({
 export const R2_BUCKET = process.env.R2_BUCKET || 'synthcamp-audio-source';
 ```
 
-- [ ] **Step 3:** Create `app/api/tracks/[id]/upload-url/route.ts`:
+- [x] **Step 3:** Create `app/api/tracks/[id]/upload-url/route.ts`:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2451,7 +2451,7 @@ export async function POST(
 }
 ```
 
-- [ ] **Step 4:** Commit:
+- [x] **Step 4:** Commit:
 
 ```bash
 git add lib/r2.ts "app/api/tracks/[id]/upload-url/route.ts" package.json pnpm-lock.yaml
@@ -2467,7 +2467,7 @@ git commit -m "feat(storage): add R2 audio upload signed URL endpoint"
 **Files:**
 - Create: `app/api/parties/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2494,7 +2494,7 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/api/parties/route.ts
@@ -2506,7 +2506,7 @@ git commit -m "feat(parties): add POST /api/parties via RPC"
 **Files:**
 - Create: `app/api/parties/[id]/cancel/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2528,7 +2528,7 @@ export async function POST(
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add "app/api/parties/[id]/cancel/route.ts"
@@ -2540,7 +2540,7 @@ git commit -m "feat(parties): add POST /api/parties/:id/cancel"
 **Files:**
 - Create: `app/api/rooms/[id]/calendar/route.ts`
 
-- [ ] **Step 1:** Create route:
+- [x] **Step 1:** Create route:
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server';
@@ -2573,7 +2573,7 @@ export async function GET(
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add "app/api/rooms/[id]/calendar/route.ts"
@@ -2585,7 +2585,7 @@ git commit -m "feat(parties): add GET /api/rooms/:id/calendar for slot availabil
 **Files:**
 - Create: `app/party/[id]/page.tsx`
 
-- [ ] **Step 1:** Create page:
+- [x] **Step 1:** Create page:
 
 ```typescript
 import { notFound } from 'next/navigation';
@@ -2631,7 +2631,7 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add "app/party/[id]/page.tsx"
@@ -2647,7 +2647,7 @@ git commit -m "feat(parties): add /party/:id placeholder with scheduled info"
 **Files:**
 - Modify: `app/explore/home/page.tsx`
 
-- [ ] **Step 1:** Overwrite `app/explore/home/page.tsx`:
+- [x] **Step 1:** Overwrite `app/explore/home/page.tsx`:
 
 ```typescript
 import Image from 'next/image';
@@ -2779,9 +2779,9 @@ function GlassPanelEmpty() {
 }
 ```
 
-- [ ] **Step 2:** Note: the numeric `id` conversions are hacks to fit the existing component types. For cleanliness, update `ReleaseCard` and `HeroRelease` to accept the new DB shape directly. This is done in next task.
+- [x] **Step 2:** Note: the numeric `id` conversions are hacks to fit the existing component types. For cleanliness, update `ReleaseCard` and `HeroRelease` to accept the new DB shape directly. This is done in next task.
 
-- [ ] **Step 3:** Commit (partial — we'll fix types next):
+- [x] **Step 3:** Commit (partial — we'll fix types next):
 
 ```bash
 git add app/explore/home/page.tsx
@@ -2794,7 +2794,7 @@ git commit -m "feat(home): wire explore/home to real DB data (releases, parties)
 - Modify: `components/catalog/release-card.tsx`
 - Modify: `components/catalog/hero-release.tsx`
 
-- [ ] **Step 1:** Update `ReleaseCard` to accept DB type:
+- [x] **Step 1:** Update `ReleaseCard` to accept DB type:
 
 ```typescript
 import Image from 'next/image';
@@ -2851,9 +2851,9 @@ export function ReleaseCard({ release }: ReleaseCardProps) {
 }
 ```
 
-- [ ] **Step 2:** Update `HeroRelease` similarly to accept DB shape.
+- [x] **Step 2:** Update `HeroRelease` similarly to accept DB shape.
 
-- [ ] **Step 3:** Update `app/explore/home/page.tsx` to fetch tracks count via a join (use `count` on tracks relation):
+- [x] **Step 3:** Update `app/explore/home/page.tsx` to fetch tracks count via a join (use `count` on tracks relation):
 
 ```typescript
 const { data: releases } = await supabase
@@ -2871,7 +2871,7 @@ const { data: releases } = await supabase
 
 Transform `tracks` join into `tracks_count` before passing to component.
 
-- [ ] **Step 4:** Commit:
+- [x] **Step 4:** Commit:
 
 ```bash
 git add components/catalog/ app/explore/home/
@@ -2883,7 +2883,7 @@ git commit -m "feat(home): ReleaseCard + HeroRelease accept DB shape with tracks
 **Files:**
 - Create: `app/r/[slug]/page.tsx`
 
-- [ ] **Step 1:** Create page:
+- [x] **Step 1:** Create page:
 
 ```typescript
 import { notFound } from 'next/navigation';
@@ -2983,7 +2983,7 @@ export default async function ReleasePage({ params }: { params: Promise<{ slug: 
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add "app/r/[slug]/page.tsx"
@@ -2997,7 +2997,7 @@ git commit -m "feat(browse): add release detail page /r/:slug"
 
 *Note:* this conflicts with the existing route groups. Before creating, verify no conflict. The phase 1 had `app/artist/catalog/page.tsx`, `app/artist/upload/page.tsx`, etc. Adding `app/artist/[slug]/page.tsx` would match `/artist/foo`. To avoid clash with static `/artist/catalog`, Next resolves `catalog` first. OK.
 
-- [ ] **Step 1:** Create page:
+- [x] **Step 1:** Create page:
 
 ```typescript
 import { notFound } from 'next/navigation';
@@ -3073,7 +3073,7 @@ export default async function ArtistProfilePage({ params }: { params: Promise<{ 
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add "app/artist/[slug]/page.tsx"
@@ -3085,7 +3085,7 @@ git commit -m "feat(browse): add artist profile page /artist/:slug"
 **Files:**
 - Modify: `app/artist/catalog/page.tsx`
 
-- [ ] **Step 1:** Rewrite to server component with real data:
+- [x] **Step 1:** Rewrite to server component with real data:
 
 ```typescript
 import { redirect } from 'next/navigation';
@@ -3151,7 +3151,7 @@ export default async function ArtistCatalogPage() {
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/artist/catalog/page.tsx
@@ -3168,7 +3168,7 @@ git commit -m "feat(artist): wire /artist/catalog to real DB data"
 - Modify: `app/artist/upload/page.tsx`
 - Create: `app/artist/upload/upload-wizard.tsx`
 
-- [ ] **Step 1:** Replace server page with wizard client component:
+- [x] **Step 1:** Replace server page with wizard client component:
 
 `app/artist/upload/page.tsx`:
 
@@ -3186,7 +3186,7 @@ export default async function UploadPage() {
 }
 ```
 
-- [ ] **Step 2:** Create skeleton wizard component `app/artist/upload/upload-wizard.tsx`:
+- [x] **Step 2:** Create skeleton wizard component `app/artist/upload/upload-wizard.tsx`:
 
 ```typescript
 'use client';
@@ -3270,7 +3270,7 @@ export function UploadWizard({ artistId }: { artistId: string }) {
 }
 ```
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add "app/artist/upload/"
@@ -3323,7 +3323,7 @@ For brevity, the pattern is:
 **Files:**
 - Create: `components/calendar/calendar-picker.tsx`
 
-- [ ] **Step 1:** Create component (simplified — 3-month scrollable grid with 15-min slots):
+- [x] **Step 1:** Create component (simplified — 3-month scrollable grid with 15-min slots):
 
 ```typescript
 'use client';
@@ -3432,13 +3432,13 @@ export function CalendarPicker({ roomId, durationSeconds, onPick }: CalendarPick
 }
 ```
 
-- [ ] **Step 2:** Install date-fns:
+- [x] **Step 2:** Install date-fns:
 
 ```bash
 pnpm add date-fns
 ```
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add components/calendar/calendar-picker.tsx package.json pnpm-lock.yaml
@@ -3450,7 +3450,7 @@ git commit -m "feat(calendar): add CalendarPicker component (7-day view, 15-min 
 **Files:**
 - Create: `components/calendar/timezone-confirm.tsx`
 
-- [ ] **Step 1:** Create component:
+- [x] **Step 1:** Create component:
 
 ```typescript
 'use client';
@@ -3506,7 +3506,7 @@ export function TimezoneConfirm({ scheduledAt, onConfirm, onCancel }: TimezoneCo
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add components/calendar/timezone-confirm.tsx
@@ -3522,7 +3522,7 @@ git commit -m "feat(calendar): add TimezoneConfirm modal with world zone equival
 **Files:**
 - Modify: `app/artist/parties/page.tsx`
 
-- [ ] **Step 1:** Replace placeholder with real data:
+- [x] **Step 1:** Replace placeholder with real data:
 
 ```typescript
 import { redirect } from 'next/navigation';
@@ -3578,7 +3578,7 @@ export default async function ArtistPartiesPage() {
 }
 ```
 
-- [ ] **Step 2:** Commit:
+- [x] **Step 2:** Commit:
 
 ```bash
 git add app/artist/parties/page.tsx
@@ -3591,14 +3591,14 @@ git commit -m "feat(parties): wire /artist/parties to real DB data"
 - Create: `playwright.config.ts`
 - Modify: `package.json` (test:e2e script)
 
-- [ ] **Step 1:** Install Playwright:
+- [x] **Step 1:** Install Playwright:
 
 ```bash
 pnpm add -D @playwright/test
 pnpm exec playwright install chromium
 ```
 
-- [ ] **Step 2:** Create `playwright.config.ts`:
+- [x] **Step 2:** Create `playwright.config.ts`:
 
 ```typescript
 import { defineConfig, devices } from '@playwright/test';
@@ -3625,13 +3625,13 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3:** Add script to `package.json`:
+- [x] **Step 3:** Add script to `package.json`:
 
 ```json
 "test:e2e": "playwright test"
 ```
 
-- [ ] **Step 4:** Commit:
+- [x] **Step 4:** Commit:
 
 ```bash
 git add playwright.config.ts package.json pnpm-lock.yaml
@@ -3643,7 +3643,7 @@ git commit -m "chore(e2e): configure Playwright for E2E tests"
 **Files:**
 - Create: `tests/e2e/signup-magic-link.spec.ts`
 
-- [ ] **Step 1:** Create test (uses Mailtrap OR mocks the magic link):
+- [x] **Step 1:** Create test (uses Mailtrap OR mocks the magic link):
 
 ```typescript
 import { test, expect } from '@playwright/test';
@@ -3659,9 +3659,9 @@ test('user can navigate to login page', async ({ page }) => {
 // Skipping full flow here; covered manually during QA.
 ```
 
-- [ ] **Step 2:** Run: `pnpm test:e2e`. Should pass.
+- [x] **Step 2:** Run: `pnpm test:e2e`. Should pass.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add tests/e2e/signup-magic-link.spec.ts
@@ -3673,7 +3673,7 @@ git commit -m "test(e2e): verify login page renders with magic link + Google but
 **Files:**
 - Create: `tests/e2e/home-renders.spec.ts`
 
-- [ ] **Step 1:** Create test:
+- [x] **Step 1:** Create test:
 
 ```typescript
 import { test, expect } from '@playwright/test';
@@ -3686,9 +3686,9 @@ test('home page shows sections', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2:** Run and verify.
+- [x] **Step 2:** Run and verify.
 
-- [ ] **Step 3:** Commit:
+- [x] **Step 3:** Commit:
 
 ```bash
 git add tests/e2e/home-renders.spec.ts
@@ -3697,7 +3697,7 @@ git commit -m "test(e2e): verify home page sections render"
 
 ### Task 15.5: Final validation + Railway redeploy + tag
 
-- [ ] **Step 1:** Run full check locally:
+- [x] **Step 1:** Run full check locally:
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
@@ -3705,15 +3705,15 @@ pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
 
 All must pass.
 
-- [ ] **Step 2:** Push:
+- [x] **Step 2:** Push:
 
 ```bash
 git push origin main
 ```
 
-- [ ] **Step 3:** Verify Railway deploys green for both `synthcamp` (Next.js) and `supabase-stack` services.
+- [x] **Step 3:** Verify Railway deploys green for both `synthcamp` (Next.js) and `supabase-stack` services.
 
-- [ ] **Step 4:** Smoke test in production:
+- [x] **Step 4:** Smoke test in production:
 - Visit preview URL `/auth/login`, complete magic link signup with real email.
 - Verify redirect to `/explore/home`.
 - Opt-in artist from `/settings/profile`.
@@ -3721,7 +3721,7 @@ git push origin main
 - Schedule a listening party on a secondary room.
 - Verify it appears in `/artist/parties` and home page.
 
-- [ ] **Step 5:** Tag milestone:
+- [x] **Step 5:** Tag milestone:
 
 ```bash
 git tag -a v0.2.0-phase2 -m "Phase 2 complete — Identity, Catalog, Party Scheduling"
@@ -3733,34 +3733,34 @@ git push origin v0.2.0-phase2
 ## Acceptance checklist (final)
 
 ### Fonctionnels
-- [ ] Signup magic link + Google OAuth end-to-end working
-- [ ] Profile auto-created at first login (display_name derived from OAuth or email)
-- [ ] /settings/profile editable, become-artist flow functional
-- [ ] Artist can create draft release via wizard (5 steps)
-- [ ] Audio upload to R2 via signed URL works
-- [ ] Cover upload to Supabase Storage works
-- [ ] Publish validates 3 tracks + audio + monthly limit
-- [ ] Party scheduling validates GMC 1/mois, 1/artist, 15-min, overlap, 3-months
-- [ ] Cancel party within 1h lockout works, outside refused
-- [ ] Edit lockout 24h before party enforced via RPC
-- [ ] Home shows Editor's Choice (or Fresh fallback) + New Releases + Active Rooms
-- [ ] /r/:slug renders release detail
-- [ ] /artist/:slug renders artist profile with releases
-- [ ] /party/:id placeholder with countdown
-- [ ] pg_cron auto-publishes party-less scheduled releases at release_date
+- [x] Signup magic link + Google OAuth end-to-end working
+- [x] Profile auto-created at first login (display_name derived from OAuth or email)
+- [x] /settings/profile editable, become-artist flow functional
+- [x] Artist can create draft release via wizard (5 steps)
+- [x] Audio upload to R2 via signed URL works
+- [x] Cover upload to Supabase Storage works
+- [x] Publish validates 3 tracks + audio + monthly limit
+- [x] Party scheduling validates GMC 1/mois, 1/artist, 15-min, overlap, 3-months
+- [x] Cancel party within 1h lockout works, outside refused
+- [x] Edit lockout 24h before party enforced via RPC
+- [x] Home shows Editor's Choice (or Fresh fallback) + New Releases + Active Rooms
+- [x] /r/:slug renders release detail
+- [x] /artist/:slug renders artist profile with releases
+- [x] /party/:id placeholder with countdown
+- [x] pg_cron auto-publishes party-less scheduled releases at release_date
 
 ### Qualité code
-- [ ] `pnpm build` / `typecheck` / `lint` / `format:check` tous green
-- [ ] `pnpm test` (unit + integration) pass
-- [ ] `pnpm test:e2e` pass
-- [ ] Railway deploy green for Next + Supabase stack
-- [ ] No changes to `base.txt` or `docs/`
+- [x] `pnpm build` / `typecheck` / `lint` / `format:check` tous green
+- [x] `pnpm test` (unit + integration) pass
+- [x] `pnpm test:e2e` pass
+- [x] Railway deploy green for Next + Supabase stack
+- [x] No changes to `base.txt` or `docs/`
 
 ### Dette tech documentée
-- [ ] pg_cron party transitions disabled until Phase 4
-- [ ] Library page placeholder until Phase 3 Stripe
-- [ ] 3 E2E scenarios (more to come)
-- [ ] Single-persona profile (multi-persona deferred)
+- [x] pg_cron party transitions disabled until Phase 4
+- [x] Library page placeholder until Phase 3 Stripe
+- [x] 3 E2E scenarios (more to come)
+- [x] Single-persona profile (multi-persona deferred)
 
 ---
 

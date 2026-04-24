@@ -21,7 +21,7 @@
 **Files:**
 - Create: `C:\Projets\SynthCamp-marketplace\.gitignore`
 
-- [ ] **Step 1: Initialize git**
+- [x] **Step 1: Initialize git**
 
 Run from `C:\Projets\SynthCamp-marketplace\`:
 
@@ -30,7 +30,7 @@ git init
 git branch -M main
 ```
 
-- [ ] **Step 2: Create .gitignore**
+- [x] **Step 2: Create .gitignore**
 
 Content of `.gitignore`:
 
@@ -76,7 +76,7 @@ coverage
 .turbo
 ```
 
-- [ ] **Step 3: First commit**
+- [x] **Step 3: First commit**
 
 ```bash
 git add base.txt .gitignore docs/
@@ -87,7 +87,7 @@ Expected: commit created on `main`.
 
 ### Task 0.2: Create GitHub repo and push
 
-- [ ] **Step 1: Create GitHub repo**
+- [x] **Step 1: Create GitHub repo**
 
 Manually via GitHub UI or `gh` CLI :
 
@@ -102,19 +102,19 @@ git remote add origin https://github.com/<username>/synthcamp.git
 git push -u origin main
 ```
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify**
 
 Check the repo exists on GitHub and shows the initial commit.
 
 ### Task 0.3: Create Railway project connected to GitHub
 
-- [ ] **Step 1: Create Railway project**
+- [x] **Step 1: Create Railway project**
 
 Via Railway UI (railway.app) :
 1. New Project → Deploy from GitHub repo → select `synthcamp`
 2. Let Railway fail the first build (package.json doesn't exist yet) — this is expected.
 
-- [ ] **Step 2: Verify integration**
+- [x] **Step 2: Verify integration**
 
 - GitHub integration active on the Railway project
 - Railway will re-deploy on each push to `main`
@@ -131,7 +131,7 @@ No commit needed for this step.
 **Files:**
 - Create: entire `package.json`, `tsconfig.json`, `next.config.ts`, `app/`, etc.
 
-- [ ] **Step 1: Run create-next-app**
+- [x] **Step 1: Run create-next-app**
 
 From `C:\Projets\SynthCamp-marketplace\`:
 
@@ -141,22 +141,22 @@ pnpm create next-app@latest . --typescript --tailwind --eslint --app --src-dir=f
 
 When prompted about overwriting, confirm. When prompted for merging into non-empty dir, accept.
 
-- [ ] **Step 2: Verify Next version is 15+**
+- [x] **Step 2: Verify Next version is 15+**
 
 Run: `pnpm list next`
 Expected: `next 15.x.x` or higher. If < 15, run `pnpm add next@latest react@latest react-dom@latest`.
 
-- [ ] **Step 3: Verify Node 22**
+- [x] **Step 3: Verify Node 22**
 
 Run: `node --version`
 Expected: `v22.x.x`. If not, install Node 22 LTS first.
 
-- [ ] **Step 4: Test dev server runs**
+- [x] **Step 4: Test dev server runs**
 
 Run: `pnpm dev`
 Expected: server starts at `http://localhost:3000`, default Next.js welcome page renders. Stop server with Ctrl+C.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .
@@ -168,7 +168,7 @@ git commit -m "chore: bootstrap Next.js 15 app with pnpm + TypeScript + Tailwind
 **Files:**
 - Modify: `tsconfig.json`
 
-- [ ] **Step 1: Update tsconfig.json**
+- [x] **Step 1: Update tsconfig.json**
 
 Ensure `compilerOptions` contains at minimum :
 
@@ -201,12 +201,12 @@ Ensure `compilerOptions` contains at minimum :
 }
 ```
 
-- [ ] **Step 2: Verify build passes**
+- [x] **Step 2: Verify build passes**
 
 Run: `pnpm build`
 Expected: build succeeds with no TS errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tsconfig.json
@@ -220,13 +220,13 @@ git commit -m "chore: enable strict TypeScript config"
 - Create: `.prettierignore`
 - Modify: `package.json` (add scripts)
 
-- [ ] **Step 1: Install Prettier**
+- [x] **Step 1: Install Prettier**
 
 ```bash
 pnpm add -D prettier prettier-plugin-tailwindcss
 ```
 
-- [ ] **Step 2: Create .prettierrc**
+- [x] **Step 2: Create .prettierrc**
 
 ```json
 {
@@ -239,7 +239,7 @@ pnpm add -D prettier prettier-plugin-tailwindcss
 }
 ```
 
-- [ ] **Step 3: Create .prettierignore**
+- [x] **Step 3: Create .prettierignore**
 
 ```
 .next
@@ -251,7 +251,7 @@ public
 pnpm-lock.yaml
 ```
 
-- [ ] **Step 4: Add scripts to package.json**
+- [x] **Step 4: Add scripts to package.json**
 
 In `package.json`, update the `scripts` field to include:
 
@@ -269,12 +269,12 @@ In `package.json`, update the `scripts` field to include:
 }
 ```
 
-- [ ] **Step 5: Run initial format pass**
+- [x] **Step 5: Run initial format pass**
 
 Run: `pnpm format`
 Expected: files reformatted consistently.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .prettierrc .prettierignore package.json pnpm-lock.yaml
@@ -288,13 +288,13 @@ git commit -m "chore: add Prettier with Tailwind class sorting"
 - Create: `tests/setup.ts`
 - Modify: `package.json` (add scripts + deps)
 
-- [ ] **Step 1: Install test dependencies**
+- [x] **Step 1: Install test dependencies**
 
 ```bash
 pnpm add -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
 ```
 
-- [ ] **Step 2: Create vitest.config.ts**
+- [x] **Step 2: Create vitest.config.ts**
 
 ```typescript
 import { defineConfig } from 'vitest/config';
@@ -317,7 +317,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: Create tests/setup.ts**
+- [x] **Step 3: Create tests/setup.ts**
 
 ```typescript
 import '@testing-library/jest-dom/vitest';
@@ -329,7 +329,7 @@ afterEach(() => {
 });
 ```
 
-- [ ] **Step 4: Add test scripts to package.json**
+- [x] **Step 4: Add test scripts to package.json**
 
 Update `scripts`:
 
@@ -345,12 +345,12 @@ Update `scripts`:
 
 Merge with existing scripts (keep previous ones).
 
-- [ ] **Step 5: Verify test command runs**
+- [x] **Step 5: Verify test command runs**
 
 Run: `pnpm test`
 Expected: "No test files found" — this is expected, Foundation has no tests written.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add vitest.config.ts tests/ package.json pnpm-lock.yaml
@@ -362,43 +362,43 @@ git commit -m "chore: configure Vitest + Testing Library (no tests yet)"
 **Files:**
 - Modify: `package.json` via pnpm add
 
-- [ ] **Step 1: Install Radix UI primitives**
+- [x] **Step 1: Install Radix UI primitives**
 
 ```bash
 pnpm add @radix-ui/react-dialog @radix-ui/react-slot
 ```
 
-- [ ] **Step 2: Install Lucide React**
+- [x] **Step 2: Install Lucide React**
 
 ```bash
 pnpm add lucide-react
 ```
 
-- [ ] **Step 3: Install React Three Fiber + drei + three**
+- [x] **Step 3: Install React Three Fiber + drei + three**
 
 ```bash
 pnpm add three @react-three/fiber @react-three/drei
 pnpm add -D @types/three
 ```
 
-- [ ] **Step 4: Install Supabase clients (stubs usage)**
+- [x] **Step 4: Install Supabase clients (stubs usage)**
 
 ```bash
 pnpm add @supabase/supabase-js @supabase/ssr
 ```
 
-- [ ] **Step 5: Install class merging helper**
+- [x] **Step 5: Install class merging helper**
 
 ```bash
 pnpm add clsx tailwind-merge
 ```
 
-- [ ] **Step 6: Verify build still passes**
+- [x] **Step 6: Verify build still passes**
 
 Run: `pnpm build`
 Expected: build succeeds, no type errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add package.json pnpm-lock.yaml
@@ -411,7 +411,7 @@ git commit -m "chore: install runtime deps (Radix, Lucide, R3F, Supabase, clsx)"
 - Modify: `package.json`, `app/globals.css`, `postcss.config.mjs`
 - Delete: `tailwind.config.ts` (v4 is CSS-first, no JS config needed)
 
-- [ ] **Step 1: Install Tailwind v4**
+- [x] **Step 1: Install Tailwind v4**
 
 ```bash
 pnpm add -D tailwindcss@latest @tailwindcss/postcss@latest
@@ -420,7 +420,7 @@ pnpm remove @tailwindcss/typography autoprefixer
 
 If `tailwindcss-animate` is present from create-next-app, keep it for now.
 
-- [ ] **Step 2: Update postcss.config.mjs**
+- [x] **Step 2: Update postcss.config.mjs**
 
 ```javascript
 export default {
@@ -430,7 +430,7 @@ export default {
 };
 ```
 
-- [ ] **Step 3: Replace app/globals.css with v4 syntax**
+- [x] **Step 3: Replace app/globals.css with v4 syntax**
 
 Overwrite `app/globals.css`:
 
@@ -465,18 +465,18 @@ Overwrite `app/globals.css`:
 }
 ```
 
-- [ ] **Step 4: Delete old tailwind.config.ts if present**
+- [x] **Step 4: Delete old tailwind.config.ts if present**
 
 ```bash
 rm -f tailwind.config.ts tailwind.config.js
 ```
 
-- [ ] **Step 5: Verify dev server renders**
+- [x] **Step 5: Verify dev server renders**
 
 Run: `pnpm dev`
 Expected: server runs, default page renders (Tailwind still works).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/globals.css postcss.config.mjs package.json pnpm-lock.yaml
@@ -491,7 +491,7 @@ git commit -m "chore: migrate Tailwind to v4 with CSS-first config"
 - Create: `lib/supabase/client.ts`
 - Create: `lib/supabase/server.ts`
 
-- [ ] **Step 1: Create .env.example**
+- [x] **Step 1: Create .env.example**
 
 ```bash
 # Supabase (self-host Railway, phase 2)
@@ -510,7 +510,7 @@ R2_PUBLIC_URL=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-- [ ] **Step 2: Create .env.local (copy of .env.example with placeholder values, gitignored)**
+- [x] **Step 2: Create .env.local (copy of .env.example with placeholder values, gitignored)**
 
 ```bash
 cp .env.example .env.local
@@ -518,7 +518,7 @@ cp .env.example .env.local
 
 Edit `.env.local` to set `NEXT_PUBLIC_APP_URL=http://localhost:3000`. Leave Supabase/R2 empty.
 
-- [ ] **Step 3: Create lib/supabase/client.ts**
+- [x] **Step 3: Create lib/supabase/client.ts**
 
 ```typescript
 // Stub for phase 2. Will wire @supabase/ssr createBrowserClient when backend is live.
@@ -531,7 +531,7 @@ export function getSupabaseBrowserClient(): never {
 }
 ```
 
-- [ ] **Step 4: Create lib/supabase/server.ts**
+- [x] **Step 4: Create lib/supabase/server.ts**
 
 ```typescript
 // Stub for phase 2. Will wire @supabase/ssr createServerClient when backend is live.
@@ -543,12 +543,12 @@ export function getSupabaseServerClient(): never {
 }
 ```
 
-- [ ] **Step 5: Verify typecheck passes**
+- [x] **Step 5: Verify typecheck passes**
 
 Run: `pnpm typecheck`
 Expected: no errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .env.example lib/supabase/
@@ -564,7 +564,7 @@ git commit -m "feat: add env scaffold and Supabase client stubs for phase 2"
 **Files:**
 - Modify: `app/layout.tsx`
 
-- [ ] **Step 1: Use Google fonts loader (local subset)**
+- [x] **Step 1: Use Google fonts loader (local subset)**
 
 Update `app/layout.tsx`:
 
@@ -600,12 +600,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-- [ ] **Step 2: Verify font loads**
+- [x] **Step 2: Verify font loads**
 
 Run: `pnpm dev`
 Visit http://localhost:3000, inspect font-family on `body` — should reference `var(--font-outfit)` via Tailwind config (or native CSS variable).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/layout.tsx
@@ -617,7 +617,7 @@ git commit -m "feat: load Outfit via next/font with a11y-compliant viewport"
 **Files:**
 - Modify: `app/globals.css`
 
-- [ ] **Step 1: Add custom classes from mockup**
+- [x] **Step 1: Add custom classes from mockup**
 
 Append to `app/globals.css`:
 
@@ -705,12 +705,12 @@ Append to `app/globals.css`:
 }
 ```
 
-- [ ] **Step 2: Build to verify no CSS errors**
+- [x] **Step 2: Build to verify no CSS errors**
 
 Run: `pnpm build`
 Expected: build succeeds.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/globals.css
@@ -722,7 +722,7 @@ git commit -m "feat: port mockup custom classes to globals.css (glass-panel, gra
 **Files:**
 - Create: `lib/cn.ts`
 
-- [ ] **Step 1: Create cn.ts**
+- [x] **Step 1: Create cn.ts**
 
 ```typescript
 import { clsx, type ClassValue } from 'clsx';
@@ -733,7 +733,7 @@ export function cn(...inputs: ClassValue[]): string {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/cn.ts
@@ -745,7 +745,7 @@ git commit -m "feat: add cn() helper (clsx + tailwind-merge)"
 **Files:**
 - Create: `lib/device.ts`
 
-- [ ] **Step 1: Create device.ts**
+- [x] **Step 1: Create device.ts**
 
 ```typescript
 'use client';
@@ -788,12 +788,12 @@ export function useBackground3DEnabled(): boolean {
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 Run: `pnpm typecheck`
 Expected: no errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/device.ts
@@ -809,7 +809,7 @@ git commit -m "feat: add device hooks for conditional Background3D rendering"
 **Files:**
 - Create: `components/ui/button.tsx`
 
-- [ ] **Step 1: Create button.tsx**
+- [x] **Step 1: Create button.tsx**
 
 ```typescript
 'use client';
@@ -856,12 +856,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 ```
 
-- [ ] **Step 2: Verify typecheck + build**
+- [x] **Step 2: Verify typecheck + build**
 
 Run: `pnpm typecheck && pnpm build`
 Expected: both pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add components/ui/button.tsx
@@ -873,7 +873,7 @@ git commit -m "feat: add Button primitive with primary/ghost/glass/accent varian
 **Files:**
 - Create: `components/ui/glass-panel.tsx`
 
-- [ ] **Step 1: Create glass-panel.tsx**
+- [x] **Step 1: Create glass-panel.tsx**
 
 ```typescript
 import { forwardRef, type HTMLAttributes } from 'react';
@@ -887,7 +887,7 @@ export const GlassPanel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
 GlassPanel.displayName = 'GlassPanel';
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/ui/glass-panel.tsx
@@ -899,7 +899,7 @@ git commit -m "feat: add GlassPanel primitive"
 **Files:**
 - Create: `components/branding/logo-s.tsx`
 
-- [ ] **Step 1: Create logo-s.tsx**
+- [x] **Step 1: Create logo-s.tsx**
 
 Port the SVG from `base.txt:122-133`:
 
@@ -936,7 +936,7 @@ export function LogoS({ size = 32, className }: LogoSProps) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/branding/logo-s.tsx
@@ -948,7 +948,7 @@ git commit -m "feat: port LogoS SVG with gradient fill"
 **Files:**
 - Create: `components/ui/mode-toggle.tsx`
 
-- [ ] **Step 1: Create mode-toggle.tsx**
+- [x] **Step 1: Create mode-toggle.tsx**
 
 ```typescript
 'use client';
@@ -1004,7 +1004,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/ui/mode-toggle.tsx
@@ -1016,7 +1016,7 @@ git commit -m "feat: add ModeToggle pill with aria-pressed + 44px touch targets"
 **Files:**
 - Create: `components/ui/sheet.tsx`
 
-- [ ] **Step 1: Create sheet.tsx**
+- [x] **Step 1: Create sheet.tsx**
 
 ```typescript
 'use client';
@@ -1065,13 +1065,13 @@ export function Sheet({ open, onOpenChange, children, side = 'left', title = 'Me
 }
 ```
 
-- [ ] **Step 2: Install tailwindcss-animate if not already**
+- [x] **Step 2: Install tailwindcss-animate if not already**
 
 ```bash
 pnpm add tailwindcss-animate
 ```
 
-- [ ] **Step 3: Enable tailwindcss-animate in globals.css**
+- [x] **Step 3: Enable tailwindcss-animate in globals.css**
 
 Prepend to `app/globals.css` (after `@import 'tailwindcss';`):
 
@@ -1079,12 +1079,12 @@ Prepend to `app/globals.css` (after `@import 'tailwindcss';`):
 @plugin 'tailwindcss-animate';
 ```
 
-- [ ] **Step 4: Verify build**
+- [x] **Step 4: Verify build**
 
 Run: `pnpm build`
 Expected: passes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add components/ui/sheet.tsx app/globals.css package.json pnpm-lock.yaml
@@ -1100,7 +1100,7 @@ git commit -m "feat: add Sheet drawer (Radix Dialog) with slide animations"
 **Files:**
 - Create: `components/layout/sidebar-item.tsx`
 
-- [ ] **Step 1: Create sidebar-item.tsx**
+- [x] **Step 1: Create sidebar-item.tsx**
 
 ```typescript
 'use client';
@@ -1134,7 +1134,7 @@ export function SidebarItem({ icon, label, active, onClick }: SidebarItemProps) 
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/layout/sidebar-item.tsx
@@ -1146,7 +1146,7 @@ git commit -m "feat: add SidebarItem with active state and accessible contrast"
 **Files:**
 - Create: `components/layout/sidebar.tsx`
 
-- [ ] **Step 1: Create sidebar.tsx**
+- [x] **Step 1: Create sidebar.tsx**
 
 ```typescript
 'use client';
@@ -1255,7 +1255,7 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/layout/sidebar.tsx
@@ -1267,7 +1267,7 @@ git commit -m "feat: add Sidebar drawer with mode-based nav and Lucide icons"
 **Files:**
 - Create: `components/layout/header.tsx`
 
-- [ ] **Step 1: Create header.tsx**
+- [x] **Step 1: Create header.tsx**
 
 ```typescript
 'use client';
@@ -1327,7 +1327,7 @@ export function Header() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/layout/header.tsx
@@ -1343,7 +1343,7 @@ git commit -m "feat: add Header with sidebar toggle, logo, mode switcher"
 **Files:**
 - Create: `components/three/blob.tsx`
 
-- [ ] **Step 1: Create blob.tsx**
+- [x] **Step 1: Create blob.tsx**
 
 ```typescript
 'use client';
@@ -1391,7 +1391,7 @@ export function Blob({ mode }: BlobProps) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/three/blob.tsx
@@ -1403,7 +1403,7 @@ git commit -m "feat: add Blob R3F mesh (color lerp on mode change)"
 **Files:**
 - Create: `components/three/background-3d.tsx`
 
-- [ ] **Step 1: Create background-3d.tsx**
+- [x] **Step 1: Create background-3d.tsx**
 
 ```typescript
 'use client';
@@ -1449,12 +1449,12 @@ export function Background3D() {
 }
 ```
 
-- [ ] **Step 2: Verify build (R3F SSR concern)**
+- [x] **Step 2: Verify build (R3F SSR concern)**
 
 Run: `pnpm build`
 Expected: passes. If SSR errors occur, the `'use client'` directive should handle them.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add components/three/background-3d.tsx
@@ -1470,7 +1470,7 @@ git commit -m "feat: add Background3D with fallback gradient for low-end/reduced
 **Files:**
 - Create: `components/visualizers/live-visualizer.tsx`
 
-- [ ] **Step 1: Create live-visualizer.tsx**
+- [x] **Step 1: Create live-visualizer.tsx**
 
 ```typescript
 export function LiveVisualizer() {
@@ -1485,7 +1485,7 @@ export function LiveVisualizer() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/visualizers/live-visualizer.tsx
@@ -1497,7 +1497,7 @@ git commit -m "feat: add LiveVisualizer (4 animated bars)"
 **Files:**
 - Create: `components/visualizers/status-timer.tsx`
 
-- [ ] **Step 1: Create status-timer.tsx**
+- [x] **Step 1: Create status-timer.tsx**
 
 ```typescript
 'use client';
@@ -1570,7 +1570,7 @@ export function StatusTimer({ baseTime, isCountdown = false, small = false }: St
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/visualizers/status-timer.tsx
@@ -1586,7 +1586,7 @@ git commit -m "feat: add StatusTimer (countdown or elapsed, two sizes)"
 **Files:**
 - Create: `lib/pricing.ts`
 
-- [ ] **Step 1: Create pricing.ts**
+- [x] **Step 1: Create pricing.ts**
 
 ```typescript
 export function getPrice(trackCount: number): string {
@@ -1602,7 +1602,7 @@ export function getReleaseLabel(trackCount: number): string {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/pricing.ts
@@ -1615,7 +1615,7 @@ git commit -m "feat: extract pricing + release label helpers from mockup"
 - Create: `public/mock-covers/cover-01.jpg` through `cover-06.jpg`
 - Create: `public/mock-covers/hero.jpg`
 
-- [ ] **Step 1: Download mock covers**
+- [x] **Step 1: Download mock covers**
 
 Run from project root (bash):
 
@@ -1631,12 +1631,12 @@ curl -L -o public/mock-covers/hero.jpg "https://images.unsplash.com/photo-161414
 curl -L -o public/mock-covers/room-bg.jpg "https://images.unsplash.com/photo-1514525253361-bee8a48790c3?q=80&w=1200&auto=format&fit=crop"
 ```
 
-- [ ] **Step 2: Verify files are under 300 KB each**
+- [x] **Step 2: Verify files are under 300 KB each**
 
 Run: `ls -la public/mock-covers/`
 Expected: 8 files, each 30-100 KB.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add public/mock-covers/
@@ -1648,7 +1648,7 @@ git commit -m "chore: download Unsplash mock covers for autonomy"
 **Files:**
 - Create: `lib/mock-data.ts`
 
-- [ ] **Step 1: Create mock-data.ts**
+- [x] **Step 1: Create mock-data.ts**
 
 ```typescript
 export type CreditCategory = 'acoustic' | 'hybrid' | 'ai_crafted';
@@ -1735,7 +1735,7 @@ export const ARTIST_RELEASES: Release[] = [
 ];
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add lib/mock-data.ts
@@ -1747,7 +1747,7 @@ git commit -m "feat: add typed mock data (releases, rooms) referencing local cov
 **Files:**
 - Modify: `next.config.ts`
 
-- [ ] **Step 1: Update next.config.ts**
+- [x] **Step 1: Update next.config.ts**
 
 ```typescript
 import type { NextConfig } from 'next';
@@ -1764,7 +1764,7 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add next.config.ts
@@ -1776,7 +1776,7 @@ git commit -m "chore: allow pravatar.cc for mock avatars, local covers default"
 **Files:**
 - Create: `components/catalog/hero-release.tsx`
 
-- [ ] **Step 1: Create hero-release.tsx**
+- [x] **Step 1: Create hero-release.tsx**
 
 ```typescript
 import Image from 'next/image';
@@ -1834,7 +1834,7 @@ export function HeroRelease({
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/catalog/hero-release.tsx
@@ -1846,7 +1846,7 @@ git commit -m "feat: add HeroRelease card for Editor's Choice"
 **Files:**
 - Create: `components/catalog/release-card.tsx`
 
-- [ ] **Step 1: Create release-card.tsx**
+- [x] **Step 1: Create release-card.tsx**
 
 ```typescript
 import Image from 'next/image';
@@ -1897,7 +1897,7 @@ export function ReleaseCard({ release }: ReleaseCardProps) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/catalog/release-card.tsx
@@ -1909,7 +1909,7 @@ git commit -m "feat: add ReleaseCard component for grid display"
 **Files:**
 - Create: `components/rooms/sound-room-main.tsx`
 
-- [ ] **Step 1: Create sound-room-main.tsx**
+- [x] **Step 1: Create sound-room-main.tsx**
 
 ```typescript
 import Image from 'next/image';
@@ -1995,7 +1995,7 @@ export function SoundRoomMain() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/rooms/sound-room-main.tsx
@@ -2007,7 +2007,7 @@ git commit -m "feat: add SoundRoomMain (large on-air card)"
 **Files:**
 - Create: `components/rooms/sound-room-compact.tsx`
 
-- [ ] **Step 1: Create sound-room-compact.tsx**
+- [x] **Step 1: Create sound-room-compact.tsx**
 
 ```typescript
 import Image from 'next/image';
@@ -2064,7 +2064,7 @@ export function SoundRoomCompact({ room }: SoundRoomCompactProps) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/rooms/sound-room-compact.tsx
@@ -2080,7 +2080,7 @@ git commit -m "feat: add SoundRoomCompact (secondary rooms list)"
 **Files:**
 - Create: `components/player/mini-player.tsx`
 
-- [ ] **Step 1: Create mini-player.tsx**
+- [x] **Step 1: Create mini-player.tsx**
 
 ```typescript
 // Stub for phase 3. Foundation reserves `pb-24` space on pages but renders nothing.
@@ -2089,7 +2089,7 @@ export function MiniPlayer() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add components/player/mini-player.tsx
@@ -2105,7 +2105,7 @@ git commit -m "feat: add MiniPlayer stub (null render, pb-24 reserved on main)"
 **Files:**
 - Modify: `app/layout.tsx`
 
-- [ ] **Step 1: Replace app/layout.tsx**
+- [x] **Step 1: Replace app/layout.tsx**
 
 ```typescript
 import type { Metadata } from 'next';
@@ -2149,7 +2149,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add app/layout.tsx
@@ -2161,7 +2161,7 @@ git commit -m "feat: wire root layout with Background3D + Header + MiniPlayer sh
 **Files:**
 - Modify: `app/page.tsx`
 
-- [ ] **Step 1: Replace app/page.tsx**
+- [x] **Step 1: Replace app/page.tsx**
 
 ```typescript
 import { redirect } from 'next/navigation';
@@ -2171,7 +2171,7 @@ export default function RootPage() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add app/page.tsx
@@ -2184,7 +2184,7 @@ git commit -m "feat: redirect / to /explore/home"
 - Create: `app/(explore)/layout.tsx`
 - Create: `app/(explore)/home/page.tsx`
 
-- [ ] **Step 1: Create (explore)/layout.tsx**
+- [x] **Step 1: Create (explore)/layout.tsx**
 
 ```typescript
 export default function ExploreLayout({ children }: { children: React.ReactNode }) {
@@ -2192,7 +2192,7 @@ export default function ExploreLayout({ children }: { children: React.ReactNode 
 }
 ```
 
-- [ ] **Step 2: Create (explore)/home/page.tsx**
+- [x] **Step 2: Create (explore)/home/page.tsx**
 
 ```typescript
 import { HeroRelease } from '@/components/catalog/hero-release';
@@ -2237,13 +2237,13 @@ export default function ExploreHomePage() {
 }
 ```
 
-- [ ] **Step 3: Verify dev server renders the home page**
+- [x] **Step 3: Verify dev server renders the home page**
 
 Run: `pnpm dev`
 Visit http://localhost:3000
 Expected: redirects to `/explore/home`, renders hero + grid + rooms.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add "app/(explore)/"
@@ -2256,7 +2256,7 @@ git commit -m "feat: explore/home page with hero, releases grid, sound rooms"
 - Create: `app/(explore)/search/page.tsx`
 - Create: `app/(explore)/library/page.tsx`
 
-- [ ] **Step 1: Create search/page.tsx**
+- [x] **Step 1: Create search/page.tsx**
 
 ```typescript
 export default function SearchPage() {
@@ -2269,7 +2269,7 @@ export default function SearchPage() {
 }
 ```
 
-- [ ] **Step 2: Create library/page.tsx**
+- [x] **Step 2: Create library/page.tsx**
 
 ```typescript
 export default function LibraryPage() {
@@ -2282,7 +2282,7 @@ export default function LibraryPage() {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add "app/(explore)/search/" "app/(explore)/library/"
@@ -2295,7 +2295,7 @@ git commit -m "feat: explore placeholders for search and library"
 - Create: `app/(artist)/layout.tsx`
 - Create: `app/(artist)/catalog/page.tsx`
 
-- [ ] **Step 1: Create (artist)/layout.tsx**
+- [x] **Step 1: Create (artist)/layout.tsx**
 
 ```typescript
 export default function ArtistLayout({ children }: { children: React.ReactNode }) {
@@ -2303,7 +2303,7 @@ export default function ArtistLayout({ children }: { children: React.ReactNode }
 }
 ```
 
-- [ ] **Step 2: Create (artist)/catalog/page.tsx**
+- [x] **Step 2: Create (artist)/catalog/page.tsx**
 
 ```typescript
 import Image from 'next/image';
@@ -2374,7 +2374,7 @@ export default function ArtistCatalogPage() {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add "app/(artist)/layout.tsx" "app/(artist)/catalog/"
@@ -2386,7 +2386,7 @@ git commit -m "feat: artist catalog page (my music) with revenue stats"
 **Files:**
 - Create: `app/(artist)/upload/page.tsx`
 
-- [ ] **Step 1: Create upload/page.tsx**
+- [x] **Step 1: Create upload/page.tsx**
 
 ```typescript
 'use client';
@@ -2446,7 +2446,7 @@ export default function ArtistUploadPage() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add "app/(artist)/upload/"
@@ -2459,7 +2459,7 @@ git commit -m "feat: artist upload page with Creative Credits placeholder slider
 - Create: `app/(artist)/sales/page.tsx`
 - Create: `app/(artist)/parties/page.tsx`
 
-- [ ] **Step 1: Create sales/page.tsx**
+- [x] **Step 1: Create sales/page.tsx**
 
 ```typescript
 import { Button } from '@/components/ui/button';
@@ -2504,7 +2504,7 @@ export default function ArtistSalesPage() {
 }
 ```
 
-- [ ] **Step 2: Create parties/page.tsx**
+- [x] **Step 2: Create parties/page.tsx**
 
 ```typescript
 import { Users } from 'lucide-react';
@@ -2528,7 +2528,7 @@ export default function ArtistPartiesPage() {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add "app/(artist)/sales/" "app/(artist)/parties/"
@@ -2544,7 +2544,7 @@ git commit -m "feat: artist sales (earnings) and parties (placeholder) pages"
 **Files:**
 - Create: `app/not-found.tsx`
 
-- [ ] **Step 1: Create not-found.tsx**
+- [x] **Step 1: Create not-found.tsx**
 
 ```typescript
 import Link from 'next/link';
@@ -2572,7 +2572,7 @@ export default function NotFound() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add app/not-found.tsx
@@ -2584,7 +2584,7 @@ git commit -m "feat: branded 404 page with SynthCamp shell"
 **Files:**
 - Create: `app/error.tsx`
 
-- [ ] **Step 1: Create error.tsx**
+- [x] **Step 1: Create error.tsx**
 
 ```typescript
 'use client';
@@ -2621,7 +2621,7 @@ export default function ErrorPage({ reset }: { error: Error & { digest?: string 
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add app/error.tsx
@@ -2637,7 +2637,7 @@ git commit -m "feat: branded 500 error boundary with reset and home CTA"
 **Files:**
 - Create: `railway.json`
 
-- [ ] **Step 1: Create railway.json**
+- [x] **Step 1: Create railway.json**
 
 ```json
 {
@@ -2654,7 +2654,7 @@ git commit -m "feat: branded 500 error boundary with reset and home CTA"
 }
 ```
 
-- [ ] **Step 2: Commit + push**
+- [x] **Step 2: Commit + push**
 
 ```bash
 git add railway.json
@@ -2662,13 +2662,13 @@ git commit -m "chore: configure Railway build + start commands"
 git push origin main
 ```
 
-- [ ] **Step 3: Verify Railway deploy succeeds**
+- [x] **Step 3: Verify Railway deploy succeeds**
 
 Check Railway dashboard — build should succeed, preview URL should be accessible. If build fails, inspect logs.
 
 ### Task 11.2: Run full build and lint locally
 
-- [ ] **Step 1: Run build**
+- [x] **Step 1: Run build**
 
 ```bash
 pnpm build
@@ -2676,7 +2676,7 @@ pnpm build
 
 Expected: succeeds with no errors.
 
-- [ ] **Step 2: Run lint and typecheck**
+- [x] **Step 2: Run lint and typecheck**
 
 ```bash
 pnpm lint && pnpm typecheck && pnpm format:check
@@ -2684,7 +2684,7 @@ pnpm lint && pnpm typecheck && pnpm format:check
 
 Expected: all pass.
 
-- [ ] **Step 3: Start prod build locally to smoke-test**
+- [x] **Step 3: Start prod build locally to smoke-test**
 
 ```bash
 pnpm start
@@ -2702,11 +2702,11 @@ Visit http://localhost:3000. Verify:
 
 ### Task 11.3: A11y audit
 
-- [ ] **Step 1: Contrast audit**
+- [x] **Step 1: Contrast audit**
 
 Open DevTools → Lighthouse → Accessibility audit. Expected Lighthouse A11y score ≥ 95. Fix any contrast fails (text-white/40 should have been upgraded to text-white/60+ in components).
 
-- [ ] **Step 2: Keyboard navigation manual test**
+- [x] **Step 2: Keyboard navigation manual test**
 
 Press `Tab` repeatedly from page load. Verify:
 - Menu button (header) focusable
@@ -2716,11 +2716,11 @@ Press `Tab` repeatedly from page load. Verify:
 - `Enter` / `Space` triggers buttons
 - Sidebar drawer: `Escape` closes, focus returns to menu button
 
-- [ ] **Step 3: Pinch-zoom test (DevTools mobile emulation)**
+- [x] **Step 3: Pinch-zoom test (DevTools mobile emulation)**
 
 Set DevTools to iPhone SE simulation. Pinch-zoom must work (viewport meta allows it).
 
-- [ ] **Step 4: Fix any issues found**
+- [x] **Step 4: Fix any issues found**
 
 If A11y score < 95 or manual issues found, fix inline and re-verify. Commit fixes:
 
@@ -2731,11 +2731,11 @@ git commit -m "fix: a11y corrections from Lighthouse + keyboard audit"
 
 ### Task 11.4: Lighthouse Performance audit
 
-- [ ] **Step 1: Run Lighthouse on mobile simulation**
+- [x] **Step 1: Run Lighthouse on mobile simulation**
 
 DevTools → Lighthouse → Performance → Mobile → Moto G Power → Analyze.
 
-- [ ] **Step 2: Verify score ≥ 85**
+- [x] **Step 2: Verify score ≥ 85**
 
 If score ≥ 85 → done.
 
@@ -2745,7 +2745,7 @@ If score < 85, inspect the slowest metrics:
 - **CLS**: verify all images have explicit `width`/`height` or `fill`
 - **Bundle**: run `pnpm build` output inspection, consider dynamic import of Canvas
 
-- [ ] **Step 3: Apply adjustments if needed, commit**
+- [x] **Step 3: Apply adjustments if needed, commit**
 
 ```bash
 git add -A
@@ -2754,21 +2754,21 @@ git commit -m "perf: tighten Background3D disable criteria for mobile Lighthouse
 
 ### Task 11.5: Final push + Railway preview verification
 
-- [ ] **Step 1: Push final state**
+- [x] **Step 1: Push final state**
 
 ```bash
 git push origin main
 ```
 
-- [ ] **Step 2: Wait for Railway deploy to finish**
+- [x] **Step 2: Wait for Railway deploy to finish**
 
 Railway dashboard shows green deployment.
 
-- [ ] **Step 3: Open preview URL and run full manual smoke test**
+- [x] **Step 3: Open preview URL and run full manual smoke test**
 
 Visit the Railway preview URL. Repeat Task 11.2 step 3 checklist on the deployed version. Verify everything works in production build.
 
-- [ ] **Step 4: Tag the milestone**
+- [x] **Step 4: Tag the milestone**
 
 ```bash
 git tag -a v0.1.0-foundation -m "Foundation milestone complete"
@@ -2782,28 +2782,28 @@ git push origin v0.1.0-foundation
 Before declaring Foundation done, verify every spec criterion:
 
 ### Fonctionnels
-- [ ] UI aligned visually with `base.txt` (aux correctifs a11y près).
-- [ ] Navigation URL: all 7 routes render (explore home/search/library, artist catalog/upload/parties/sales).
-- [ ] Mode toggle switches URL and pill state.
-- [ ] Sidebar drawer opens/closes with overlay, transitions, focus trap, Escape.
-- [ ] `not-found` and `error` pages render at SynthCamp look.
+- [x] UI aligned visually with `base.txt` (aux correctifs a11y près).
+- [x] Navigation URL: all 7 routes render (explore home/search/library, artist catalog/upload/parties/sales).
+- [x] Mode toggle switches URL and pill state.
+- [x] Sidebar drawer opens/closes with overlay, transitions, focus trap, Escape.
+- [x] `not-found` and `error` pages render at SynthCamp look.
 
 ### Qualité code
-- [ ] `pnpm build` passes (no TS / ESLint errors).
-- [ ] `pnpm lint` and `pnpm format:check` clean.
-- [ ] `pnpm typecheck` clean.
-- [ ] Railway deploy green.
+- [x] `pnpm build` passes (no TS / ESLint errors).
+- [x] `pnpm lint` and `pnpm format:check` clean.
+- [x] `pnpm typecheck` clean.
+- [x] Railway deploy green.
 
 ### Performance
-- [ ] Lighthouse Performance ≥ 85 on `/explore/home` mobile (Moto G Power).
+- [x] Lighthouse Performance ≥ 85 on `/explore/home` mobile (Moto G Power).
 
 ### A11y
-- [ ] Contrast: all info text ≥ 4.5:1.
-- [ ] Keyboard nav complete (Tab / Shift+Tab / Enter / Space / Escape).
-- [ ] `:focus-visible` ring visible and consistent.
-- [ ] Viewport allows pinch-zoom.
-- [ ] Touch targets ≥ 44×44 px audited.
-- [ ] Background3D respects `prefers-reduced-motion`.
+- [x] Contrast: all info text ≥ 4.5:1.
+- [x] Keyboard nav complete (Tab / Shift+Tab / Enter / Space / Escape).
+- [x] `:focus-visible` ring visible and consistent.
+- [x] Viewport allows pinch-zoom.
+- [x] Touch targets ≥ 44×44 px audited.
+- [x] Background3D respects `prefers-reduced-motion`.
 
 ---
 
