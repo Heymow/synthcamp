@@ -27,7 +27,7 @@ export function Header({ profile, unreadCount }: HeaderProps) {
 
   return (
     <>
-      <header className="pointer-events-none fixed top-0 right-0 left-0 z-50 bg-gradient-to-b from-[#050507] via-[#050507]/90 to-transparent p-4 pt-6 pb-24 md:p-8 md:pt-10">
+      <header className="pointer-events-none fixed top-0 right-0 left-0 z-50 bg-gradient-to-b from-[#050507] via-[#050507]/90 to-transparent p-4 pt-6 pb-12 md:p-8 md:pt-10">
         <div className="pointer-events-auto mx-auto flex h-14 max-w-6xl items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3 md:gap-6">
             <button
