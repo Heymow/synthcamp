@@ -40,23 +40,22 @@ export function CreativeCredits({ category, tags, narrative }: CreativeCreditsPr
   const hasTags = tags.length > 0;
 
   return (
-    <div className="space-y-3 rounded-2xl border border-white/5 bg-white/[0.02] p-4">
-      <div className="flex items-center justify-between gap-3">
+    <div className="space-y-2 rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/60">
           Creative Credits
         </span>
         <span
-          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${meta.accent}`}
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${meta.accent}`}
         >
           <span aria-hidden="true">{meta.emoji}</span>
           <span>{meta.label}</span>
         </span>
+        <span className="text-[10px] italic text-white/40">{meta.description}</span>
       </div>
 
-      <p className="text-[11px] italic text-white/50">{meta.description}</p>
-
       {hasTags && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {tags.map((tag) => (
             <span
               key={tag}
@@ -69,9 +68,7 @@ export function CreativeCredits({ category, tags, narrative }: CreativeCreditsPr
       )}
 
       {narrative && (
-        <p className="border-t border-white/5 pt-3 text-[12px] italic leading-relaxed text-white/80">
-          « {narrative} »
-        </p>
+        <p className="text-[11px] italic leading-snug text-white/75">« {narrative} »</p>
       )}
     </div>
   );
