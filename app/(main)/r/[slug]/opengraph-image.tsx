@@ -37,7 +37,24 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
 
   const title = release?.title ?? 'SynthCamp';
   const artistName = release?.artist?.display_name ?? 'Unknown';
-  const coverUrl = release?.cover_url ?? null;
+  const rawCoverUrl = release?.cover_url ?? null;
+
+  // Pre-fetch cover server-side and inline as data URL — satori is unreliable
+  // when reaching out to arbitrary hosts (self-hosted Supabase) at render time.
+  let coverDataUrl: string | null = null;
+  if (rawCoverUrl) {
+    try {
+      const r = await fetch(rawCoverUrl, { cache: 'no-store' });
+      if (r.ok) {
+        const buf = Buffer.from(await r.arrayBuffer());
+        const mime = r.headers.get('content-type') ?? 'image/jpeg';
+        coverDataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+      }
+    } catch {
+      coverDataUrl = null;
+    }
+  }
+  const coverUrl = coverDataUrl;
 
   const outfit = await readFile(join(process.cwd(), 'public/fonts/Outfit-Black.ttf'));
 

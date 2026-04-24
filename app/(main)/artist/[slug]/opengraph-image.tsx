@@ -25,8 +25,23 @@ export default async function ArtistOG({ params }: ArtistOGParams) {
     .single();
 
   const displayName = profile?.display_name ?? 'Artist';
-  const avatarUrl = profile?.avatar_url ?? null;
+  const rawAvatarUrl = profile?.avatar_url ?? null;
   const bio = profile?.bio ?? null;
+
+  let avatarDataUrl: string | null = null;
+  if (rawAvatarUrl) {
+    try {
+      const r = await fetch(rawAvatarUrl, { cache: 'no-store' });
+      if (r.ok) {
+        const buf = Buffer.from(await r.arrayBuffer());
+        const mime = r.headers.get('content-type') ?? 'image/jpeg';
+        avatarDataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+      }
+    } catch {
+      avatarDataUrl = null;
+    }
+  }
+  const avatarUrl = avatarDataUrl;
 
   const outfit = await readFile(join(process.cwd(), 'public/fonts/Outfit-Black.ttf'));
 
