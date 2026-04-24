@@ -219,8 +219,7 @@ export function CalendarPicker({ roomId, durationSeconds, onPick }: CalendarPick
       </div>
 
       <p className="text-[9px] italic text-white/40">
-        Party duration: {Math.floor(durationSeconds / 60)} min. Slots shown as unavailable either
-        overlap with an existing party in this room or are in the past.
+        Greyed-out slots are booked or in the past. Party duration: {Math.floor(durationSeconds / 60)} min.
       </p>
     </div>
   );
