@@ -76,12 +76,10 @@ export function renderPartyReminderEmail(p: PartyReminderPayload): {
     `— SynthCamp`;
   const html = `<div style="background:#050507;color:#d4d4d8;font-family:Georgia,serif;font-size:15px;line-height:1.65;padding:40px 32px;max-width:560px;">
 <p style="font-family:Arial,sans-serif;font-size:13px;letter-spacing:0.35em;font-weight:900;font-style:italic;text-transform:uppercase;color:#ffffff;margin:0 0 28px;">SynthCamp</p>
-<p style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:0.3em;font-weight:900;text-transform:uppercase;color:#f87171;margin:0 0 6px;">Starts in ${p.minutesUntilStart} min</p>
-<p style="font-family:Arial,sans-serif;font-size:24px;font-weight:900;font-style:italic;text-transform:uppercase;color:#ffffff;margin:0 0 4px;line-height:1.15;">${p.releaseTitle}</p>
-<p style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:0.2em;font-weight:700;text-transform:uppercase;color:#a5b4fc;margin:0 0 24px;">by ${p.artistName}</p>
-<p style="margin:0 0 28px;color:#9ca3af;font-size:13px;">on ${p.roomName}</p>
+<p style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:0.3em;font-weight:900;text-transform:uppercase;color:#f87171;margin:0 0 8px;">Starts in ${p.minutesUntilStart} min</p>
+<p style="margin:0 0 24px;color:#d4d4d8;font-size:15px;">on ${p.roomName}</p>
 <p>Hey,</p>
-<p>Just a heads-up — the party is about to kick off. Drop in early to grab a good spot.</p>
+<p>Just a heads-up — <b style="color:#ffffff;">${p.artistName}</b>'s listening party for <i style="color:#ffffff;">${p.releaseTitle}</i> is about to kick off. Drop in early to grab a good spot.</p>
 <p>Join here: <a href="${partyUrl}" style="color:#a5b4fc;">${partyUrl}</a></p>
 <p style="margin-top:36px;color:#6b7280;font-size:13px;">— The SynthCamp team</p>
 </div>`;
