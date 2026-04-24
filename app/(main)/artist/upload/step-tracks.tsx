@@ -292,9 +292,12 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
           size="md"
           onClick={onNext}
           disabled={!canProceed || isBusy}
-          className="flex-1"
+          className="flex-1 flex-col !py-2 leading-tight"
         >
-          Next → ({state.tracks.length}/3 min)
+          <span>Next →</span>
+          <span className="text-[9px] font-bold opacity-70">
+            ({state.tracks.length}/3 min)
+          </span>
         </Button>
       </div>
     </GlassPanel>
