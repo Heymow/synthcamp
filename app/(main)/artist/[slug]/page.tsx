@@ -110,7 +110,7 @@ export default async function ArtistProfilePage({ params }: ArtistPageProps) {
             alt={profile.display_name}
             width={96}
             height={96}
-            className="rounded-full"
+            className="h-24 w-24 shrink-0 rounded-full object-cover"
           />
         )}
         <div className="min-w-0 flex-1 space-y-2">
