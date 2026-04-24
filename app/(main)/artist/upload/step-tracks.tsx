@@ -12,6 +12,23 @@ interface StepTracksProps {
   onBack: () => void;
 }
 
+type UploadPhase =
+  | 'idle'
+  | 'reading'
+  | 'creating'
+  | 'signing'
+  | 'uploading'
+  | 'finalizing';
+
+const PHASE_LABELS: Record<UploadPhase, string> = {
+  idle: 'Choose audio file',
+  reading: 'Reading file…',
+  creating: 'Creating track…',
+  signing: 'Preparing upload…',
+  uploading: 'Uploading',
+  finalizing: 'Finalizing…',
+};
+
 function extractDurationSeconds(file: File): Promise<number> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -29,8 +46,34 @@ function extractDurationSeconds(file: File): Promise<number> {
   });
 }
 
+function xhrUpload(
+  url: string,
+  file: File,
+  contentType: string,
+  onProgress: (pct: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Content-Type', contentType);
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) onProgress((e.loaded / e.total) * 100);
+    });
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Upload failed (HTTP ${xhr.status})`));
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.onabort = () => reject(new Error('Upload aborted'));
+    xhr.send(file);
+  });
+}
+
 export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps) {
   const [uploading, setUploading] = useState<string | null>(null);
+  const [phase, setPhase] = useState<UploadPhase>('idle');
+  const [progress, setProgress] = useState(0);
+  const [fileLabel, setFileLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const addTrack = async (file: File) => {
@@ -41,12 +84,13 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
     setError(null);
     const uiKey = crypto.randomUUID();
     setUploading(uiKey);
+    setFileLabel(file.name);
     try {
+      setPhase('reading');
       const durationSeconds = await extractDurationSeconds(file);
       const defaultTitle = file.name.replace(/\.[^/.]+$/, '');
 
-      // Server assigns the track_number — avoids unique-constraint collisions
-      // when the wizard resumes with a stale local state.
+      setPhase('creating');
       const createRes = await fetch(`/api/releases/${state.releaseId}/tracks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,7 +110,7 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
         track_number: number;
       };
 
-      // Signed URL for R2
+      setPhase('signing');
       const urlRes = await fetch(`/api/tracks/${trackId}/upload-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,15 +124,11 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
       }
       const { signed_url, key } = (await urlRes.json()) as { signed_url: string; key: string };
 
-      // Upload to R2
-      const put = await fetch(signed_url, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type || 'audio/mpeg' },
-        body: file,
-      });
-      if (!put.ok) throw new Error('Audio upload failed');
+      setPhase('uploading');
+      setProgress(0);
+      await xhrUpload(signed_url, file, file.type || 'audio/mpeg', (pct) => setProgress(pct));
 
-      // Patch track row with audio_source_key
+      setPhase('finalizing');
       await fetch(`/api/releases/${state.releaseId}/tracks/${trackId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -108,6 +148,9 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(null);
+      setPhase('idle');
+      setProgress(0);
+      setFileLabel(null);
     }
   };
 
@@ -142,7 +185,6 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
       ...prev,
       tracks: prev.tracks.map((t) => (t.uiKey === track.uiKey ? { ...t, title: newTitle } : t)),
     }));
-    // Debounce would be nicer but MVP: fire-and-forget
     await fetch(`/api/releases/${state.releaseId}/tracks/${track.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -151,6 +193,7 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
   };
 
   const canProceed = state.tracks.length >= 3;
+  const isBusy = uploading !== null;
 
   return (
     <GlassPanel className="space-y-5 p-6">
@@ -189,17 +232,17 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
         })}
       </div>
 
-      <div className="flex flex-col items-start gap-2">
+      <div className="flex flex-col items-stretch gap-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
           Add a track
         </span>
         <label
           className={
             'inline-flex cursor-pointer items-center justify-center rounded-xl bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-white/20 ' +
-            (uploading !== null ? 'pointer-events-none opacity-50' : '')
+            (isBusy ? 'pointer-events-none opacity-50' : '')
           }
         >
-          {uploading !== null ? 'Uploading...' : 'Choose audio file'}
+          {isBusy ? PHASE_LABELS[phase] : PHASE_LABELS.idle}
           <input
             type="file"
             accept="audio/*"
@@ -209,23 +252,46 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
               input.value = '';
               if (file) await addTrack(file);
             }}
-            disabled={uploading !== null}
+            disabled={isBusy}
             className="sr-only"
           />
         </label>
+
+        {isBusy && (
+          <div className="space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-white/70">
+              <span className="truncate pr-2">{fileLabel ?? 'File'}</span>
+              <span className="shrink-0 font-mono text-indigo-300">
+                {phase === 'uploading' ? `${Math.round(progress)}%` : PHASE_LABELS[phase]}
+              </span>
+            </div>
+            <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className={
+                  'h-full rounded-full bg-indigo-400 transition-[width] duration-150 ' +
+                  (phase === 'uploading' ? '' : 'animate-pulse')
+                }
+                style={{
+                  width: phase === 'uploading' ? `${progress}%` : '100%',
+                  opacity: phase === 'uploading' ? 1 : 0.4,
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <p className="text-xs italic text-red-400">{error}</p>}
 
       <div className="flex gap-3 pt-2">
-        <Button variant="ghost" size="md" onClick={onBack} className="flex-1">
+        <Button variant="ghost" size="md" onClick={onBack} className="flex-1" disabled={isBusy}>
           ← Back
         </Button>
         <Button
           variant="primary"
           size="md"
           onClick={onNext}
-          disabled={!canProceed || uploading !== null}
+          disabled={!canProceed || isBusy}
           className="flex-1"
         >
           Next → ({state.tracks.length}/3 min)
