@@ -13,10 +13,11 @@ import { ReportButton } from '@/components/social/report-button';
 import { CancelPartyButton } from '@/components/party/cancel-party-button';
 import { ArchiveReleaseButton } from '@/components/catalog/archive-release-button';
 import { DeleteDraftButton } from '@/components/catalog/delete-draft-button';
+import { CreativeCredits } from '@/components/catalog/creative-credits';
 import { LocalDateTime } from '@/components/ui/local-datetime';
 import { getReleaseLabel } from '@/lib/pricing';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import type { ReleaseStatus } from '@/lib/database.types';
+import type { CreditCategory, ReleaseStatus } from '@/lib/database.types';
 
 interface ReleasePageProps {
   params: Promise<{ slug: string }>;
@@ -121,7 +122,8 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
     cover_url: string;
     status: string;
     artist_id: string;
-    credit_category: string;
+    credit_category: CreditCategory;
+    credit_tags: string[] | null;
     credit_narrative: string | null;
     price_minimum: number;
     artist: { display_name: string; slug: string | null; bio: string | null };
@@ -187,12 +189,11 @@ export default async function ReleasePage({ params }: ReleasePageProps) {
             </p>
           )}
           {r.description && <p className="text-sm italic text-white/80">{r.description}</p>}
-          <span className="inline-block rounded-full bg-indigo-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-400">
-            {r.credit_category}
-          </span>
-          {r.credit_narrative && (
-            <p className="text-xs italic text-white/60">« {r.credit_narrative} »</p>
-          )}
+          <CreativeCredits
+            category={r.credit_category}
+            tags={r.credit_tags ?? []}
+            narrative={r.credit_narrative}
+          />
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
             {getReleaseLabel(tracks.length)} · Min ${r.price_minimum.toFixed(2)} ·{' '}
             <span className="text-white/50">{r.status}</span>
