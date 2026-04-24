@@ -114,15 +114,18 @@ export default async function OpengraphImage() {
           </svg>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* Outfit has no italic variant; satori won't synthesize oblique,
+                so we skew the container to mimic the browser's synthetic
+                italic that the site uses with font-style: italic. */}
             <div
               style={{
                 fontSize: 96,
                 fontWeight: 900,
-                fontStyle: 'italic',
                 letterSpacing: '-0.04em',
                 lineHeight: 0.95,
                 color: '#ffffff',
                 textTransform: 'uppercase',
+                transform: 'skewX(-10deg)',
               }}
             >
               SynthCamp
@@ -130,11 +133,11 @@ export default async function OpengraphImage() {
             <div
               style={{
                 fontSize: 22,
-                fontStyle: 'italic',
                 letterSpacing: '0.2em',
                 color: '#a5b4fc',
                 textTransform: 'uppercase',
                 fontWeight: 700,
+                transform: 'skewX(-10deg)',
               }}
             >
               The AI Music Marketplace
