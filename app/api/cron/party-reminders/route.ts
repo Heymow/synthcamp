@@ -123,12 +123,12 @@ export async function POST(request: NextRequest) {
     }),
   );
 
-  // Fire-and-forget: sendEmail has its own try/catch, errors won't crash.
-  void Promise.all(emailJobs.map((job) => sendEmail(job)));
+  console.log(`[cron] party-reminders: ${parties.length} party/ies, ${emailJobs.length} emails to send`);
+  await Promise.all(emailJobs.map((job) => sendEmail(job)));
 
   return NextResponse.json({
     ok: true,
     parties: parties.length,
-    emails_queued: emailJobs.length,
+    emails_sent: emailJobs.length,
   });
 }
