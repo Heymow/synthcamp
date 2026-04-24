@@ -49,13 +49,13 @@ export async function generateMetadata({ params }: ReleasePageProps): Promise<Me
       type: 'music.album',
       title,
       description,
-      images: [{ url: row.cover_url, width: 800, height: 800, alt: row.title }],
+      // image supplied by app/(main)/r/[slug]/opengraph-image.tsx
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [row.cover_url],
+      // image inherits from the opengraph-image above
     },
   };
 }
