@@ -11,50 +11,61 @@ interface ReleaseOGParams {
   params: Promise<{ slug: string }>;
 }
 
+async function fetchAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const r = await fetch(url, { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeout);
+    if (!r.ok) return null;
+    const buf = Buffer.from(await r.arrayBuffer());
+    const mime = r.headers.get('content-type') ?? 'image/jpeg';
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Per-release Open Graph card. Cover on the left at poster size, release
- * title + artist on the right in the site's display typography, SynthCamp
- * logomark in the bottom right so viewers recognize the source even when
- * the image is lifted.
+ * Per-release Open Graph card. Cover poster on the left, title + artist on
+ * the right, SynthCamp logomark bottom-right. Falls back to a purely
+ * text-based card if Supabase or the cover fetch fails — we never let the
+ * route 500 because that breaks link previews everywhere.
  */
 export default async function ReleaseOG({ params }: ReleaseOGParams) {
   const { slug } = await params;
-  const supabase = await getSupabaseServerClient();
-  const { data } = await supabase
-    .from('releases')
-    .select(
-      'title, cover_url, artist:profiles!releases_artist_id_fkey(display_name)',
-    )
-    .eq('slug', slug)
-    .in('status', ['published', 'unlisted', 'scheduled'])
-    .single();
 
-  const release = data as unknown as {
-    title: string;
-    cover_url: string;
-    artist: { display_name: string } | null;
-  } | null;
-
-  const title = release?.title ?? 'SynthCamp';
-  const artistName = release?.artist?.display_name ?? 'Unknown';
-  const rawCoverUrl = release?.cover_url ?? null;
-
-  // Pre-fetch cover server-side and inline as data URL — satori is unreliable
-  // when reaching out to arbitrary hosts (self-hosted Supabase) at render time.
+  let title = 'SynthCamp';
+  let artistName = 'Unknown';
   let coverDataUrl: string | null = null;
-  if (rawCoverUrl) {
-    try {
-      const r = await fetch(rawCoverUrl, { cache: 'no-store' });
-      if (r.ok) {
-        const buf = Buffer.from(await r.arrayBuffer());
-        const mime = r.headers.get('content-type') ?? 'image/jpeg';
-        coverDataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+
+  try {
+    const supabase = await getSupabaseServerClient();
+    const { data } = await supabase
+      .from('releases')
+      .select(
+        'title, cover_url, artist:profiles!releases_artist_id_fkey(display_name)',
+      )
+      .eq('slug', slug)
+      .in('status', ['published', 'unlisted', 'scheduled'])
+      .single();
+
+    const release = data as unknown as {
+      title: string;
+      cover_url: string;
+      artist: { display_name: string } | null;
+    } | null;
+
+    if (release) {
+      title = release.title;
+      artistName = release.artist?.display_name ?? 'Unknown';
+      if (release.cover_url) {
+        coverDataUrl = await fetchAsDataUrl(release.cover_url);
       }
-    } catch {
-      coverDataUrl = null;
     }
+  } catch {
+    // Fall through to defaults, render a text-only card.
   }
-  const coverUrl = coverDataUrl;
 
   const outfit = await readFile(join(process.cwd(), 'public/fonts/Outfit-Black.ttf'));
 
@@ -66,38 +77,15 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
           height: '100%',
           display: 'flex',
           position: 'relative',
-          background: '#050507',
+          background:
+            'linear-gradient(120deg, #050507 0%, #0a0a1f 55%, #1e1b4b 100%)',
           fontFamily: 'Outfit, system-ui, sans-serif',
         }}
       >
-        {/* Blurred cover as ambient backdrop */}
-        {coverUrl && (
-          <img
-            src={coverUrl}
-            width={1200}
-            height={630}
-            alt=""
-            style={{
-              position: 'absolute',
-              inset: 0,
-              objectFit: 'cover',
-              filter: 'blur(40px) brightness(0.35)',
-              transform: 'scale(1.1)',
-            }}
-          />
-        )}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(120deg, rgba(5,5,7,0.85) 0%, rgba(5,5,7,0.4) 100%)',
-          }}
-        />
-
         {/* Poster cover on the left */}
-        {coverUrl && (
+        {coverDataUrl && (
           <img
-            src={coverUrl}
+            src={coverDataUrl}
             width={450}
             height={450}
             alt=""
@@ -118,7 +106,7 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
         <div
           style={{
             position: 'absolute',
-            left: 590,
+            left: coverDataUrl ? 590 : 80,
             right: 80,
             top: 110,
             display: 'flex',
@@ -147,7 +135,6 @@ export default async function ReleaseOG({ params }: ReleaseOGParams) {
               lineHeight: 1,
               letterSpacing: '-0.04em',
               transform: 'skewX(-10deg)',
-              // Clamp extremely long titles with a soft max
               maxHeight: 220,
               overflow: 'hidden',
               display: 'flex',

@@ -11,37 +11,51 @@ interface ArtistOGParams {
   params: Promise<{ slug: string }>;
 }
 
+async function fetchAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const r = await fetch(url, { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeout);
+    if (!r.ok) return null;
+    const buf = Buffer.from(await r.arrayBuffer());
+    const mime = r.headers.get('content-type') ?? 'image/jpeg';
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Per-artist Open Graph card. Avatar as circular hero on the left, display
- * name in the site's display typography, SynthCamp logomark bottom-right.
+ * Per-artist Open Graph card. Avatar circle on the left, display name +
+ * bio on the right, SynthCamp logomark bottom-right. Gracefully falls
+ * back to a text-only card if Supabase or the avatar fetch fails.
  */
 export default async function ArtistOG({ params }: ArtistOGParams) {
   const { slug } = await params;
-  const supabase = await getSupabaseServerClient();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('display_name, avatar_url, bio')
-    .eq('slug', slug)
-    .single();
 
-  const displayName = profile?.display_name ?? 'Artist';
-  const rawAvatarUrl = profile?.avatar_url ?? null;
-  const bio = profile?.bio ?? null;
-
+  let displayName = 'Artist';
+  let bio: string | null = null;
   let avatarDataUrl: string | null = null;
-  if (rawAvatarUrl) {
-    try {
-      const r = await fetch(rawAvatarUrl, { cache: 'no-store' });
-      if (r.ok) {
-        const buf = Buffer.from(await r.arrayBuffer());
-        const mime = r.headers.get('content-type') ?? 'image/jpeg';
-        avatarDataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+
+  try {
+    const supabase = await getSupabaseServerClient();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name, avatar_url, bio')
+      .eq('slug', slug)
+      .single();
+
+    if (profile) {
+      displayName = profile.display_name;
+      bio = profile.bio;
+      if (profile.avatar_url) {
+        avatarDataUrl = await fetchAsDataUrl(profile.avatar_url);
       }
-    } catch {
-      avatarDataUrl = null;
     }
+  } catch {
+    // Text-only fallback.
   }
-  const avatarUrl = avatarDataUrl;
 
   const outfit = await readFile(join(process.cwd(), 'public/fonts/Outfit-Black.ttf'));
 
@@ -53,39 +67,15 @@ export default async function ArtistOG({ params }: ArtistOGParams) {
           height: '100%',
           display: 'flex',
           position: 'relative',
-          background: '#050507',
+          background:
+            'linear-gradient(120deg, #050507 0%, #0a0a1f 55%, #1e1b4b 100%)',
           fontFamily: 'Outfit, system-ui, sans-serif',
         }}
       >
-        {/* Blurred avatar as ambient backdrop */}
-        {avatarUrl && (
-          <img
-            src={avatarUrl}
-            width={1200}
-            height={630}
-            alt=""
-            style={{
-              position: 'absolute',
-              inset: 0,
-              objectFit: 'cover',
-              filter: 'blur(60px) brightness(0.3)',
-              transform: 'scale(1.2)',
-            }}
-          />
-        )}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'linear-gradient(120deg, rgba(5,5,7,0.88) 0%, rgba(5,5,7,0.55) 60%, rgba(79,70,229,0.25) 100%)',
-          }}
-        />
-
         {/* Avatar circle on the left */}
-        {avatarUrl ? (
+        {avatarDataUrl ? (
           <img
-            src={avatarUrl}
+            src={avatarDataUrl}
             width={340}
             height={340}
             alt=""
