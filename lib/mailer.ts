@@ -74,11 +74,13 @@ export function renderPartyReminderEmail(p: PartyReminderPayload): {
     `Just a heads-up: ${p.artistName}'s listening party for "${p.releaseTitle}" on ${p.roomName} starts in ${p.minutesUntilStart} minutes.\n\n` +
     `Join here: ${partyUrl}\n\n` +
     `— SynthCamp`;
-  const html = `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#111;">
+  const html = `<div style="font-family:Georgia,serif;font-size:15px;line-height:1.6;color:#1a1a1a;max-width:520px;">
+<p style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.25em;font-weight:bold;font-style:italic;text-transform:uppercase;color:#6b21a8;margin:0 0 4px;">SynthCamp</p>
+<p style="font-size:11px;color:#999;margin:0 0 24px;border-bottom:1px solid #eee;padding-bottom:16px;">Listening party reminder</p>
 <p>Hey,</p>
-<p>Just a heads-up: <b>${p.artistName}</b>'s listening party for <b>${p.releaseTitle}</b> on ${p.roomName} starts in <b>${p.minutesUntilStart} minutes</b>.</p>
-<p>Join here: <a href="${partyUrl}">${partyUrl}</a></p>
-<p>— SynthCamp</p>
+<p>Just a heads-up — <b>${p.artistName}</b>'s listening party for <i>${p.releaseTitle}</i> on ${p.roomName} starts in <b>${p.minutesUntilStart} minutes</b>.</p>
+<p>Join here: <a href="${partyUrl}" style="color:#6b21a8;">${partyUrl}</a></p>
+<p style="margin-top:32px;color:#555;">— The SynthCamp team</p>
 </div>`;
   return { subject, html, text };
 }
