@@ -38,10 +38,8 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
         textContent: text,
       }),
     });
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      console.error(`[mailer] Brevo ${res.status}:`, body.slice(0, 300));
-    }
+    const body = await res.text().catch(() => '');
+    console.log(`[mailer] Brevo ${res.status} to=${to} body=${body.slice(0, 300)}`);
   } catch (err) {
     console.error('[mailer] send failed:', err);
   }
