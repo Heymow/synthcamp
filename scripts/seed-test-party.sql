@@ -12,16 +12,25 @@ DECLARE
   v_party_id uuid;
   v_room_id uuid;
   v_scheduled timestamptz;
+  v_lynckit_id uuid;
 BEGIN
   SELECT lp.id, lp.room_id INTO v_party_id, v_room_id
   FROM listening_parties lp
   JOIN profiles p ON p.id = lp.artist_id
   WHERE p.slug IN ('neon-shadow', 'luna-ostrakon', 'vector-pulse', 'moss-voltage')
-  ORDER BY random()
+  ORDER BY lp.id
   LIMIT 1;
 
   IF v_party_id IS NULL THEN
     RAISE EXCEPTION 'No dummy-artist party found';
+  END IF;
+
+  -- Ensure lynckit is subscribed so the cron has something to email.
+  SELECT id INTO v_lynckit_id FROM auth.users WHERE email = 'lynckit@gmail.com' LIMIT 1;
+  IF v_lynckit_id IS NOT NULL THEN
+    INSERT INTO party_alerts (party_id, user_id)
+    VALUES (v_party_id, v_lynckit_id)
+    ON CONFLICT DO NOTHING;
   END IF;
 
   v_scheduled := date_trunc('hour', now())
