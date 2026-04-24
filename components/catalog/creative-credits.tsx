@@ -8,19 +8,19 @@ const CATEGORY_META: Record<
     label: 'Acoustic',
     emoji: '🌱',
     description: 'Crafted without generative AI.',
-    accent: 'text-emerald-300 border-emerald-300/30 bg-emerald-500/10',
+    accent: 'text-white/90 border-white/15 bg-white/[0.04]',
   },
   hybrid: {
     label: 'Hybrid',
     emoji: '✨',
     description: 'Human craft woven with AI assistance.',
-    accent: 'text-amber-200 border-amber-200/30 bg-amber-500/10',
+    accent: 'text-indigo-100 border-indigo-200/20 bg-indigo-400/[0.07]',
   },
   ai_crafted: {
     label: 'AI-Crafted',
     emoji: '🎨',
     description: 'Built with generative AI tools, curated by the artist.',
-    accent: 'text-indigo-200 border-indigo-300/30 bg-indigo-500/10',
+    accent: 'text-indigo-200 border-indigo-300/40 bg-indigo-500/15',
   },
 };
 
