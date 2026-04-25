@@ -41,17 +41,20 @@ export function EmbeddedConnect({ mode, onExit }: Props) {
         const { client_secret } = (await res.json()) as { client_secret: string };
         return client_secret;
       },
-      // Force an explicit light theme on the embedded form so it lives on a
-      // white card regardless of the parent page background. Stripe's
-      // defaults use medium-contrast grays that wash out on either pure
-      // dark or pure light parents.
+      // Hybrid theme: form sits on a transparent (dark) parent for labels
+      // and headers (white text on dark page), while individual input
+      // fields use a white background. Stripe's embedded components
+      // auto-contrast text inside inputs to a dark color for readability.
       appearance: {
         overlays: 'dialog',
         variables: {
-          colorPrimary: '#000000',
-          colorBackground: '#ffffff',
-          colorText: '#0a0a0a',
-          colorSecondaryText: '#404040',
+          colorPrimary: '#ffffff',
+          colorBackground: 'transparent',
+          colorText: '#ffffff',
+          colorSecondaryText: '#a0a0a0',
+          formBackgroundColor: '#ffffff',
+          buttonPrimaryColorBackground: '#ffffff',
+          buttonPrimaryColorText: '#000000',
           fontFamily: 'inherit',
           borderRadius: '8px',
         },
@@ -69,18 +72,16 @@ export function EmbeddedConnect({ mode, onExit }: Props) {
   if (!stripeConnectInstance) return null;
 
   return (
-    <div className="rounded-lg bg-white p-4 text-neutral-900">
-      <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
-        {mode === 'onboarding' ? (
-          <ConnectAccountOnboarding
-            onExit={() => {
-              if (onExit) onExit();
-            }}
-          />
-        ) : (
-          <ConnectAccountManagement />
-        )}
-      </ConnectComponentsProvider>
-    </div>
+    <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+      {mode === 'onboarding' ? (
+        <ConnectAccountOnboarding
+          onExit={() => {
+            if (onExit) onExit();
+          }}
+        />
+      ) : (
+        <ConnectAccountManagement />
+      )}
+    </ConnectComponentsProvider>
   );
 }
