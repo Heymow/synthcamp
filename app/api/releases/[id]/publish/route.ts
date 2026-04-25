@@ -34,25 +34,43 @@ export async function POST(
   const body = (await request.json().catch(() => null)) as PublishBody | null;
   if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
 
+  // Guard: only drafts can be published. Without this, an owner could
+  // re-publish an `archived` release and silently flip it back to live.
+  const { data: existing, error: existingErr } = await supabase
+    .from('releases')
+    .select('status')
+    .eq('id', id)
+    .single();
+  if (existingErr || !existing) {
+    return NextResponse.json({ error: 'Release not found' }, { status: 404 });
+  }
+  if (existing.status !== 'draft') {
+    return NextResponse.json(
+      { error: 'Only drafts can be published' },
+      { status: 400 },
+    );
+  }
+
   // 1. Validate publish eligibility (3 tracks + audio + monthly limit)
   const { error: validationErr } = await supabase.rpc('validate_release_publish', {
     p_release_id: id,
   });
   if (validationErr) return NextResponse.json({ error: validationErr.message }, { status: 400 });
 
-  // 2. Compute price_minimum from tracks count
+  // 2. Compute price_minimum from tracks count. We do NOT write it yet —
+  // the price + status + release_date all flip in a single UPDATE at the
+  // end of the route, so a failure mid-flight (e.g. party slot taken
+  // between validation and insert) doesn't leave a draft with a bumped
+  // price applied.
   const { data: tracks } = await supabase.from('tracks').select('id').eq('release_id', id);
   const trackCount = tracks?.length ?? 0;
   const priceMinimum = parseFloat(getPrice(trackCount));
 
-  const { error: priceErr } = await supabase
-    .from('releases')
-    .update({ price_minimum: priceMinimum })
-    .eq('id', id);
-  if (priceErr) return NextResponse.json({ error: priceErr.message }, { status: 400 });
-
   // 3. Dispatch based on party/no-party
   if (body.party) {
+    // The party RPC flips status to 'scheduled' and sets release_date as
+    // its final write. We update price_minimum immediately after — if the
+    // RPC throws, we never wrote anything to the release.
     const { data: partyId, error: partyErr } = await supabase.rpc(
       'validate_and_create_listening_party',
       {
@@ -62,6 +80,13 @@ export async function POST(
       },
     );
     if (partyErr) return NextResponse.json({ error: partyErr.message }, { status: 400 });
+
+    const { error: priceErr } = await supabase
+      .from('releases')
+      .update({ price_minimum: priceMinimum })
+      .eq('id', id);
+    if (priceErr) return NextResponse.json({ error: priceErr.message }, { status: 400 });
+
     return NextResponse.json({ ok: true, party_id: partyId });
   }
 
@@ -79,12 +104,15 @@ export async function POST(
     );
   }
 
+  // Atomic write: status + release_date + price_minimum in one UPDATE so a
+  // failure leaves the draft fully untouched.
   const nextStatus = futureSchedule ? 'scheduled' : 'published';
   const { error: statusErr } = await supabase
     .from('releases')
     .update({
       status: nextStatus,
       release_date: rd.toISOString(),
+      price_minimum: priceMinimum,
     })
     .eq('id', id);
   if (statusErr) return NextResponse.json({ error: statusErr.message }, { status: 400 });

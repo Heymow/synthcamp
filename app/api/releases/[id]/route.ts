@@ -97,11 +97,9 @@ export async function DELETE(
     );
   }
 
-  // Explicit ordered deletes — FK cascades may or may not be set depending on
-  // when the tables were created, and some rows (party_alerts, notifications)
-  // reference tracks/parties, so do them in dependency order.
-  await supabase.from('listening_parties').delete().eq('release_id', id);
-  await supabase.from('tracks').delete().eq('release_id', id);
+  // tracks.release_id and listening_parties.release_id both cascade on
+  // delete (see migrations 20260422000005 + 20260422000006), so a single
+  // DELETE on releases cleans up everything downstream.
   const { error: delErr } = await supabase.from('releases').delete().eq('id', id);
   if (delErr) return NextResponse.json({ error: delErr.message }, { status: 400 });
 
