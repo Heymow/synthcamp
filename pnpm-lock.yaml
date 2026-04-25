@@ -26,6 +26,12 @@ importers:
       '@react-three/fiber':
         specifier: ^9.6.0
         version: 9.6.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(three@0.184.0)
+      '@stripe/connect-js':
+        specifier: ^3.3.38
+        version: 3.3.38
+      '@stripe/react-connect-js':
+        specifier: ^3.3.34
+        version: 3.3.34(@stripe/connect-js@3.3.38)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@supabase/ssr':
         specifier: ^0.10.2
         version: 0.10.2(@supabase/supabase-js@2.104.0)
@@ -1919,6 +1925,16 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@stripe/connect-js@3.3.38':
+    resolution: {integrity: sha512-CnhJ8xzzUZD6/eHFDio/8Nea8U0tFicCkfWfP4x0VGq2JY8uS8t5O500NaHSajvQcPxQCrbG+/6xnM/8G9FLrA==}
+
+  '@stripe/react-connect-js@3.3.34':
+    resolution: {integrity: sha512-eNyvlWeh90SBUC5dQhNfVPXOFuliO2Va3ZOfhZfybJoAYyZx4Jwy6SBOq5lEUU5+4RwRj/JJQfMeezSS9xQBng==}
+    peerDependencies:
+      '@stripe/connect-js': '>=3.3.35'
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   '@supabase/auth-js@2.104.0':
     resolution: {integrity: sha512-Vs0ndL+s5an7rOmXtS/nbYnGXL8m+KXlCSrPIcw9bR96ma6qyLYILnE6syuM+rpDnf+Tg4PVNxNB2+oDwoy6mA==}
@@ -6537,6 +6553,14 @@ snapshots:
       tslib: 2.8.1
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@stripe/connect-js@3.3.38': {}
+
+  '@stripe/react-connect-js@3.3.34(@stripe/connect-js@3.3.38)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stripe/connect-js': 3.3.38
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   '@supabase/auth-js@2.104.0':
     dependencies:

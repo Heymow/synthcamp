@@ -25,6 +25,8 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.0",
+    "@stripe/connect-js": "^3.3.38",
+    "@stripe/react-connect-js": "^3.3.34",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.0",
     "@types/nodemailer": "^8.0.0",
