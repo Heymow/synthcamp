@@ -12,7 +12,7 @@ export interface ModeToggleProps {
 export function ModeToggle({ mode, onChange }: ModeToggleProps) {
   return (
     <div
-      role="group"
+      role="radiogroup"
       aria-label="Mode"
       className="glass-panel relative flex h-10 w-32 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5 p-1 sm:w-40"
     >
@@ -26,7 +26,8 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
       />
       <button
         type="button"
-        aria-pressed={mode === 'explore'}
+        role="radio"
+        aria-checked={mode === 'explore'}
         onClick={() => onChange('explore')}
         className={cn(
           'relative z-10 flex h-full flex-1 items-center justify-center text-[9px] font-black tracking-widest uppercase transition-colors duration-300',
@@ -37,7 +38,8 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
       </button>
       <button
         type="button"
-        aria-pressed={mode === 'artist'}
+        role="radio"
+        aria-checked={mode === 'artist'}
         onClick={() => onChange('artist')}
         className={cn(
           'relative z-10 flex h-full flex-1 items-center justify-center text-[9px] font-black tracking-widest uppercase transition-colors duration-300',
