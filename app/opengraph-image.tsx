@@ -5,6 +5,9 @@ import { join } from 'node:path';
 export const alt = 'SynthCamp · The AI Music Marketplace';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
+// Cache the rendered PNG for 1h. The root card has no dynamic inputs,
+// but every crawler hit was re-running font I/O and satori render.
+export const revalidate = 3600;
 
 /**
  * Read Outfit-Black.ttf from the repo. Committed locally so OG generation

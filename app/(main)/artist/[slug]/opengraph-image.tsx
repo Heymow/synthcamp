@@ -7,6 +7,11 @@ import { fetchAsDataUrl } from '@/lib/og/fetch-image';
 export const alt = 'Artist on SynthCamp';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
+// Cache the rendered PNG for 1h. Crawlers (Discord, iMessage, Twitter,
+// link-preview bots) hit these routes repeatedly per share; without
+// revalidate every hit re-ran a Supabase read, a remote image fetch,
+// and a satori render.
+export const revalidate = 3600;
 
 interface ArtistOGParams {
   params: Promise<{ slug: string }>;

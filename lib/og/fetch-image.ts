@@ -72,8 +72,12 @@ export async function fetchAsDataUrl(url: string): Promise<string | null> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4000);
+    // No `cache: 'no-store'` here: callers are OG render routes that
+    // declare `export const revalidate = 3600`. Letting this fetch
+    // participate in Next's request cache means a hot release/artist's
+    // cover poster is fetched at most once per revalidation window
+    // instead of on every crawler hit.
     const r = await fetch(url, {
-      cache: 'no-store',
       signal: controller.signal,
       redirect: 'error', // don't follow redirects to off-allowlist hosts
     });
