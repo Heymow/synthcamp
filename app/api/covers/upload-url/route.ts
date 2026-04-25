@@ -8,6 +8,12 @@ interface CoverUploadBody {
   filename?: string;
 }
 
+const ALLOWED_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp'] as const;
+type AllowedExt = (typeof ALLOWED_IMAGE_EXTS)[number];
+function isAllowedExt(s: string): s is AllowedExt {
+  return (ALLOWED_IMAGE_EXTS as readonly string[]).includes(s);
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await getSupabaseServerClient();
   const {
@@ -39,7 +45,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Release not found or not owned' }, { status: 403 });
   }
 
-  const ext = body.filename.split('.').pop() ?? 'jpg';
+  // Defense in depth on top of the bucket's MIME allowlist: take the last
+  // segment after a dot, lowercase, and reject anything not in our small
+  // image whitelist. Stops `..` / `/` segments from getting into the path.
+  const rawExt = body.filename.split('.').pop()?.toLowerCase() ?? '';
+  if (!isAllowedExt(rawExt)) {
+    return NextResponse.json(
+      { error: `Unsupported image format. Allowed: ${ALLOWED_IMAGE_EXTS.join(', ')}` },
+      { status: 400 },
+    );
+  }
+  const ext = rawExt;
   const path = `artist_${user.id}/release_${body.release_id}/cover.${ext}`;
 
   const { data, error } = await supabase.storage.from('covers').createSignedUploadUrl(path);
