@@ -26,7 +26,7 @@ export default async function ProfileSettingsPage() {
   }
 
   return (
-    <main className="view-enter mx-auto max-w-md space-y-8 px-6 pb-32">
+    <main className="view-enter mx-auto max-w-2xl space-y-8 px-6 pb-32">
       <h2 className="text-3xl font-black italic uppercase leading-none tracking-tighter text-white">
         Profile
       </h2>
