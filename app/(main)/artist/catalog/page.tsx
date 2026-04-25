@@ -38,11 +38,9 @@ export default async function ArtistCatalogPage() {
         <h2 className="text-4xl font-black italic uppercase leading-none tracking-tighter text-white">
           My Music
         </h2>
-        <Link href="/artist/upload">
-          <Button variant="primary" size="sm">
-            + New
-          </Button>
-        </Link>
+        <Button asChild variant="primary" size="sm">
+          <Link href="/artist/upload">+ New</Link>
+        </Button>
       </div>
       {releases.length > 0 ? (
         <div className="space-y-4">

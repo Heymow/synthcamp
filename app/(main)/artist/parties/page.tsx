@@ -58,11 +58,9 @@ export default async function ArtistPartiesPage({ searchParams }: ArtistPartiesP
         <h2 className="text-3xl leading-none font-black tracking-tighter text-white uppercase italic">
           My Parties
         </h2>
-        <Link href="/artist/upload">
-          <Button variant="primary" size="sm">
-            + New Party
-          </Button>
-        </Link>
+        <Button asChild variant="primary" size="sm">
+          <Link href="/artist/upload">+ New Party</Link>
+        </Button>
       </div>
 
       <Section

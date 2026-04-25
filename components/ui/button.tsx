@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/cn';
 
 type ButtonVariant = 'primary' | 'ghost' | 'glass' | 'accent';
@@ -9,6 +10,11 @@ type ButtonSize = 'sm' | 'md' | 'lg';
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /**
+   * Render the button as the immediate child element (via Radix Slot).
+   * Use this to compose with `<Link>` and avoid nested `<a><button>` markup.
+   */
+  asChild?: boolean;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -25,19 +31,22 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', className, ...props }, ref) => (
-    <button
-      ref={ref}
-      className={cn(
-        'rounded-2xl font-black tracking-widest uppercase transition-all',
-        'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500',
-        variantClasses[variant],
-        sizeClasses[size],
-        className,
-      )}
-      {...props}
-    />
-  ),
+  ({ variant = 'primary', size = 'md', asChild = false, className, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return (
+      <Comp
+        ref={ref}
+        className={cn(
+          'inline-flex items-center justify-center rounded-2xl font-black tracking-widest uppercase transition-all',
+          'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500',
+          variantClasses[variant],
+          sizeClasses[size],
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
 );
 Button.displayName = 'Button';
