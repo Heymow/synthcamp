@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/api/require-admin';
 import type { ReportStatus } from '@/lib/database.types';
 
 const VALID_STATUSES: ReportStatus[] = ['open', 'reviewed', 'dismissed'];
@@ -13,20 +13,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-
-  const { data: me } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (!me?.is_admin) {
-    return NextResponse.json({ error: 'Admin only' }, { status: 403 });
-  }
+  const { supabase, err } = await requireAdmin();
+  if (err) return err;
 
   const body = (await request.json().catch(() => null)) as PatchBody | null;
   if (!body || !body.status || !VALID_STATUSES.includes(body.status as ReportStatus)) {

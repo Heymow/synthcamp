@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceLimit } from '@/lib/api/limit';
+import { requireActiveAccount } from '@/lib/api/require-active';
 
 async function requireUser(request: NextRequest, partyId: string) {
   const supabase = await getSupabaseServerClient();
@@ -14,6 +15,8 @@ async function requireUser(request: NextRequest, partyId: string) {
       err: NextResponse.json({ error: 'Not authenticated' }, { status: 401 }),
     };
   }
+  const suspended = await requireActiveAccount(supabase, user.id);
+  if (suspended) return { supabase, user, err: suspended };
   const limited = enforceLimit(`user:${user.id}:alert:${partyId}`, 30, 60);
   if (limited) return { supabase, user, err: limited };
   return { supabase, user, err: null };

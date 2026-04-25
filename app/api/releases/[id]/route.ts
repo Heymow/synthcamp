@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { requireActiveAccount } from '@/lib/api/require-active';
 import type { Database } from '@/lib/database.types';
 
 type ReleaseUpdate = Database['public']['Tables']['releases']['Update'];
@@ -27,6 +28,9 @@ export async function PATCH(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const suspended = await requireActiveAccount(supabase, user.id);
+  if (suspended) return suspended;
 
   // Check 24h edit lockout via RPC
   const { data: editable, error: editCheckErr } = await supabase.rpc('check_release_editable', {
@@ -73,6 +77,9 @@ export async function DELETE(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const suspended = await requireActiveAccount(supabase, user.id);
+  if (suspended) return suspended;
 
   const { data: release, error: fetchErr } = await supabase
     .from('releases')

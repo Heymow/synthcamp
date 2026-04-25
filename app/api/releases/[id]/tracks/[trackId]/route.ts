@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { requireActiveAccount } from '@/lib/api/require-active';
 import type { Database } from '@/lib/database.types';
 
 type TrackUpdate = Database['public']['Tables']['tracks']['Update'];
@@ -22,6 +23,9 @@ export async function PATCH(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const suspended = await requireActiveAccount(supabase, user.id);
+  if (suspended) return suspended;
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
@@ -52,6 +56,9 @@ export async function DELETE(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const suspended = await requireActiveAccount(supabase, user.id);
+  if (suspended) return suspended;
 
   // RLS enforces: only delete if release is in draft
   const { error } = await supabase.from('tracks').delete().eq('id', trackId);

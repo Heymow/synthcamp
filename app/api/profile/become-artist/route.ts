@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceLimit } from '@/lib/api/limit';
+import { requireActiveAccount } from '@/lib/api/require-active';
 
 export async function POST() {
   const supabase = await getSupabaseServerClient();
@@ -8,6 +9,9 @@ export async function POST() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const suspended = await requireActiveAccount(supabase, user.id);
+  if (suspended) return suspended;
 
   const limited = enforceLimit(`user:${user.id}:become-artist`, 5, 3600);
   if (limited) return limited;
