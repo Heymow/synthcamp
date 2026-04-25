@@ -17,7 +17,12 @@
  *     gracefully render a text-only fallback when null.
  */
 
-const DEFAULT_HOSTS = 'api.synthcamp.net,*.synthcamp.net,r2.cloudflarestorage.com';
+// Defaults are intentionally narrow. The wildcard-parsing logic below still
+// works for env-driven additions (e.g. set OG_IMAGE_HOSTS to include
+// `*.synthcamp.net` if a future preview deploy genuinely needs it), but
+// keeping wildcards out of the baked-in defaults means new subdomains
+// don't silently inherit fetch-on-behalf-of-server privileges.
+const DEFAULT_HOSTS = 'api.synthcamp.net,r2.cloudflarestorage.com';
 
 /**
  * Match a hostname against a single allowlist entry. The entry is either
