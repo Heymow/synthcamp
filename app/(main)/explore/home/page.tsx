@@ -112,10 +112,15 @@ export default async function ExploreHomePage() {
     const partyIds = [...partiesByRoom.values()].map((p) => p.id);
 
     const [alertsRes, followsRes] = await Promise.all([
+      // Defensive cap: at the home page's worst case (3 secondary rooms ×
+      // a few hundred subs each) 2000 rows is plenty of headroom. Beyond
+      // that we accept partial social signal rather than running megabyte
+      // queries on every home-page render.
       supabase
         .from('party_alerts')
         .select('party_id, user_id')
-        .in('party_id', partyIds),
+        .in('party_id', partyIds)
+        .limit(2000),
       supabase.from('follows').select('followed_id').eq('follower_id', viewerId),
     ]);
 
@@ -142,14 +147,17 @@ export default async function ExploreHomePage() {
   const roomList = rooms ?? [];
   const gmc = roomList.find((r) => r.kind === 'global_master');
   const secondariesUnsorted = roomList.filter((r) => r.kind !== 'global_master');
-  // GMC stays pinned; secondaries re-order by social weight (tie-breaker
-  // preserves original display_order).
+  // GMC stays pinned; secondaries re-order by social weight, with the
+  // rooms.display_order column as an explicit tie-breaker so identical
+  // weights (most commonly weight=0 for everyone, when the viewer is
+  // signed-out or follows nobody in the room artists) produce a stable
+  // render order across requests.
   const secondaries = [...secondariesUnsorted].sort((a, b) => {
     const pa = partiesByRoom.get(a.id);
     const pb = partiesByRoom.get(b.id);
     const wa = pa ? socialWeight(signals.get(pa.id) ?? { viewerFollowsArtist: false, followedWaitingCount: 0 }) : 0;
     const wb = pb ? socialWeight(signals.get(pb.id) ?? { viewerFollowsArtist: false, followedWaitingCount: 0 }) : 0;
-    return wb - wa;
+    return (wb - wa) || (a.display_order - b.display_order);
   });
 
   return (

@@ -48,6 +48,13 @@ const AVATAR_SEEDS: Array<readonly number[]> = [
   [31, 32, 33],
 ];
 
+// Privacy: a "1 friend waiting" badge plus the avatar stack on the same
+// card effectively names that one person if the viewer follows few
+// people. Hide the count below this threshold (the "You follow" pill
+// stays — that's about the artist, not the friends). Do not lower this
+// number without thinking through the de-anonymization angle.
+const FRIENDS_WAITING_PRIVACY_THRESHOLD = 3;
+
 export function RoomCompactCard({
   roomName,
   party,
@@ -63,9 +70,12 @@ export function RoomCompactCard({
   const listeners = party ? PLACEHOLDER_LISTENERS[party.status] : null;
   const cities = PLACEHOLDER_CITY_SETS[paletteIndex % PLACEHOLDER_CITY_SETS.length]!;
   const avatars = AVATAR_SEEDS[paletteIndex % AVATAR_SEEDS.length]!;
-  const hasSocial = Boolean(
+  const showFollowedWaiting = Boolean(
     socialSignal &&
-      (socialSignal.viewerFollowsArtist || socialSignal.followedWaitingCount > 0),
+      socialSignal.followedWaitingCount >= FRIENDS_WAITING_PRIVACY_THRESHOLD,
+  );
+  const hasSocial = Boolean(
+    socialSignal && (socialSignal.viewerFollowsArtist || showFollowedWaiting),
   );
 
   const body = (
@@ -112,14 +122,14 @@ export function RoomCompactCard({
             </p>
           )}
 
-          {socialSignal && (socialSignal.viewerFollowsArtist || socialSignal.followedWaitingCount > 0) && (
+          {socialSignal && (socialSignal.viewerFollowsArtist || showFollowedWaiting) && (
             <div className="flex flex-wrap items-center gap-1 pt-1">
               {socialSignal.viewerFollowsArtist && (
                 <span className="rounded-full border border-indigo-300/40 bg-indigo-500/20 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-indigo-100">
                   You follow
                 </span>
               )}
-              {socialSignal.followedWaitingCount > 0 && (
+              {showFollowedWaiting && (
                 <span className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-white/80">
                   {socialSignal.followedWaitingCount} friend{socialSignal.followedWaitingCount > 1 ? 's' : ''} waiting
                 </span>
