@@ -245,6 +245,7 @@ export interface Database {
           release_id: string;
           artist_id: string;
           room_id: string;
+          room_kind: RoomKind;
           scheduled_at: string;
           duration_seconds: number;
           ends_at: string;
@@ -258,6 +259,7 @@ export interface Database {
           release_id: string;
           artist_id: string;
           room_id: string;
+          room_kind?: RoomKind;
           scheduled_at: string;
           duration_seconds: number;
           ends_at?: string;
@@ -271,6 +273,7 @@ export interface Database {
           release_id?: string;
           artist_id?: string;
           room_id?: string;
+          room_kind?: RoomKind;
           scheduled_at?: string;
           duration_seconds?: number;
           ends_at?: string;
