@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
+import { EmbeddedConnect } from '@/components/stripe/embedded-connect';
 
 interface PayoutsCardProps {
   hasAccount: boolean;
@@ -10,27 +12,11 @@ interface PayoutsCardProps {
 }
 
 export function PayoutsCard({ hasAccount, payoutEnabled }: PayoutsCardProps) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const start = async () => {
-    setLoading(true);
-    setError(null);
-    const res = await fetch('/api/artist/stripe/connect', { method: 'POST' });
-    if (!res.ok) {
-      setLoading(false);
-      const body = (await res.json().catch(() => ({ error: 'Request failed' }))) as {
-        error?: string;
-      };
-      setError(body.error ?? 'Request failed');
-      return;
-    }
-    const { url } = (await res.json()) as { url: string };
-    window.location.href = url;
-  };
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   const label = payoutEnabled
-    ? 'Update payout details'
+    ? 'Manage payouts'
     : hasAccount
       ? 'Continue Stripe setup'
       : 'Set up payouts';
@@ -43,7 +29,7 @@ export function PayoutsCard({ hasAccount, payoutEnabled }: PayoutsCardProps) {
           <p className="text-xs text-white/60">
             {payoutEnabled
               ? 'Stripe Connect is active.'
-              : 'Connect a Stripe account to receive sales payouts (Phase 3).'}
+              : 'Connect a Stripe account to receive sales payouts.'}
           </p>
         </div>
         {payoutEnabled && (
@@ -53,16 +39,32 @@ export function PayoutsCard({ hasAccount, payoutEnabled }: PayoutsCardProps) {
         )}
       </div>
 
-      <Button
-        variant={payoutEnabled ? 'ghost' : 'primary'}
-        size="sm"
-        onClick={start}
-        disabled={loading}
-      >
-        {loading ? 'Redirecting…' : label}
-      </Button>
+      {!open && (
+        <Button
+          variant={payoutEnabled ? 'ghost' : 'primary'}
+          size="sm"
+          onClick={() => setOpen(true)}
+        >
+          {label}
+        </Button>
+      )}
 
-      {error && <p className="text-[10px] italic text-red-400">{error}</p>}
+      {open && (
+        <div className="space-y-3">
+          <EmbeddedConnect
+            mode={payoutEnabled ? 'management' : 'onboarding'}
+            onExit={() => {
+              setOpen(false);
+              // The account.updated webhook flips payout_enabled; refresh
+              // the server component so the ribbon and label catch up.
+              router.refresh();
+            }}
+          />
+          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            Close
+          </Button>
+        </div>
+      )}
     </GlassPanel>
   );
 }
