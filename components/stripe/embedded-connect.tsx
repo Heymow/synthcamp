@@ -41,20 +41,18 @@ export function EmbeddedConnect({ mode, onExit }: Props) {
         const { client_secret } = (await res.json()) as { client_secret: string };
         return client_secret;
       },
-      // Hybrid theme: form sits on a transparent (dark) parent for labels
-      // and headers (white text on dark page), while individual input
-      // fields use a white background. Stripe's embedded components
-      // auto-contrast text inside inputs to a dark color for readability.
+      // Light theme inside a white canvas wrapper. Stripe's appearance API
+      // exposes only one colorText variable that applies to BOTH outside
+      // labels AND text typed inside inputs — so we can't mix white-on-dark
+      // for labels with dark-on-white for inputs. Pick one. We pick light
+      // for readability; the wrapper isolates the form from the dark page.
       appearance: {
         overlays: 'dialog',
         variables: {
-          colorPrimary: '#ffffff',
-          colorBackground: 'transparent',
-          colorText: '#ffffff',
-          colorSecondaryText: '#a0a0a0',
-          formBackgroundColor: '#ffffff',
-          buttonPrimaryColorBackground: '#ffffff',
-          buttonPrimaryColorText: '#000000',
+          colorPrimary: '#000000',
+          colorBackground: '#ffffff',
+          colorText: '#0a0a0a',
+          colorSecondaryText: '#404040',
           fontFamily: 'inherit',
           borderRadius: '8px',
         },
@@ -72,16 +70,18 @@ export function EmbeddedConnect({ mode, onExit }: Props) {
   if (!stripeConnectInstance) return null;
 
   return (
-    <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
-      {mode === 'onboarding' ? (
-        <ConnectAccountOnboarding
-          onExit={() => {
-            if (onExit) onExit();
-          }}
-        />
-      ) : (
-        <ConnectAccountManagement />
-      )}
-    </ConnectComponentsProvider>
+    <div className="rounded-lg bg-white p-4 text-neutral-900">
+      <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+        {mode === 'onboarding' ? (
+          <ConnectAccountOnboarding
+            onExit={() => {
+              if (onExit) onExit();
+            }}
+          />
+        ) : (
+          <ConnectAccountManagement />
+        )}
+      </ConnectComponentsProvider>
+    </div>
   );
 }
