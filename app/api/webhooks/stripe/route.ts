@@ -61,15 +61,24 @@ export async function POST(request: NextRequest) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleSessionCompleted(supabase, event.data.object as Stripe.Checkout.Session);
+        await handleSessionCompleted(
+          supabase,
+          event.data.object as Stripe.Checkout.Session,
+          event.account ?? null,
+        );
         break;
       case 'checkout.session.expired':
+        // No API retrieves needed; row lookup is by session.id which is
+        // globally unique across platform + connected accounts.
         await handleSessionExpired(supabase, event.data.object as Stripe.Checkout.Session);
         break;
       case 'charge.refunded':
+        // Charge.id is globally unique; the purchases-table lookup by
+        // stripe_charge_id needs no account context.
         await handleChargeRefunded(supabase, event.data.object as Stripe.Charge);
         break;
       case 'account.updated':
+        // Platform-origin event keyed by account.id; no stripeAccount needed.
         await handleAccountUpdated(supabase, event.data.object as Stripe.Account);
         break;
       default:
@@ -90,10 +99,12 @@ export async function POST(request: NextRequest) {
 async function handleSessionCompleted(
   supabase: ReturnType<typeof getSupabaseServiceRoleClient>,
   session: Stripe.Checkout.Session,
+  connectedAccountId: string | null,
 ): Promise<void> {
-  // Resolve the charge id by retrieving the PaymentIntent. The Session
-  // payload only carries the PI id, but charge_refunded webhooks key on
-  // charge id, so we must persist it now or refunds will silently no-op.
+  // Resolve the charge id by retrieving the PaymentIntent. Under direct
+  // charges, the PI lives on the connected account, so we MUST pass
+  // stripeAccount on the retrieve call. Without it Stripe returns 404
+  // (the platform account doesn't own the PI).
   const stripe = getStripeClient();
   const piId = typeof session.payment_intent === 'string'
     ? session.payment_intent
@@ -101,7 +112,11 @@ async function handleSessionCompleted(
 
   let chargeId: string | null = null;
   if (piId) {
-    const pi = await stripe.paymentIntents.retrieve(piId);
+    const pi = await stripe.paymentIntents.retrieve(
+      piId,
+      undefined,
+      connectedAccountId ? { stripeAccount: connectedAccountId } : undefined,
+    );
     chargeId = typeof pi.latest_charge === 'string'
       ? pi.latest_charge
       : pi.latest_charge?.id ?? null;
