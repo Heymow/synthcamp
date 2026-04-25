@@ -547,6 +547,16 @@ export interface Database {
         Args: { p_party_id: string };
         Returns: undefined;
       };
+      claim_party_reminders: {
+        Args: { p_window_minutes?: number };
+        Returns: {
+          party_id: string;
+          scheduled_at: string;
+          release_title: string | null;
+          artist_name: string | null;
+          room_name: string | null;
+        }[];
+      };
       check_release_editable: {
         Args: { p_release_id: string };
         Returns: boolean;
