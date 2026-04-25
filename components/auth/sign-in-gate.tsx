@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
@@ -13,8 +14,51 @@ interface SignInGateProps {
   redirectTo?: string;
 }
 
+// Map known callback/auth failure codes (set by app/(main)/auth/callback/route.ts
+// and possible future OAuth flows) to friendly copy. Unknown codes fall
+// through to a generic message so we never surface raw provider strings.
+const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
+  callback_failed: "We couldn't finish signing you in. Please try again.",
+  magic_link_expired: 'That magic link has expired. Request a new one below.',
+  oauth_denied: 'Google sign-in was cancelled. You can try again below.',
+  oauth_failed: "Google sign-in didn't complete. Please try again.",
+  session_expired: 'Your session expired. Please sign in again.',
+};
+
+function callbackErrorMessage(code: string | null): string | null {
+  if (!code) return null;
+  return CALLBACK_ERROR_MESSAGES[code] ?? 'Sign-in failed. Please try again.';
+}
+
+// Translate GoTrue / network errors into copy we're OK showing users. Raw
+// provider messages leak internals ("User signups disabled", rate-limit
+// details) so we bucket by substring/code into a small set of friendly
+// strings and default to a generic retry prompt.
+function friendlyAuthError(err: { message?: string; code?: string } | null | undefined): string {
+  const raw = `${err?.code ?? ''} ${err?.message ?? ''}`.toLowerCase();
+  if (!raw.trim()) return "Couldn't send the magic link. Please try again.";
+  if (raw.includes('rate') || raw.includes('too many') || raw.includes('429')) {
+    return 'Too many attempts. Please wait a minute and try again.';
+  }
+  if (raw.includes('invalid') && raw.includes('email')) {
+    return 'That email address looks invalid. Please check and try again.';
+  }
+  if (raw.includes('signup') && raw.includes('disabled')) {
+    return 'New sign-ups are temporarily paused. Please try again later.';
+  }
+  if (raw.includes('network') || raw.includes('fetch') || raw.includes('failed to fetch')) {
+    return 'Network error. Check your connection and try again.';
+  }
+  if (raw.includes('not confirmed') || raw.includes('not_confirmed')) {
+    return 'Please check your inbox for the confirmation email we already sent.';
+  }
+  return "Couldn't send the magic link. Please try again.";
+}
+
 export function SignInGate({ heading, subheading, redirectTo }: SignInGateProps) {
   const t = useTranslations('auth');
+  const searchParams = useSearchParams();
+  const callbackError = callbackErrorMessage(searchParams.get('error'));
   const resolvedHeading = heading ?? t('signInHeading');
   const resolvedSubheading = subheading ?? t('welcome');
   const [email, setEmail] = useState('');
@@ -38,7 +82,7 @@ export function SignInGate({ heading, subheading, redirectTo }: SignInGateProps)
     });
     if (err) {
       setStatus('error');
-      setError(err.message);
+      setError(friendlyAuthError(err));
     } else {
       setStatus('sent');
     }
@@ -109,6 +153,10 @@ export function SignInGate({ heading, subheading, redirectTo }: SignInGateProps)
         )}
 
         {error && <p className="text-center text-xs italic text-red-400">{error}</p>}
+
+        {!error && callbackError && (
+          <p className="text-center text-xs italic text-red-400">{callbackError}</p>
+        )}
       </GlassPanel>
     </main>
   );

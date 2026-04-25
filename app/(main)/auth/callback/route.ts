@@ -5,8 +5,12 @@ import { resolveOrigin } from '@/lib/auth/origin';
 function safeNext(raw: string | null): string {
   // Only accept in-app paths, and bounce away from auth pages so we don't
   // land the user right back on /auth/login after a successful login.
+  // Lowercase the prefix check so /AUTH/login doesn't slip through, and
+  // match bare /auth as well as /auth/* so we can't loop back to the login
+  // route via path casing tricks.
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/explore/home';
-  if (raw.startsWith('/auth/')) return '/explore/home';
+  const lower = raw.toLowerCase();
+  if (lower === '/auth' || lower.startsWith('/auth/')) return '/explore/home';
   return raw;
 }
 
