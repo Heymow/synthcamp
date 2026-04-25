@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { fetchAsDataUrl } from '@/lib/og/fetch-image';
 
 export const alt = 'Release on SynthCamp';
 export const size = { width: 1200, height: 630 };
@@ -9,21 +10,6 @@ export const contentType = 'image/png';
 
 interface ReleaseOGParams {
   params: Promise<{ slug: string }>;
-}
-
-async function fetchAsDataUrl(url: string): Promise<string | null> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
-    const r = await fetch(url, { cache: 'no-store', signal: controller.signal });
-    clearTimeout(timeout);
-    if (!r.ok) return null;
-    const buf = Buffer.from(await r.arrayBuffer());
-    const mime = r.headers.get('content-type') ?? 'image/jpeg';
-    return `data:${mime};base64,${buf.toString('base64')}`;
-  } catch {
-    return null;
-  }
 }
 
 /**
