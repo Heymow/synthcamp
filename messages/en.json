@@ -26,8 +26,7 @@
     "sendMagicLink": "Send magic link",
     "checkInbox": "Check your inbox and click the link to sign in.",
     "signIn": "Sign in",
-    "signOut": "Sign out",
-    "openMenu": "Open menu"
+    "signOut": "Sign out"
   },
   "player": {
     "play": "Play",
@@ -91,14 +90,5 @@
     "noReleases": "No published releases from the people you follow yet.",
     "enter": "Enter",
     "signInSubheading": "Sign in to see your library"
-  },
-  "errors": {
-    "signalScrambled": "Signal scrambled",
-    "playbackError": "An unexpected error occurred during playback.",
-    "retry": "Retry",
-    "back": "Back",
-    "signalLost": "Signal lost",
-    "frequencyNotFound": "This frequency doesn't exist.",
-    "backToExplore": "Back to Explore"
   }
 }
