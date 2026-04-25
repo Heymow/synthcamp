@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPrice, getReleaseLabel } from '@/lib/pricing';
+import { effectiveMinPrice, getPrice, getReleaseLabel } from '@/lib/pricing';
 
 describe('getPrice (formula: ceil(tracks * 0.60) - 0.01)', () => {
   it('3 tracks → $1.99 (ceil(1.8)=2)', () => {
@@ -35,5 +35,25 @@ describe('getReleaseLabel', () => {
   });
   it('12 tracks → Album', () => {
     expect(getReleaseLabel(12)).toBe('12 tracks • Album');
+  });
+});
+
+describe('effectiveMinPrice', () => {
+  it('returns base price when party is not live', () => {
+    expect(effectiveMinPrice(3, 20, false)).toBe(getPrice(3));
+  });
+
+  it('applies 20% discount on 3-track EP during party live', () => {
+    // getPrice(3) = '1.99'; 1.99 * 0.8 = 1.592 → '1.59'
+    expect(effectiveMinPrice(3, 20, true)).toBe('1.59');
+  });
+
+  it('returns base when discount is 0%', () => {
+    expect(effectiveMinPrice(5, 0, true)).toBe(getPrice(5));
+  });
+
+  it('caps cleanly at 50% discount', () => {
+    // getPrice(12) = '7.99'; 7.99 * 0.5 = 3.995 → '4.00' (rounding)
+    expect(effectiveMinPrice(12, 50, true)).toBe('4.00');
   });
 });
