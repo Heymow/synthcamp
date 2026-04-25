@@ -39,7 +39,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
       }),
     });
     const body = await res.text().catch(() => '');
-    console.log(`[mailer] Brevo ${res.status} to=${to} body=${body.slice(0, 300)}`);
+    console.log(`[mailer] Brevo ${res.status} body=${body.slice(0, 100)}`);
   } catch (err) {
     console.error('[mailer] send failed:', err);
   }
