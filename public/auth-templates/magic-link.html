@@ -9,8 +9,12 @@
       <p style="font-family:Arial,sans-serif;font-size:13px;letter-spacing:0.35em;font-weight:900;font-style:italic;text-transform:uppercase;color:#ffffff;margin:0 0 28px;">SynthCamp</p>
       <p style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:0.3em;font-weight:900;text-transform:uppercase;color:#a5b4fc;margin:0 0 24px;">Sign in link</p>
       <p>Hey,</p>
-      <p>Tap the link below to sign in to your SynthCamp account. The link is valid for one hour and can only be used once.</p>
-      <p><a href="{{ .ConfirmationURL }}" style="color:#a5b4fc;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+      <p>Tap the button below to sign in to your SynthCamp account. The link is valid for one hour and can only be used once.</p>
+      <p style="margin-top:28px;margin-bottom:8px;">
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 32px;background:#a5b4fc;color:#050507;text-decoration:none;font-family:Arial,sans-serif;font-weight:900;font-size:12px;letter-spacing:0.15em;text-transform:uppercase;border-radius:10px;">Sign In</a>
+      </p>
+      <p style="margin-top:24px;font-size:11px;color:#6b7280;line-height:1.5;">If the button doesn't work, paste this URL into your browser:</p>
+      <p style="font-size:11px;color:#6b7280;line-height:1.4;word-break:break-all;margin-top:4px;"><a href="{{ .ConfirmationURL }}" style="color:#6b7280;text-decoration:underline;">{{ .ConfirmationURL }}</a></p>
       <p style="margin-top:32px;font-size:12px;color:#6b7280;">If you didn't request this, you can safely ignore this email. Nobody can sign in without clicking the link above.</p>
       <p style="margin-top:36px;color:#6b7280;font-size:13px;">The SynthCamp team</p>
     </div>
