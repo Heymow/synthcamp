@@ -4,9 +4,9 @@
 
 **Goal:** Stand up a dedicated Railway service that polls `claim_next_encode_job()`, transcodes uploaded source audio into HLS+AES-128 streaming bundles + 30-second MP3 previews, uploads outputs to R2, and updates `tracks` rows accordingly.
 
-**Architecture:** New top-level `encoder/` workspace, Node 20 + TypeScript. Uses `ffmpeg-static` (binary bundled in node_modules — no system FFmpeg needed on the Railway runner), `@aws-sdk/client-s3` for R2 (S3-compatible), and `@supabase/supabase-js` with the service-role key for DB access. Jobs are claimed atomically via the `claim_next_encode_job()` RPC from Lot 1; `mark_encode_job_done()` records success/failure. Errors retry up to 3 times then mark `tracks.encode_status='failed'`.
+**Architecture:** New top-level `encoder/` workspace, Node 22 + TypeScript. Uses `ffmpeg-static` (binary bundled in node_modules — no system FFmpeg needed on the Railway runner), `@aws-sdk/client-s3` for R2 (S3-compatible), and `@supabase/supabase-js` with the service-role key for DB access. Jobs are claimed atomically via the `claim_next_encode_job()` RPC from Lot 1; `mark_encode_job_done()` records success/failure. Errors retry up to 3 times via `requeueJob()` then mark `tracks.encode_status='failed'`.
 
-**Tech Stack:** Node 20, TypeScript, fluent-ffmpeg, ffmpeg-static, @aws-sdk/client-s3, @aws-sdk/lib-storage, @supabase/supabase-js, vitest (smoke tests).
+**Tech Stack:** Node 22, TypeScript, fluent-ffmpeg, ffmpeg-static, @aws-sdk/client-s3, @aws-sdk/lib-storage, @supabase/supabase-js, vitest (smoke tests).
 
 **Out of scope:** Stripe webhook + Checkout (Lot 3), key delivery + manifest signing endpoints (Lot 4), UI for preview controls + buy CTAs (Lot 5), full E2E (Lot 6).
 
@@ -27,13 +27,13 @@ R2 single bucket, multiple top-level prefixes:
 
 | Path | Content | Cache |
 |---|---|---|
-| `audio-source/artist_<uid>/release_<rid>/track_<n>.<ext>` | Original upload, kept for re-encode | private |
+| `artist_<uid>/release_<rid>/track_<n>.<ext>` | Original upload, kept for re-encode (no `audio-source/` prefix; bucket itself is named after sources) | private |
 | `audio-stream/<artist_id>/<release_id>/<track_id>/playlist.m3u8` | HLS manifest, baked at encode time | private |
 | `audio-stream/<artist_id>/<release_id>/<track_id>/seg-NNN.ts` | Encrypted AAC segments | private |
 | `audio-stream/<artist_id>/<release_id>/<track_id>/key.bin` | 16-byte AES key | private (never served) |
 | `audio-preview/<artist_id>/<release_id>/<track_id>.mp3` | 30-second MP3 preview | public |
 
-The `audio-stream` segments are publicly fetchable (their content is encrypted; the security boundary is the key endpoint added in Lot 4). `audio-preview/*.mp3` is plain MP3 served as the existing `tracks.preview_url`. `audio-source/*` and `key.bin` are never publicly readable.
+The `audio-stream` segments are publicly fetchable (their content is encrypted; the security boundary is the key endpoint added in Lot 4). `audio-preview/*.mp3` is plain MP3 served as the existing `tracks.preview_url`. Source uploads (top-level `artist_<uid>/...` keys) and `key.bin` are never publicly readable.
 
 ---
 
@@ -43,7 +43,7 @@ The `audio-stream` segments are publicly fetchable (their content is encrypted; 
 - Create: `encoder/package.json`
 - Create: `encoder/tsconfig.json`
 - Create: `encoder/.gitignore`
-- Create: `encoder/Dockerfile` (Railway-friendly Node 20 + bundled ffmpeg-static)
+- Create: `encoder/Dockerfile` (Railway-friendly Node 22 + bundled ffmpeg-static)
 - Create: `encoder/README.md`
 - Modify: `package.json` (root) — add the encoder workspace
 
@@ -1017,14 +1017,14 @@ the Next.js app, deployed from the `encoder/` directory of this monorepo.
 ## One-time setup
 
 1. **Cloudflare R2:**
-   - Create a bucket named `synthcamp-audio` (or whatever).
+   - Use the existing R2 bucket the Next.js app already writes to (default `synthcamp-audio-source` per `lib/r2.ts`). Phase 3 adds new prefixes (`audio-stream/`, `audio-preview/`) to the same bucket — no new bucket needed.
    - Generate an R2 API token with read+write on that bucket. Save the
      access key ID, secret, and the account-scoped endpoint URL
      (`https://<account-id>.r2.cloudflarestorage.com`).
    - Make `audio-preview/*` publicly readable: in R2 settings, add a
      custom domain or enable the public-read setting for the prefix. The
      30-second MP3 previews need to be reachable by anonymous browsers.
-   - Keep `audio-source/*`, `audio-stream/*`, and `key.bin` private.
+   - Keep source uploads (top-level `artist_<uid>/...` keys), `audio-stream/*`, and `key.bin` private.
 
 2. **Railway service:**
    - In the SynthCamp project, click "+ New" → "Empty Service".
@@ -1039,7 +1039,7 @@ the Next.js app, deployed from the `encoder/` directory of this monorepo.
    - `R2_ENDPOINT` = `https://<account-id>.r2.cloudflarestorage.com`
    - `R2_ACCESS_KEY_ID` = (from R2 token)
    - `R2_SECRET_ACCESS_KEY` = (from R2 token)
-   - `R2_BUCKET` = `synthcamp-audio`
+   - `R2_BUCKET` = exact same value as the Next.js service's `R2_BUCKET` (default `synthcamp-audio-source`)
    - `R2_PUBLIC_BASE_URL` = (the public URL prefix; for default R2 public,
      this is the worker URL or a custom domain — confirm with one
      manual upload-then-fetch test)
