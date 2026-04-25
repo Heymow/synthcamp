@@ -120,6 +120,7 @@ export default async function ExploreHomePage() {
         .from('party_alerts')
         .select('party_id, user_id')
         .in('party_id', partyIds)
+        .order('user_id', { ascending: true })
         .limit(2000),
       supabase.from('follows').select('followed_id').eq('follower_id', viewerId),
     ]);
