@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
       // the artist uploads a real cover. The API requires a non-empty
       // cover_url, so the wizard seeds this fallback.
       { protocol: 'https', hostname: 'placehold.co' },
+      // Cover_url written by scripts/seed.mjs for seeded demo releases.
+      // Remove after we replace seed releases with real artist uploads.
+      { protocol: 'https', hostname: 'picsum.photos' },
     ],
   },
   // Anti-clickjacking: deny framing everywhere except /embed/*, which is
