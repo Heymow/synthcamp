@@ -44,7 +44,10 @@ export async function POST(
   const { error } = await supabase
     .from('party_alerts')
     .insert({ party_id: id, user_id: user.id });
-  if (error && !/duplicate key/i.test(error.message)) {
+  // 23505 = unique_violation — user is already subscribed, treat as a
+  // no-op success. Postgres error codes are stable; the human-readable
+  // message ("duplicate key…") is not.
+  if (error && error.code !== '23505') {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
   return NextResponse.json({ ok: true, subscribed: true });
