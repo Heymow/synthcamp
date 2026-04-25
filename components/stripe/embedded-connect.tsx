@@ -41,14 +41,14 @@ export function EmbeddedConnect({ mode, onExit }: Props) {
         const { client_secret } = (await res.json()) as { client_secret: string };
         return client_secret;
       },
-      // Match SynthCamp's dark glass aesthetic so the embedded form
-      // doesn't look like a foreign widget.
+      // Use Stripe's default light theme for inputs (white background, dark
+      // text) so form fields are readable. Only override the primary action
+      // color so CTAs match the page accent. Trying to fully re-theme the
+      // embedded form clashes with Stripe's input default styling.
       appearance: {
         overlays: 'dialog',
         variables: {
-          colorPrimary: '#ffffff',
-          colorBackground: 'transparent',
-          colorText: '#ffffff',
+          colorPrimary: '#000000',
           fontFamily: 'inherit',
         },
       },
