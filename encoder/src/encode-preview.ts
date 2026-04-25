@@ -1,11 +1,10 @@
 import ffmpeg from 'fluent-ffmpeg';
-import ffmpegStatic from 'ffmpeg-static';
 import { mkdir, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { TrackRow } from './db.js';
 import { downloadToFile, uploadFile } from './storage.js';
 
-if (ffmpegStatic) ffmpeg.setFfmpegPath(ffmpegStatic);
+// FFmpeg installed system-wide via apt; fluent-ffmpeg uses PATH.
 
 const PREVIEW_DURATION_SECONDS = 30;
 const MP3_BITRATE_K = 128;

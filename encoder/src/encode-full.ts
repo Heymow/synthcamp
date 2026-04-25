@@ -1,12 +1,12 @@
 import ffmpeg from 'fluent-ffmpeg';
-import ffmpegStatic from 'ffmpeg-static';
 import { mkdir, rm, writeFile, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { TrackRow } from './db.js';
 import { downloadToFile, uploadFile } from './storage.js';
 import { generateAesKey, buildKeyInfoFile } from './key.js';
 
-if (ffmpegStatic) ffmpeg.setFfmpegPath(ffmpegStatic);
+// FFmpeg is installed system-wide via apt in the Dockerfile (/usr/bin/ffmpeg).
+// fluent-ffmpeg picks it up from PATH automatically — no setFfmpegPath needed.
 
 const SEGMENT_SECONDS = 6;
 const AAC_BITRATE_K = 256;

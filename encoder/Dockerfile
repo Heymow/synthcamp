@@ -2,10 +2,13 @@ FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-# ffmpeg-static ships a Linux binary in node_modules, so no apt install needed.
-# We do need basic CA certs for HTTPS to R2/Supabase.
+# Install ffmpeg via apt — more robust than ffmpeg-static which depends on
+# pnpm postinstall scripts that get filtered by default in pnpm 9+.
+# The Debian package is well-maintained and gives us a known-good binary
+# at a stable path (/usr/bin/ffmpeg). CA certs needed for HTTPS to R2.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 # pnpm needs the workspace YAML at install time to resolve --filter ./encoder.
