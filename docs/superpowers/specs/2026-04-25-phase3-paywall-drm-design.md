@@ -46,7 +46,7 @@ Three new moving parts on top of phase 2:
 - **Encoder:** Node 20 + `fluent-ffmpeg` + `ffmpeg-static` on a dedicated Railway service. Polls `encode_jobs` every 5 s.
 - **Stripe:** `stripe` SDK (server), Stripe Checkout (hosted), Stripe Connect Express (artist onboarding), Stripe Tax (auto VAT).
 - **Storage layout in R2:**
-  - `audio-source/artist_<user_id>/release_<release_id>/track_<n>.<ext>` — original upload (private, kept for re-encode if preview window changes). This path is already produced by `app/api/tracks/[id]/upload-url/route.ts` and stored in `tracks.audio_source_key`. The encoder reads the path from the column directly; no derivation needed.
+  - `artist_<user_id>/release_<release_id>/track_<n>.<ext>` — original upload (private, kept for re-encode if preview window changes). This is the path actually produced by `app/api/tracks/[id]/upload-url/route.ts` and stored verbatim in `tracks.audio_source_key`. No `audio-source/` prefix in production; the bucket itself is named after sources (default `synthcamp-audio-source`). The encoder reads the column directly.
   - `audio-stream/<artist_id>/<release_id>/<track_id>/playlist.m3u8` — manifest.
   - `audio-stream/<artist_id>/<release_id>/<track_id>/seg-NNN.ts` — encrypted segments.
   - `audio-stream/<artist_id>/<release_id>/<track_id>/key.bin` — 16-byte AES key, never publicly readable. The path is derived from `track.id` (stored as `tracks.aes_key_id uuid`) plus `release_id` / `artist_id`; no separate text path column needed.
