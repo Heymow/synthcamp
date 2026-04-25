@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { requireActiveAccount } from '@/lib/api/require-active';
 
 /**
  * Result of an admin gate. Either you have a `supabase` + `user` to keep
@@ -46,6 +47,13 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
       user,
       err: NextResponse.json({ error: 'Admin only' }, { status: 403 }),
     };
+  }
+  // Banned admins must not be able to mutate via admin routes. Even if
+  // is_admin remains true after a ban, the active-account gate denies
+  // suspended users.
+  const suspended = await requireActiveAccount(supabase, user.id);
+  if (suspended) {
+    return { supabase, user, err: suspended };
   }
   return { supabase, user, err: null };
 }
