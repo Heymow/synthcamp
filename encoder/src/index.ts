@@ -1,3 +1,12 @@
+// DEBUG: log env var visibility before any module that throws on missing.
+// Remove once Railway env injection is confirmed working.
+console.log(
+  '[encoder] env keys visible:',
+  Object.keys(process.env)
+    .filter((k) => k.startsWith('SUPABASE') || k.startsWith('R2') || k === 'POLL_INTERVAL_MS' || k === 'MAX_ATTEMPTS')
+    .join(', ') || '(none)',
+);
+
 import {
   claimJob,
   markDone,
