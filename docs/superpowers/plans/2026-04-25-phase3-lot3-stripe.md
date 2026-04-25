@@ -36,6 +36,54 @@ Setup instructions in §5 below.
 
 ---
 
+## Task 0: Install Stripe SDK + extend `lib/stripe.ts`
+
+The existing `lib/stripe.ts` is a minimal REST shim (only Connect onboarding helpers). Lot 3 needs the official `stripe` npm package for webhook signature verification, Checkout Session creation, account retrieval, refunds, and PaymentIntent expansion.
+
+**Files:**
+- Modify: `package.json`
+- Modify: `lib/stripe.ts`
+
+- [ ] **Step 1: Install the SDK**
+
+```bash
+pnpm add stripe
+```
+
+- [ ] **Step 2: Extend `lib/stripe.ts`**
+
+Add to the existing file (keep `createExpressAccount`/`createOnboardingLink`/`isStripeConfigured` untouched for backwards compatibility):
+
+```ts
+import Stripe from 'stripe';
+
+let cachedClient: Stripe | null = null;
+
+/**
+ * Returns the official Stripe SDK client (singleton). Used for Checkout
+ * Sessions, webhook signature validation, account retrieval, and refunds.
+ * The legacy REST shim above is still used by the Connect onboarding flow
+ * — both can coexist.
+ */
+export function getStripeClient(): Stripe {
+  if (cachedClient) return cachedClient;
+  const key = secret();
+  if (!key) throw new Error('STRIPE_SECRET_KEY is not set');
+  cachedClient = new Stripe(key);
+  return cachedClient;
+}
+```
+
+- [ ] **Step 3: Typecheck + commit**
+
+```bash
+npx tsc --noEmit
+git add package.json pnpm-lock.yaml lib/stripe.ts
+git commit -m "phase3(stripe): install official SDK + getStripeClient singleton"
+```
+
+---
+
 ## Task 1: Purchase RPCs migration
 
 **Files:**
@@ -59,10 +107,12 @@ Setup instructions in §5 below.
 
 -- 1. Effective minimum price in cents, applying the party-live discount
 -- iff a party is currently live for the release.
+-- VOLATILE because we read now() via the live-party EXISTS — STABLE could
+-- let PG cache a plan-time result.
 CREATE OR REPLACE FUNCTION public.effective_min_price_cents(p_release_id uuid)
 RETURNS int
 LANGUAGE plpgsql
-STABLE
+VOLATILE
 SECURITY DEFINER
 SET search_path = public
 AS $$
@@ -83,8 +133,10 @@ BEGIN
     FROM public.releases WHERE id = p_release_id;
 
   -- Mirror lib/pricing.ts:getPrice exactly: ceil(n * 0.6) - 0.01 dollars.
-  -- In cents: (ceil(n * 60) - 1).
-  v_base_cents := ceil(v_track_count * 60.0)::int - 1;
+  -- For n=3: ceil(1.8) = 2 → $2 - $0.01 = $1.99 = 199 cents.
+  -- IMPORTANT: ceil(n * 60) ≠ ceil(n * 0.6) * 100 in general.
+  -- We need ceil first on dollars, then convert: (ceil(n * 0.6) * 100) - 1.
+  v_base_cents := (ceil(v_track_count * 0.6)::int * 100) - 1;
 
   v_party_live := EXISTS (
     SELECT 1 FROM public.listening_parties
@@ -216,6 +268,12 @@ $$;
 
 REVOKE ALL ON FUNCTION public.record_purchase FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.record_purchase(uuid, uuid, int, int, int, int, text, text, boolean) TO service_role;
+
+-- Note: record_purchase is service_role-only by design. The Checkout route
+-- (which has already authenticated the buyer and validated the amount)
+-- calls it via getSupabaseServiceRoleClient() so the row insert bypasses
+-- the purchases-RLS no-INSERT policy. Calling it from the user-cookied
+-- client would fail with "permission denied for function".
 ```
 
 - [ ] **Step 2: Update `lib/database.types.ts`** to add the 3 new RPCs
@@ -268,6 +326,7 @@ git push origin main
 ```ts
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/service';
 import { getStripeClient } from '@/lib/stripe';
 import { resolveOrigin } from '@/lib/auth/origin';
 import { requireActiveAccount } from '@/lib/api/require-active';
@@ -312,6 +371,13 @@ export async function POST(
   });
   if (minErr || typeof minCents !== 'number') {
     return NextResponse.json({ error: minErr?.message ?? 'price lookup failed' }, { status: 500 });
+  }
+  // Defensive: even the floor must respect the hard cap.
+  if (minCents > HARD_CAP_CENTS) {
+    return NextResponse.json(
+      { error: `Computed minimum (${minCents} cents) exceeds hard cap (${HARD_CAP_CENTS}); release is unpurchasable` },
+      { status: 403 },
+    );
   }
 
   const body = (await request.json().catch(() => null)) as CheckoutBody | null;
@@ -363,19 +429,19 @@ export async function POST(
   const stripe = getStripeClient();
   const origin = resolveOrigin(request);
 
-  // Idempotency: minute-bucketed so double-clicks within 60s reuse the session.
+  // Idempotency: bucket by buyer + release + amount + minute. Including
+  // the amount means a user changing the PWYW slider within 60s creates a
+  // new session (correct UX). The minute bucket still absorbs accidental
+  // double-clicks of the same amount.
   const minuteBucket = Math.floor(Date.now() / 60_000);
-  const idempotencyKey = `checkout:${user.id}:${releaseId}:${minuteBucket}`;
+  const idempotencyKey = `checkout:${user.id}:${releaseId}:${amountCents}:${minuteBucket}`;
 
-  // Stripe Tax gate: if the artist account doesn't have automatic_tax enabled,
-  // omit the flag — Stripe rejects sessions when capability is missing.
-  let autoTaxEnabled = false;
-  try {
-    const account = await stripe.accounts.retrieve(artistStripe.stripe_account_id);
-    autoTaxEnabled = (account.tax as { automatic_tax?: { status?: string } })?.automatic_tax?.status === 'enabled';
-  } catch {
-    autoTaxEnabled = false;
-  }
+  // Stripe Tax: omit by default. Auto-tax requires per-account capability
+  // setup that we don't manage in Lot 3 (each artist would need to opt in
+  // via Stripe Dashboard). Phase 3.5 work: detect capability and enable
+  // selectively. For now, artists handle their own tax compliance per
+  // jurisdiction — documented in payouts dashboard copy.
+  // (No `automatic_tax` field in the session below.)
 
   const session = await stripe.checkout.sessions.create(
     {
@@ -403,7 +469,6 @@ export async function POST(
           artist_id: release.artist_id,
         },
       },
-      automatic_tax: autoTaxEnabled ? { enabled: true } : undefined,
       customer_email: user.email,
       success_url: `${origin}/r/${release.slug}?purchase=success`,
       cancel_url: `${origin}/r/${release.slug}?purchase=cancelled`,
@@ -416,9 +481,13 @@ export async function POST(
     { idempotencyKey },
   );
 
-  // 7. Reserve a pending purchase row (writes via SECURITY DEFINER RPC since
-  // RLS on `purchases` only allows SELECT for clients).
-  const { error: recordErr } = await supabase.rpc('record_purchase', {
+  // 7. Reserve a pending purchase row. record_purchase is service-role-only
+  // by design — the row write bypasses purchases-RLS-no-INSERT policy.
+  // We've already authenticated the buyer (user.id is verified) and
+  // validated the amount above, so the service-role escalation here is
+  // safe and scoped.
+  const adminSupabase = getSupabaseServiceRoleClient();
+  const { error: recordErr } = await adminSupabase.rpc('record_purchase', {
     p_buyer_id: user.id,
     p_release_id: release.id,
     p_amount_paid_cents: amountCents,
@@ -430,8 +499,16 @@ export async function POST(
     p_party_discount_applied: partyDiscountApplied,
   });
   if (recordErr) {
-    // Log but don't fail; the webhook can recover from the session metadata.
-    console.error('[checkout] record_purchase failed:', recordErr);
+    // 23505 means a pending row already exists for this (buyer, release).
+    // That's the idempotency-replay path — the existing session URL is
+    // safe to return.
+    if (recordErr.code !== '23505') {
+      console.error('[checkout] record_purchase failed:', recordErr);
+      return NextResponse.json(
+        { error: `Failed to record pending purchase: ${recordErr.message}` },
+        { status: 500 },
+      );
+    }
   }
 
   return NextResponse.json({ session_url: session.url, session_id: session.id });
@@ -460,7 +537,7 @@ git commit -m "phase3(checkout): create Stripe Session with PWYW + Connect trans
 ```ts
 import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import { getStripeClient } from '@/lib/stripe';
 import { getSupabaseServiceRoleClient } from '@/lib/supabase/service';
 
@@ -492,17 +569,29 @@ export async function POST(request: NextRequest) {
 
   const supabase = getSupabaseServiceRoleClient();
 
-  // Idempotency: insert event-id into ledger first. If duplicate, skip.
+  // Idempotency with retry-safety: try to insert the event. If 23505, look
+  // up the existing row — only short-circuit if it's been processed. If a
+  // previous attempt's handler threw, processed_at is null and we re-run.
+  // This avoids permanent loss when the first attempt fails.
   const { error: insertErr } = await supabase
     .from('stripe_events')
     .insert({ id: event.id, type: event.type, payload: event as unknown as object });
   if (insertErr) {
     if (insertErr.code === '23505') {
-      // Already processed — Stripe is retrying
-      return NextResponse.json({ received: true, deduped: true });
+      const { data: existing } = await supabase
+        .from('stripe_events')
+        .select('processed_at')
+        .eq('id', event.id)
+        .single();
+      if (existing?.processed_at) {
+        return NextResponse.json({ received: true, deduped: true });
+      }
+      // First attempt failed; this is Stripe's retry. Fall through to
+      // re-execute the handler.
+    } else {
+      console.error('[webhook] event ledger insert failed:', insertErr);
+      return NextResponse.json({ error: insertErr.message }, { status: 500 });
     }
-    console.error('[webhook] event ledger insert failed:', insertErr);
-    return NextResponse.json({ error: insertErr.message }, { status: 500 });
   }
 
   try {
@@ -527,11 +616,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error(`[webhook] handler for ${event.type} failed:`, err);
-    // Return 500 so Stripe retries. The ledger row stays unprocessed; the
-    // next retry will fail the dedupe insert (23505), see existing row,
-    // and re-attempt by NOT short-circuiting on dedupe... actually that
-    // does short-circuit. Trade-off: we accept that retries past first
-    // failure require manual intervention. Realistic for a Phase 3 MVP.
+    // Return 500 so Stripe retries. The ledger row stays unprocessed
+    // (processed_at IS NULL), and the dedupe block above re-runs the
+    // handler on the next retry instead of short-circuiting.
     return NextResponse.json({ error: 'Handler error' }, { status: 500 });
   }
 }
@@ -540,13 +627,28 @@ async function handleSessionCompleted(
   supabase: ReturnType<typeof getSupabaseServiceRoleClient>,
   session: Stripe.Checkout.Session,
 ): Promise<void> {
+  // Resolve the charge id by retrieving the PaymentIntent. The Session
+  // payload only carries the PI id, but charge_refunded webhooks key on
+  // charge id, so we must persist it now or refunds will silently no-op.
+  const stripe = getStripeClient();
+  const piId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id ?? null;
+
+  let chargeId: string | null = null;
+  if (piId) {
+    const pi = await stripe.paymentIntents.retrieve(piId);
+    chargeId = typeof pi.latest_charge === 'string'
+      ? pi.latest_charge
+      : pi.latest_charge?.id ?? null;
+  }
+
   const { error } = await supabase
     .from('purchases')
     .update({
       status: 'succeeded',
-      stripe_payment_intent_id: typeof session.payment_intent === 'string'
-        ? session.payment_intent
-        : session.payment_intent?.id ?? null,
+      stripe_payment_intent_id: piId,
+      stripe_charge_id: chargeId,
       succeeded_at: new Date().toISOString(),
     })
     .eq('stripe_session_id', session.id);
@@ -619,11 +721,11 @@ import { getStripeClient } from '@/lib/stripe';
 export const dynamic = 'force-dynamic';
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { admin: _admin, supabase, error } = await requireAdmin();
-  if (error) return error;
+  const { supabase, err } = await requireAdmin();
+  if (err) return err;
 
   const { id: purchaseId } = await params;
 
