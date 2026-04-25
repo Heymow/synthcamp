@@ -85,10 +85,12 @@ Diff intent (replace existing destination-charge `payment_intent_data` and the s
       ],
       payment_intent_data: {
         application_fee_amount: platformFeeCents,
-        // Statement descriptor: max 22 chars, alphanumeric + spaces. Card
-        // statements show "SYNTHCAMP" so buyers recognise the charge even
-        // though the merchant of record is the artist account.
-        statement_descriptor: 'SYNTHCAMP',
+        // On direct charges the connected account's own statement descriptor
+        // is the prefix; we append SYNTHCAMP as a suffix so the card
+        // statement reads "<artist>* SYNTHCAMP" (capped at 22 chars combined
+        // by Stripe). statement_descriptor (without suffix) is rejected /
+        // overridden when the merchant of record is the connected account.
+        statement_descriptor_suffix: 'SYNTHCAMP',
         metadata: {
           release_id: release.id,
           buyer_id: user.id,
@@ -115,7 +117,7 @@ Removed lines (vs the current `ded41e4` version):
 - `transfer_data: { destination: artistStripe.stripe_account_id },` inside `payment_intent_data`.
 
 Added lines:
-- `statement_descriptor: 'SYNTHCAMP'` inside `payment_intent_data`.
+- `statement_descriptor_suffix: 'SYNTHCAMP'` inside `payment_intent_data` (NOT `statement_descriptor` — Stripe rejects/overrides that field on direct charges where the connected account is MoR).
 - `stripeAccount: artistStripe.stripe_account_id` inside the second-arg options object alongside `idempotencyKey`.
 
 Everything else in the route stays identical:
@@ -149,7 +151,7 @@ The refund must now run *on the connected account*. There is no `connected_accou
 
 Rewrite the route to:
 1. Look up the purchase (existing).
-2. Look up the artist's `stripe_account_id` via the join above (use the service-role client because admin RLS may not grant SELECT on other artists' `profiles_stripe` rows).
+2. Look up the artist's `stripe_account_id` via the join above using the service-role client (defense-in-depth — keeps this route's correctness independent of the admin SELECT policy on `profiles_stripe`; the admin policy exists today but we don't want refunds to silently break if a future RLS refactor uncouples it).
 3. Call `stripe.refunds.create(params, { stripeAccount })` without `reverse_transfer`.
 
 ```ts
@@ -169,8 +171,9 @@ export async function POST(
 
   const { id: purchaseId } = await params;
 
-  // Use service role for the lookup: the join into profiles_stripe touches a
-  // table whose RLS is owner-only, and admins aren't owners.
+  // Service role for the cross-artist join — defense-in-depth, keeps the
+  // refund-route's correctness independent of the profiles_stripe admin
+  // SELECT policy staying coupled to the is_admin flag.
   const admin = getSupabaseServiceRoleClient();
 
   const { data: purchase, error: fetchErr } = await admin
@@ -240,7 +243,7 @@ export async function POST(
 
 Key removals vs commit `75eb19f`:
 - `reverse_transfer: true` argument.
-- Reliance on the user-cookied `supabase` from `requireAdmin()` for the purchase lookup (we now use service role so the cross-artist join doesn't fail RLS).
+- Reliance on the user-cookied `supabase` from `requireAdmin()` for the purchase lookup (we now use service role for defense-in-depth on the cross-artist join).
 
 Key additions:
 - Service-role lookup of `releases.artist_id` and `profiles_stripe.stripe_account_id`.
@@ -521,6 +524,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { createExpressAccount, getStripeClient, isStripeConfigured } from '@/lib/stripe';
 import { requireActiveAccount } from '@/lib/api/require-active';
+import { enforceLimit } from '@/lib/api/limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -542,6 +546,12 @@ export async function POST(_request: NextRequest) {
 
   const suspended = await requireActiveAccount(supabase, user.id);
   if (suspended) return suspended;
+
+  // Throttle: prevents two near-concurrent first-time hits from each calling
+  // createExpressAccount and orphaning a Stripe account. Mirrors the limit
+  // already on /api/artist/stripe/connect.
+  const limited = enforceLimit(`user:${user.id}:stripe:connect`, 5, 300);
+  if (limited) return limited;
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -664,14 +674,10 @@ interface Props {
  * payout_enabled state.
  */
 export function EmbeddedConnect({ mode, onExit }: Props) {
-  const [error, setError] = useState<string | null>(null);
+  const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
   const [stripeConnectInstance] = useState(() => {
-    const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-    if (!publishableKey) {
-      setError('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set');
-      return null;
-    }
+    if (!publishableKey) return null;
     return loadConnectAndInitialize({
       publishableKey,
       fetchClientSecret: async () => {
@@ -699,8 +705,12 @@ export function EmbeddedConnect({ mode, onExit }: Props) {
     });
   });
 
-  if (error) {
-    return <p className="text-xs italic text-red-400">{error}</p>;
+  if (!publishableKey) {
+    return (
+      <p className="text-xs italic text-red-400">
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set
+      </p>
+    );
   }
   if (!stripeConnectInstance) return null;
 
@@ -845,16 +855,21 @@ In Stripe Dashboard → Developers → Webhooks → existing endpoint at `https:
 2. Toggle **"Listen to events on Connected accounts"** ON. Confirm the existing event subscriptions (`checkout.session.completed`, `checkout.session.expired`, `charge.refunded`, `account.updated`) are still selected.
 3. Save. The signing secret is unchanged; do not rotate it.
 
-- [ ] **Step 4: Verify a Connect-origin event reaches the handler**
+- [ ] **Step 4: Verify Connect-origin events reach the handler**
 
 ```bash
-# Trigger a Connect event against a test connected account.
+# Platform-keyed event (account_updated): exercises the simple dispatch path.
 stripe trigger account.updated --stripe-account acct_TEST_ID
+
+# Session completion: exercises the new paymentIntents.retrieve(piId, { stripeAccount })
+# path in handleSessionCompleted. This is the most important verification —
+# without `stripeAccount` on the retrieve call, Stripe returns 404.
+stripe trigger checkout.session.completed --stripe-account acct_TEST_ID
 ```
 
 Watch Railway logs of the Next.js service. Expected:
-- `[webhook]` lines (no errors).
-- `stripe_events` table picks up a row for the event id; `processed_at` is set.
+- `[webhook]` lines (no errors, especially no 404 on PI retrieve).
+- `stripe_events` table picks up rows for both event ids; `processed_at` is set.
 
 - [ ] **Step 5: End-to-end smoke test**
 
@@ -872,7 +887,8 @@ Pre-requisites: an artist account whose `profiles_stripe.payout_enabled` is `tru
 4. **Verify in Stripe Dashboard:**
    - Switch the dashboard view to the **connected account** (top-left dropdown).
    - The PaymentIntent should appear in that account's Payments list with `application_fee_amount` deducted.
-   - The card statement should show `SYNTHCAMP` (visible on the PI detail page under "Statement descriptor").
+   - On the PI detail page, the "Statement descriptor" field should show `<connected-account-prefix>* SYNTHCAMP` (suffix concatenation). If the connected account hasn't set its own prefix, Stripe falls back to a generated prefix; the `SYNTHCAMP` suffix should still be visible.
+   - If the suffix doesn't appear, Stripe may have rejected it server-side without erroring (some MCC/account combinations restrict suffixes); flag as Phase 3.5 follow-up — set the suffix on the connected account's `settings.payments.statement_descriptor_suffix_kana/kanji` instead at onboarding.
 5. **Refund flow:** as an admin, `POST /api/admin/purchases/<id>/refund`. The Stripe Dashboard (connected account view) should show the refund with the application fee reversed; the `purchases` row flips to `refunded` once `charge.refunded` is processed.
 
 ---
@@ -891,3 +907,12 @@ Pre-requisites: an artist account whose `profiles_stripe.payout_enabled` is `tru
 - `lib/stripe.ts` legacy `createOnboardingLink` / `createExpressAccount` REST shims (kept as fallback).
 - `app/api/artist/stripe/connect/route.ts` (still works, just no longer wired into the UI).
 - The Lot 3 idempotency key shape, retry-safety dedupe, and signature-verification block.
+
+## Future cleanup (post-pivot)
+
+After the embedded flow has run for **30 days in production without rollback**, remove the dead code:
+- Delete `app/api/artist/stripe/connect/route.ts` (no UI calls it).
+- Delete `createOnboardingLink` from `lib/stripe.ts`.
+- Keep `createExpressAccount` (still used by the new `/api/stripe/account-sessions` route to bootstrap accounts).
+
+If a Phase 3.5 statement-descriptor-suffix audit shows the suffix isn't reliably appearing, switch to setting the descriptor on the connected account's `settings.payments` block at onboarding completion (in `account.updated` webhook) instead of per-charge.
