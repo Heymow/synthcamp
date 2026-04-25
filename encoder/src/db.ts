@@ -2,7 +2,17 @@ import { createClient } from '@supabase/supabase-js';
 
 const required = (name: string): string => {
   const v = process.env[name];
-  if (!v) throw new Error(`Missing env: ${name}`);
+  if (!v) {
+    // DEBUG: dump what's actually visible so we know what Railway is/isn't injecting.
+    console.error(
+      '[encoder] env injection diagnosis. Keys present:',
+      Object.keys(process.env)
+        .filter((k) => !k.startsWith('npm_') && !k.startsWith('PNPM_'))
+        .sort()
+        .join(', ') || '(none)',
+    );
+    throw new Error(`Missing env: ${name}`);
+  }
   return v;
 };
 
