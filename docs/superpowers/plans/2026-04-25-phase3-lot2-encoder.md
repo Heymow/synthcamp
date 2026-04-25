@@ -49,20 +49,14 @@ The `audio-stream` segments are publicly fetchable (their content is encrypted; 
 
 - [ ] **Step 1: Add the encoder workspace to the root**
 
-Read the root `package.json` first. If `workspaces` is not configured, add:
-
-```json
-{
-  "workspaces": ["encoder"]
-}
-```
-
-This lets `pnpm install` from the root install encoder deps too. If pnpm is the package manager (check `pnpm-lock.yaml`), adjust to use `pnpm-workspace.yaml`:
+The root project uses pnpm (`pnpm-lock.yaml` is present, no `package-lock.json`). Create `pnpm-workspace.yaml` at the repo root:
 
 ```yaml
 packages:
   - encoder
 ```
+
+Do NOT add a `workspaces` field to the root `package.json` — pnpm reads from the YAML file, not the JSON. Mixing the two confuses tooling.
 
 - [ ] **Step 2: Write `encoder/package.json`**
 
@@ -129,7 +123,7 @@ dist/
 - [ ] **Step 5: Write `encoder/Dockerfile`** (Railway uses Nixpacks by default but a Dockerfile gives us deterministic FFmpeg)
 
 ```dockerfile
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 
@@ -139,7 +133,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package.json pnpm-lock.yaml* ./
+# pnpm needs the workspace YAML at install time to resolve --filter ./encoder.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY encoder/package.json ./encoder/
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -167,7 +162,7 @@ Polls `claim_next_encode_job()` every 5 s, transcodes audio:
 - `R2_ENDPOINT` — `https://<account-id>.r2.cloudflarestorage.com`
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET` — single bucket containing all `audio-*/` prefixes
+- `R2_BUCKET` — **must match the Next.js side's `R2_BUCKET`** (default `synthcamp-audio-source` — yes the name is legacy from when only sources lived there; phase 3 reuses the same bucket with `audio-stream/` and `audio-preview/` prefixes added). No default in encoder; require explicit set.
 - `POLL_INTERVAL_MS` — default `5000`
 - `MAX_ATTEMPTS` — default `3`
 
@@ -377,6 +372,24 @@ export async function markDone(
     p_error: error ?? null,
   });
   if (rpcErr) throw new Error(`mark_encode_job_done failed: ${rpcErr.message}`);
+}
+
+/**
+ * Flip a job back to 'pending' so the next poll cycle re-claims it. Used
+ * for retry between attempts. Service-role bypasses RLS, so the direct
+ * UPDATE is allowed. Stores the previous attempt's error message for
+ * audit but doesn't increment attempts (the next claim will).
+ */
+export async function requeueJob(jobId: string, error: string): Promise<void> {
+  const { error: updErr } = await supabase
+    .from('encode_jobs')
+    .update({
+      status: 'pending',
+      last_error: error,
+      claimed_at: null,
+    })
+    .eq('id', jobId);
+  if (updErr) throw new Error(`requeueJob failed: ${updErr.message}`);
 }
 
 export async function fetchTrack(trackId: string): Promise<TrackRow> {
@@ -603,6 +616,7 @@ export async function encodeFull(args: {
           '-hls_key_info_file', keyInfoPath,
           '-hls_segment_filename', segmentPattern,
           '-hls_playlist_type', 'vod',
+          '-hls_segment_type', 'mpegts',
           '-f', 'hls',
         ])
         .output(playlistPath)
@@ -614,6 +628,12 @@ export async function encodeFull(args: {
     const r2Prefix = `audio-stream/${artistId}/${track.release_id}/${track.id}`;
     const files = await readdir(workDir);
     const segmentFiles = files.filter((f) => f.startsWith('seg-') && f.endsWith('.ts'));
+
+    // Re-encode of an existing track may produce fewer segments than the
+    // previous run, leaving orphan seg-NNN.ts in R2. We don't list+delete
+    // here for v1 (R2 storage is cheap, and the manifest never references
+    // them so they're effectively dead data). If storage cost becomes an
+    // issue, add a list-old-and-delete pass here. Tracked as tech debt.
 
     // Upload segments in parallel (they're small ~1-2 MB each).
     await Promise.all(
@@ -785,6 +805,7 @@ git commit -m "phase3(encoder): preview MP3 encoder (30s slice from preview_star
 import {
   claimJob,
   markDone,
+  requeueJob,
   fetchTrack,
   fetchReleaseArtist,
   updateTrackEncoded,
@@ -794,8 +815,10 @@ import { encodePreview } from './encode-preview.js';
 
 const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS ?? 5000);
 const MAX_ATTEMPTS = Number(process.env.MAX_ATTEMPTS ?? 3);
-const PUBLIC_BASE_URL =
-  process.env.R2_PUBLIC_BASE_URL ?? process.env.SUPABASE_URL ?? '';
+const PUBLIC_BASE_URL = process.env.R2_PUBLIC_BASE_URL;
+if (!PUBLIC_BASE_URL) {
+  throw new Error('R2_PUBLIC_BASE_URL is required (no fallback — set it explicitly in Railway vars)');
+}
 
 let stopping = false;
 
@@ -861,20 +884,20 @@ async function processOneJob(): Promise<boolean> {
     console.error(`[encoder] job ${job.job_id} failed (attempt ${job.attempts}/${MAX_ATTEMPTS}): ${msg}`);
 
     if (job.attempts >= MAX_ATTEMPTS) {
+      // Terminal failure: mark the job failed for the dispatcher table AND
+      // flip the track's encode_status so the wizard surfaces a Retry CTA
+      // (Lot 5).
       await markDone(job.job_id, 'failed', msg);
-      // Mark the track itself failed so the wizard surfaces a Retry button.
       await updateTrackEncoded({ trackId: job.track_id, encodeStatus: 'failed' });
     } else {
-      // Re-queue: leave job in failed state but reset to pending after a backoff.
-      // Simplest approach: mark_encode_job_done with status='failed' increments
-      // the attempts counter via the trigger... actually, the existing schema's
-      // attempts field is incremented by claim_next_encode_job() in Lot 1. So
-      // just mark failed; the next manual re-enqueue (or future retry RPC) is
-      // out of scope. For now we capitulate after MAX_ATTEMPTS.
-      await markDone(job.job_id, 'failed', msg);
-      await updateTrackEncoded({ trackId: job.track_id, encodeStatus: 'failed' });
+      // Re-queue for retry. The atomic claim RPC already incremented attempts
+      // on the previous claim, so flipping status='pending' (with the error
+      // message preserved on the row) lets the next poll cycle pick it back
+      // up. Service-role bypasses RLS so the direct UPDATE is fine.
+      await requeueJob(job.job_id, msg);
+      console.log(`[encoder] job ${job.job_id} re-queued for retry (attempt ${job.attempts}/${MAX_ATTEMPTS})`);
     }
-    return true; // we did process a job (success or terminal failure)
+    return true; // we did process a job (success, retry, or terminal failure)
   }
 }
 
@@ -933,8 +956,11 @@ SUPABASE_SERVICE_ROLE_KEY=
 R2_ENDPOINT=https://<account>.r2.cloudflarestorage.com
 R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=
-R2_BUCKET=synthcamp-audio
-R2_PUBLIC_BASE_URL=https://api.synthcamp.net
+# Must match Next.js R2_BUCKET (default `synthcamp-audio-source`).
+R2_BUCKET=
+# Public URL prefix for previews. Use the R2 public bucket URL or the CF
+# custom-domain proxy. Required — no fallback.
+R2_PUBLIC_BASE_URL=
 
 POLL_INTERVAL_MS=5000
 MAX_ATTEMPTS=3
