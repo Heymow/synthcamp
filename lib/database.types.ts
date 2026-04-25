@@ -154,6 +154,7 @@ export interface Database {
           release_date: string | null;
           status: ReleaseStatus;
           is_listed: boolean;
+          party_live_discount_pct: number;
           created_at: string;
           updated_at: string;
         };
@@ -175,6 +176,7 @@ export interface Database {
           release_date?: string | null;
           status?: ReleaseStatus;
           is_listed?: boolean;
+          party_live_discount_pct?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -196,6 +198,7 @@ export interface Database {
           release_date?: string | null;
           status?: ReleaseStatus;
           is_listed?: boolean;
+          party_live_discount_pct?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -223,6 +226,9 @@ export interface Database {
           plays_count: number;
           credit_category: CreditCategory | null;
           credit_tags: string[] | null;
+          preview_enabled: boolean;
+          preview_start_seconds: number;
+          encode_status: 'pending' | 'encoding' | 'ready' | 'failed';
           created_at: string;
         };
         Insert: {
@@ -238,6 +244,9 @@ export interface Database {
           plays_count?: number;
           credit_category?: CreditCategory | null;
           credit_tags?: string[] | null;
+          preview_enabled?: boolean;
+          preview_start_seconds?: number;
+          encode_status?: 'pending' | 'encoding' | 'ready' | 'failed';
           created_at?: string;
         };
         Update: {
@@ -253,6 +262,9 @@ export interface Database {
           plays_count?: number;
           credit_category?: CreditCategory | null;
           credit_tags?: string[] | null;
+          preview_enabled?: boolean;
+          preview_start_seconds?: number;
+          encode_status?: 'pending' | 'encoding' | 'ready' | 'failed';
           created_at?: string;
         };
         Relationships: [
@@ -373,25 +385,56 @@ export interface Database {
           id: string;
           buyer_id: string;
           release_id: string;
-          amount_paid: number;
-          stripe_payment_intent: string | null;
-          purchased_at: string;
+          artist_id: string;
+          amount_paid_cents: number;
+          amount_min_cents: number;
+          tip_cents: number;
+          platform_fee_cents: number;
+          artist_payout_cents: number;
+          currency: string;
+          stripe_session_id: string;
+          stripe_payment_intent_id: string | null;
+          stripe_charge_id: string | null;
+          status: 'pending' | 'succeeded' | 'refunded';
+          party_discount_applied: boolean;
+          created_at: string;
+          succeeded_at: string | null;
         };
         Insert: {
           id?: string;
           buyer_id: string;
           release_id: string;
-          amount_paid: number;
-          stripe_payment_intent?: string | null;
-          purchased_at?: string;
+          artist_id: string;
+          amount_paid_cents: number;
+          amount_min_cents: number;
+          platform_fee_cents: number;
+          artist_payout_cents: number;
+          currency?: string;
+          stripe_session_id: string;
+          stripe_payment_intent_id?: string | null;
+          stripe_charge_id?: string | null;
+          status: 'pending' | 'succeeded' | 'refunded';
+          party_discount_applied?: boolean;
+          created_at?: string;
+          succeeded_at?: string | null;
         };
         Update: {
           id?: string;
           buyer_id?: string;
           release_id?: string;
-          amount_paid?: number;
-          stripe_payment_intent?: string | null;
-          purchased_at?: string;
+          artist_id?: string;
+          amount_paid_cents?: number;
+          amount_min_cents?: number;
+          platform_fee_cents?: number;
+          artist_payout_cents?: number;
+          currency?: string;
+          stripe_session_id?: string;
+          stripe_payment_intent_id?: string | null;
+          stripe_charge_id?: string | null;
+          status?: 'pending' | 'succeeded' | 'refunded';
+          party_discount_applied?: boolean;
+          created_at?: string;
+          succeeded_at?: string | null;
         };
         Relationships: [
           {
@@ -408,7 +451,82 @@ export interface Database {
             referencedColumns: ['id'];
             isOneToOne: false;
           },
+          {
+            foreignKeyName: 'purchases_artist_id_fkey';
+            columns: ['artist_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+            isOneToOne: false;
+          },
         ];
+      };
+      encode_jobs: {
+        Row: {
+          id: string;
+          track_id: string;
+          kind: 'full' | 'preview';
+          status: 'pending' | 'running' | 'succeeded' | 'failed';
+          attempts: number;
+          last_error: string | null;
+          claimed_at: string | null;
+          created_at: string;
+          finished_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          track_id: string;
+          kind: 'full' | 'preview';
+          status?: 'pending' | 'running' | 'succeeded' | 'failed';
+          attempts?: number;
+          last_error?: string | null;
+          claimed_at?: string | null;
+          created_at?: string;
+          finished_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          track_id?: string;
+          kind?: 'full' | 'preview';
+          status?: 'pending' | 'running' | 'succeeded' | 'failed';
+          attempts?: number;
+          last_error?: string | null;
+          claimed_at?: string | null;
+          created_at?: string;
+          finished_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'encode_jobs_track_id_fkey';
+            columns: ['track_id'];
+            referencedRelation: 'tracks';
+            referencedColumns: ['id'];
+            isOneToOne: false;
+          },
+        ];
+      };
+      stripe_events: {
+        Row: {
+          id: string;
+          type: string;
+          received_at: string;
+          processed_at: string | null;
+          payload: Json;
+        };
+        Insert: {
+          id: string;
+          type: string;
+          received_at?: string;
+          processed_at?: string | null;
+          payload: Json;
+        };
+        Update: {
+          id?: string;
+          type?: string;
+          received_at?: string;
+          processed_at?: string | null;
+          payload?: Json;
+        };
+        Relationships: [];
       };
       follows: {
         Row: {
@@ -631,6 +749,19 @@ export interface Database {
         Args: { p_ids: string[] };
         Returns: { id: string; email: string }[];
       };
+      claim_next_encode_job: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          job_id: string;
+          track_id: string;
+          kind: string;
+          attempts: number;
+        }[];
+      };
+      mark_encode_job_done: {
+        Args: { p_job_id: string; p_status: string; p_error?: string | null };
+        Returns: undefined;
+      };
     };
     Enums: {
       credit_category: CreditCategory;
@@ -664,3 +795,5 @@ export type Follow = Tables<'follows'>;
 export type Report = Tables<'reports'>;
 export type Notification = Tables<'notifications'>;
 export type PartyAlert = Tables<'party_alerts'>;
+export type EncodeJob = Tables<'encode_jobs'>;
+export type StripeEvent = Tables<'stripe_events'>;
