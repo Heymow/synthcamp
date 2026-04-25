@@ -3,27 +3,13 @@
 import { Canvas } from '@react-three/fiber';
 import { usePathname } from 'next/navigation';
 import { Blob } from '@/components/three/blob';
-import { useBackground3DEnabled } from '@/lib/device';
 import type { Mode } from '@/components/ui/mode-toggle';
 
+// This component is only rendered by `Background3DLazy` once the capability
+// gate has passed, so we can assume the WebGL canvas should always render here.
 export function Background3D() {
   const pathname = usePathname();
-  const enabled = useBackground3DEnabled();
-
   const mode: Mode = pathname.startsWith('/artist') ? 'artist' : 'explore';
-
-  if (!enabled) {
-    return (
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-0"
-        style={{
-          background:
-            'radial-gradient(circle at 50% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 60%)',
-        }}
-      />
-    );
-  }
 
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 opacity-60">

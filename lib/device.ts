@@ -1,6 +1,6 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
@@ -31,31 +31,33 @@ export function usePrefersReducedMotion(): boolean {
 // deviceMemory is not in the standard Navigator lib types yet.
 type NavigatorWithDeviceMemory = Navigator & { deviceMemory?: number };
 
-// Device capability does not change at runtime; no subscription needed.
-const subscribeLowEnd: (callback: () => void) => () => void = () => () => {};
-
-function getLowEndSnapshot(): boolean {
+function isLowEndClient(): boolean {
   if (typeof navigator === 'undefined') return false;
   const cores = navigator.hardwareConcurrency ?? 8;
   const memory = (navigator as NavigatorWithDeviceMemory).deviceMemory ?? 4;
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-  return isMobile && (cores < 6 || memory < 8);
+  if (isMobile) return cores < 6 || memory < 8;
+  // Desktop heuristic: still flag genuinely weak machines.
+  return cores < 4 || memory < 4;
 }
 
-function getLowEndServerSnapshot(): boolean {
-  // Pessimistic default on the server: assume low-end so SSR renders the
-  // static fallback gradient instead of the WebGL Canvas. Clients with real
-  // capabilities upgrade to the Canvas after hydration (one-way transition,
-  // less jarring than the reverse flash on mobile).
-  return true;
-}
-
-export function useIsLowEndDevice(): boolean {
-  return useSyncExternalStore(subscribeLowEnd, getLowEndSnapshot, getLowEndServerSnapshot);
-}
-
+/**
+ * Whether the WebGL background should be enabled. Returns `false` on the
+ * server AND on the first client render so server- and client-rendered markup
+ * match (no hydration mismatch). After mount, `useEffect` runs the capability
+ * check and may flip to `true`.
+ */
 export function useBackground3DEnabled(): boolean {
+  const [enabled, setEnabled] = useState(false);
   const reduced = usePrefersReducedMotion();
-  const lowEnd = useIsLowEndDevice();
-  return !reduced && !lowEnd;
+
+  useEffect(() => {
+    if (reduced) {
+      setEnabled(false);
+      return;
+    }
+    setEnabled(!isLowEndClient());
+  }, [reduced]);
+
+  return enabled;
 }
