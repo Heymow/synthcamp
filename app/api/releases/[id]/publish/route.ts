@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getSupabaseServiceRoleClient } from '@/lib/supabase/service';
 import { enforceLimit } from '@/lib/api/limit';
 import { requireActiveAccount } from '@/lib/api/require-active';
 import { getPrice } from '@/lib/pricing';
@@ -120,10 +121,7 @@ async function sendReleasePublishedEmails(
     };
     if (!r.artist) return;
 
-    // Query the artist's followers' emails via admin API — SELECT on
-    // auth.users isn't exposed through PostgREST. We fan out via the
-    // already-existing notification rows (which have user_id) and look
-    // up emails in batch using supabase.auth.admin.
+    // Query the artist's followers via the user's RLS-bound session.
     const { data: followers } = await supabase
       .from('follows')
       .select('follower_id')
@@ -137,13 +135,23 @@ async function sendReleasePublishedEmails(
       releaseSlug: r.slug,
     });
 
-    // Pull emails from auth.users via the admin API (service-role cookie-
-    // backed client already has the power). We use listUsers once and map.
-    const { data: usersPage } = await supabase.auth.admin.listUsers({
-      perPage: 1000,
-    });
-    const byId = new Map<string, string | undefined>();
-    for (const u of usersPage?.users ?? []) byId.set(u.id, u.email ?? undefined);
+    // Resolve emails via the get_user_emails RPC, which is granted to
+    // service_role only (auth.users is not reachable from the cookie-backed
+    // anon-key client). Same pattern as cron/party-reminders.
+    const followerIds = followers.map((f) => f.follower_id);
+    const serviceClient = getSupabaseServiceRoleClient();
+    const { data: emailRows, error: emailErr } = await serviceClient.rpc(
+      'get_user_emails',
+      { p_ids: followerIds },
+    );
+    if (emailErr) {
+      console.error('[publish] get_user_emails failed:', emailErr.message);
+      return;
+    }
+    const byId = new Map<string, string>();
+    for (const row of emailRows ?? []) {
+      if (row.email) byId.set(row.id, row.email);
+    }
 
     await Promise.all(
       followers.map(async (f) => {
