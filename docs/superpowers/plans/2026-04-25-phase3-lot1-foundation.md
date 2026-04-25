@@ -8,7 +8,12 @@
 
 **Tech Stack:** PostgreSQL 16 (self-hosted Supabase), TypeScript helpers in `lib/`.
 
-**Out of scope (next lots):** encoder worker (Lot 2), Stripe Checkout + webhook (Lot 3), key delivery + player (Lot 4), UI (Lot 5), tests + ops (Lot 6).
+**Out of scope (next lots):**
+- Encoder worker (Lot 2)
+- Stripe Checkout + webhook (Lot 3) — the spec's migration #7 with `effective_min_price()`, `is_release_purchasable()`, `record_purchase()` SECURITY DEFINER RPCs ships with Lot 3, not Lot 1, since they're only consumed by the webhook handler.
+- Key delivery + player (Lot 4)
+- UI (Lot 5)
+- Tests + ops (Lot 6)
 
 ---
 
@@ -42,7 +47,7 @@
 
 DROP TABLE IF EXISTS public.purchases CASCADE;
 
-CREATE TABLE public.purchases (
+CREATE TABLE IF NOT EXISTS public.purchases (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   buyer_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
   release_id uuid NOT NULL REFERENCES public.releases(id) ON DELETE RESTRICT,
@@ -63,15 +68,15 @@ CREATE TABLE public.purchases (
 );
 
 -- One non-refunded purchase per release per buyer. Refunded buyers can repurchase.
-CREATE UNIQUE INDEX idx_purchases_one_per_buyer_release
+CREATE UNIQUE INDEX IF NOT EXISTS idx_purchases_one_per_buyer_release
   ON public.purchases (buyer_id, release_id)
   WHERE status != 'refunded';
 
-CREATE INDEX idx_purchases_artist
+CREATE INDEX IF NOT EXISTS idx_purchases_artist
   ON public.purchases (artist_id, succeeded_at DESC)
   WHERE status = 'succeeded';
 
-CREATE INDEX idx_purchases_release
+CREATE INDEX IF NOT EXISTS idx_purchases_release
   ON public.purchases (release_id, succeeded_at DESC)
   WHERE status = 'succeeded';
 
@@ -143,7 +148,7 @@ git commit -m "phase3(db): replace purchases stub with cents+status schema, rewr
 -- concurrent workers never claim the same job. Worker calls the RPC via
 -- service-role client; no direct INSERT/SELECT permissions are granted.
 
-CREATE TABLE public.encode_jobs (
+CREATE TABLE IF NOT EXISTS public.encode_jobs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   track_id uuid NOT NULL REFERENCES public.tracks(id) ON DELETE CASCADE,
   kind text NOT NULL CHECK (kind IN ('full', 'preview')),
@@ -156,11 +161,11 @@ CREATE TABLE public.encode_jobs (
   finished_at timestamptz
 );
 
-CREATE INDEX idx_encode_jobs_pending
+CREATE INDEX IF NOT EXISTS idx_encode_jobs_pending
   ON public.encode_jobs (created_at)
   WHERE status = 'pending';
 
-CREATE INDEX idx_encode_jobs_track
+CREATE INDEX IF NOT EXISTS idx_encode_jobs_track
   ON public.encode_jobs (track_id, kind, status);
 
 ALTER TABLE public.encode_jobs ENABLE ROW LEVEL SECURITY;
@@ -255,7 +260,7 @@ git commit -m "phase3(db): encode_jobs table + claim/mark RPCs (service-role onl
 -- retries), the unique-violation tells the handler to no-op. Stored payload
 -- aids debugging. Service-role only — clients never see this table.
 
-CREATE TABLE public.stripe_events (
+CREATE TABLE IF NOT EXISTS public.stripe_events (
   id text PRIMARY KEY,  -- evt_xxx from Stripe
   type text NOT NULL,
   received_at timestamptz NOT NULL DEFAULT now(),
@@ -263,7 +268,7 @@ CREATE TABLE public.stripe_events (
   payload jsonb NOT NULL
 );
 
-CREATE INDEX idx_stripe_events_unprocessed
+CREATE INDEX IF NOT EXISTS idx_stripe_events_unprocessed
   ON public.stripe_events (received_at)
   WHERE processed_at IS NULL;
 
@@ -291,9 +296,9 @@ git commit -m "phase3(db): stripe_events ledger for webhook idempotency"
 -- SynthCamp Phase 3 — DRM/preview columns on tracks + party-live discount on releases.
 
 ALTER TABLE public.tracks
-  ADD COLUMN preview_enabled boolean NOT NULL DEFAULT true,
-  ADD COLUMN preview_start_seconds int NOT NULL DEFAULT 0,
-  ADD COLUMN encode_status text NOT NULL DEFAULT 'pending'
+  ADD COLUMN IF NOT EXISTS preview_enabled boolean NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS preview_start_seconds int NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS encode_status text NOT NULL DEFAULT 'pending'
     CHECK (encode_status IN ('pending', 'encoding', 'ready', 'failed'));
 
 -- Backfill: tracks that already have hls_manifest_key set (phase 2 uploads
@@ -305,12 +310,28 @@ UPDATE public.tracks
 SET encode_status = 'ready'
 WHERE hls_manifest_key IS NOT NULL;
 
-ALTER TABLE public.tracks
-  ADD CONSTRAINT preview_window_in_bounds
-    CHECK (preview_start_seconds + 30 <= duration_seconds);
+-- Disable preview on any track shorter than 30 seconds before adding the
+-- CHECK. Without this, the constraint would reject the migration on
+-- short tracks (preview_start_seconds=0 + 30 > duration_seconds<30).
+UPDATE public.tracks
+SET preview_enabled = false
+WHERE duration_seconds < 30;
+
+-- Constraint: either preview is disabled, OR the 30s window fits within
+-- the track. CREATE CONSTRAINT has no IF NOT EXISTS, so guard with DO.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_constraint WHERE conname = 'preview_window_in_bounds'
+  ) THEN
+    ALTER TABLE public.tracks
+      ADD CONSTRAINT preview_window_in_bounds
+        CHECK (preview_enabled = false OR preview_start_seconds + 30 <= duration_seconds);
+  END IF;
+END $$;
 
 ALTER TABLE public.releases
-  ADD COLUMN party_live_discount_pct int NOT NULL DEFAULT 20
+  ADD COLUMN IF NOT EXISTS party_live_discount_pct int NOT NULL DEFAULT 20
     CHECK (party_live_discount_pct BETWEEN 0 AND 50);
 ```
 
@@ -341,12 +362,16 @@ git commit -m "phase3(db): preview controls + encode_status on tracks, party dis
 
 ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
 
+-- CREATE POLICY has no IF NOT EXISTS, so drop-then-create for idempotency.
+DROP POLICY IF EXISTS purchases_select_buyer ON public.purchases;
 CREATE POLICY purchases_select_buyer ON public.purchases FOR SELECT
   USING (auth.uid() = buyer_id);
 
+DROP POLICY IF EXISTS purchases_select_artist ON public.purchases;
 CREATE POLICY purchases_select_artist ON public.purchases FOR SELECT
   USING (auth.uid() = artist_id);
 
+DROP POLICY IF EXISTS purchases_select_admin ON public.purchases;
 CREATE POLICY purchases_select_admin ON public.purchases FOR SELECT
   USING (public.is_current_user_admin());
 
@@ -428,31 +453,35 @@ export function effectiveMinPrice(
 
 - [ ] **Step 3: Add tests**
 
-Append to `tests/lib/pricing.test.ts`:
+Append to `tests/lib/pricing.test.ts`. **Match the existing file's conventions** — read it first to confirm. Existing file uses `import { describe, it, expect } from 'vitest'` and `it(...)` (not `test(...)`), with `@/lib/pricing` import alias.
 
 ```ts
-import { effectiveMinPrice, getPrice } from '../../lib/pricing';
+// Append at the end of the existing file. Don't duplicate imports if the
+// describe is added inside the same block; if added as a sibling describe
+// at top level, the imports are already in scope.
 
 describe('effectiveMinPrice', () => {
-  test('no discount when party not live', () => {
+  it('returns base price when party is not live', () => {
     expect(effectiveMinPrice(3, 20, false)).toBe(getPrice(3));
   });
 
-  test('20% discount on 3-track EP during party live', () => {
-    // getPrice(3) = '1.99'; 1.99 * 0.8 = 1.592 → 1.59
+  it('applies 20% discount on 3-track EP during party live', () => {
+    // getPrice(3) = '1.99'; 1.99 * 0.8 = 1.592 → '1.59'
     expect(effectiveMinPrice(3, 20, true)).toBe('1.59');
   });
 
-  test('zero-percent discount returns base price', () => {
+  it('returns base when discount is 0%', () => {
     expect(effectiveMinPrice(5, 0, true)).toBe(getPrice(5));
   });
 
-  test('50% discount cap', () => {
-    // getPrice(12) = '7.99'; 7.99 * 0.5 = 3.995 → 4.00 (rounding)
+  it('caps cleanly at 50% discount', () => {
+    // getPrice(12) = '7.99'; 7.99 * 0.5 = 3.995 → '4.00' (rounding)
     expect(effectiveMinPrice(12, 50, true)).toBe('4.00');
   });
 });
 ```
+
+If `effectiveMinPrice` isn't already imported at the top of the file, add it: `import { effectiveMinPrice, getPrice } from '@/lib/pricing'`.
 
 - [ ] **Step 4: Run tests**
 
@@ -493,11 +522,11 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- New audio source → re-encode everything.
+  -- New audio source → re-encode everything. encode_status defaults to
+  -- 'pending' on the new row already; no extra UPDATE needed.
   IF TG_OP = 'INSERT' AND NEW.audio_source_key IS NOT NULL THEN
     INSERT INTO public.encode_jobs (track_id, kind) VALUES (NEW.id, 'full');
     INSERT INTO public.encode_jobs (track_id, kind) VALUES (NEW.id, 'preview');
-    UPDATE public.tracks SET encode_status = 'pending' WHERE id = NEW.id;
     RETURN NEW;
   END IF;
 
