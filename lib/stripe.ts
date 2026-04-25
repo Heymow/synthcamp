@@ -3,6 +3,8 @@
 // links). Phase 3 may swap to the official SDK when webhook signature
 // verification is required.
 
+import Stripe from 'stripe';
+
 const STRIPE_API = 'https://api.stripe.com/v1';
 
 function secret(): string | null {
@@ -63,4 +65,20 @@ export async function createOnboardingLink(
     type: 'account_onboarding',
   });
   return result.url;
+}
+
+let cachedClient: Stripe | null = null;
+
+/**
+ * Returns the official Stripe SDK client (singleton). Used for Checkout
+ * Sessions, webhook signature validation, account retrieval, and refunds.
+ * The legacy REST shim above is still used by the Connect onboarding flow
+ * — both can coexist.
+ */
+export function getStripeClient(): Stripe {
+  if (cachedClient) return cachedClient;
+  const key = secret();
+  if (!key) throw new Error('STRIPE_SECRET_KEY is not set');
+  cachedClient = new Stripe(key);
+  return cachedClient;
 }
