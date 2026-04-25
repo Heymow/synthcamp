@@ -8,7 +8,7 @@
 - **Charge model:** Direct charges. The Checkout Session is created on the connected account (`{ stripeAccount }` API option). `application_fee_amount` flows from the artist's account back to the platform automatically. No `transfer_data.destination` and no platform-side transfer to reverse on refund.
 - **Webhook model:** A single endpoint receives both platform events and Connect events. Connect-origin events carry `event.account = acct_...`; any subsequent retrieve calls (`paymentIntents.retrieve`, etc.) MUST pass `{ stripeAccount: event.account }`. Signature secret stays a single `STRIPE_WEBHOOK_SECRET`.
 - **Refunds:** `stripe.refunds.create(params, { stripeAccount })`. Drop `reverse_transfer` (no transfer happened); keep `refund_application_fee: true` so the platform fee returns to the artist on refund.
-- **Onboarding:** Embedded `<ConnectAccountOnboarding />` from `@stripe/react-connect-js`, fed by a server-issued `AccountSession.client_secret`. The legacy hosted Account Link helper (`createOnboardingLink`) stays in `lib/stripe.ts` as a dormant fallback.
+- **Onboarding + management:** Embedded `<ConnectAccountOnboarding />` (initial KYC) and `<ConnectAccountManagement />` (ongoing settings: bank changes, identity updates, payouts view) from `@stripe/react-connect-js`, fed by a server-issued `AccountSession.client_secret` that enables BOTH components. The UI mounts onboarding when `payout_enabled = false`, management when `payout_enabled = true`. The legacy hosted Account Link helper (`createOnboardingLink`) stays in `lib/stripe.ts` as a dormant fallback.
 
 **Tech stack:** `stripe` SDK (already installed `^22.1.0`), `@stripe/connect-js` + `@stripe/react-connect-js` (new), Next.js Route Handlers, Supabase service-role for webhook writes.
 
@@ -463,7 +463,10 @@ describe('POST /api/stripe/account-sessions', () => {
     expect(createExpressAccountMock).toHaveBeenCalledWith('a@b.c');
     expect(accountSessionsCreateMock).toHaveBeenCalledWith({
       account: 'acct_new',
-      components: { account_onboarding: { enabled: true } },
+      components: {
+        account_onboarding: { enabled: true },
+        account_management: { enabled: true },
+      },
     });
   });
 
@@ -495,7 +498,10 @@ describe('POST /api/stripe/account-sessions', () => {
     expect(createExpressAccountMock).not.toHaveBeenCalled();
     expect(accountSessionsCreateMock).toHaveBeenCalledWith({
       account: 'acct_existing',
-      components: { account_onboarding: { enabled: true } },
+      components: {
+        account_onboarding: { enabled: true },
+        account_management: { enabled: true },
+      },
     });
   });
 });
@@ -582,7 +588,10 @@ export async function POST(_request: NextRequest) {
     const stripe = getStripeClient();
     const session = await stripe.accountSessions.create({
       account: accountId,
-      components: { account_onboarding: { enabled: true } },
+      components: {
+        account_onboarding: { enabled: true },
+        account_management: { enabled: true },
+      },
     });
     return NextResponse.json({ client_secret: session.client_secret });
   } catch (err) {
@@ -611,11 +620,13 @@ git commit -m "phase3(stripe): AccountSession endpoint for embedded onboarding (
 
 ---
 
-## Task 5: Client embedded onboarding component + dependency install
+## Task 5: Client embedded Stripe Connect component + dependency install
 
 **Files:**
 - Modify: `package.json`, `pnpm-lock.yaml`
-- Create: `components/stripe/embedded-onboarding.tsx`
+- Create: `components/stripe/embedded-connect.tsx`
+
+A single wrapper component handles BOTH onboarding and management. The parent (payouts card) chooses which Stripe component to render via the `mode` prop based on `payout_enabled`. The Connect.js instance is shared across mounts of the same parent.
 
 - [ ] **Step 1: Install dependencies**
 
@@ -626,7 +637,7 @@ pnpm add @stripe/connect-js @stripe/react-connect-js
 - [ ] **Step 2: Implement the component**
 
 ```tsx
-// components/stripe/embedded-onboarding.tsx
+// components/stripe/embedded-connect.tsx
 'use client';
 
 import { useState } from 'react';
@@ -634,20 +645,25 @@ import { loadConnectAndInitialize } from '@stripe/connect-js';
 import {
   ConnectComponentsProvider,
   ConnectAccountOnboarding,
+  ConnectAccountManagement,
 } from '@stripe/react-connect-js';
 
 interface Props {
-  /** Called when the embedded UI raises onExit (user closed or finished). */
+  /** Which Stripe component to render. */
+  mode: 'onboarding' | 'management';
+  /** Called when the embedded UI raises onExit (only fires for onboarding). */
   onExit?: () => void;
 }
 
 /**
- * Renders Stripe's embedded onboarding UI inside SynthCamp. The fetch
+ * Renders Stripe's embedded Connect components inside SynthCamp. The fetch
  * callback hits /api/stripe/account-sessions, which authenticates the user,
  * bootstraps their connected account if missing, and returns a fresh
- * client_secret. loadConnectAndInitialize is called once per mount.
+ * client_secret with both account_onboarding and account_management
+ * components enabled. The parent picks which component to mount based on
+ * payout_enabled state.
  */
-export function EmbeddedOnboarding({ onExit }: Props) {
+export function EmbeddedConnect({ mode, onExit }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const [stripeConnectInstance] = useState(() => {
@@ -690,11 +706,15 @@ export function EmbeddedOnboarding({ onExit }: Props) {
 
   return (
     <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
-      <ConnectAccountOnboarding
-        onExit={() => {
-          if (onExit) onExit();
-        }}
-      />
+      {mode === 'onboarding' ? (
+        <ConnectAccountOnboarding
+          onExit={() => {
+            if (onExit) onExit();
+          }}
+        />
+      ) : (
+        <ConnectAccountManagement />
+      )}
     </ConnectComponentsProvider>
   );
 }
@@ -704,8 +724,8 @@ export function EmbeddedOnboarding({ onExit }: Props) {
 
 ```bash
 npx tsc --noEmit
-git add package.json pnpm-lock.yaml components/stripe/embedded-onboarding.tsx
-git commit -m "phase3(stripe): embedded onboarding component + connect-js deps"
+git add package.json pnpm-lock.yaml components/stripe/embedded-connect.tsx
+git commit -m "phase3(stripe): embedded Connect component (onboarding + management) + deps"
 ```
 
 ---
@@ -727,7 +747,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/glass-panel';
-import { EmbeddedOnboarding } from '@/components/stripe/embedded-onboarding';
+import { EmbeddedConnect } from '@/components/stripe/embedded-connect';
 
 interface PayoutsCardProps {
   hasAccount: boolean;
@@ -739,7 +759,7 @@ export function PayoutsCard({ hasAccount, payoutEnabled }: PayoutsCardProps) {
   const [open, setOpen] = useState(false);
 
   const label = payoutEnabled
-    ? 'Update payout details'
+    ? 'Manage payouts'
     : hasAccount
       ? 'Continue Stripe setup'
       : 'Set up payouts';
@@ -774,7 +794,8 @@ export function PayoutsCard({ hasAccount, payoutEnabled }: PayoutsCardProps) {
 
       {open && (
         <div className="space-y-3">
-          <EmbeddedOnboarding
+          <EmbeddedConnect
+            mode={payoutEnabled ? 'management' : 'onboarding'}
             onExit={() => {
               setOpen(false);
               // The account.updated webhook flips payout_enabled; refresh
