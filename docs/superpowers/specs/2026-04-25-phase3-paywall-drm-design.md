@@ -91,6 +91,49 @@ CREATE UNIQUE INDEX idx_purchases_one_per_buyer_release
 CREATE INDEX idx_purchases_artist ON public.purchases (artist_id, succeeded_at DESC)
   WHERE status = 'succeeded';
 
+-- The phase 2 get_editors_choice() RPC (migration 20260422000011)
+-- references purchases.amount_paid and purchases.purchased_at, which the
+-- DROP+CREATE above removed. PL/pgSQL bodies aren't validated at CREATE
+-- time, so the function's still there but its next invocation throws
+-- "column does not exist" on the homepage. Replace it now against the
+-- new schema: amount_paid_cents (integer) and succeeded_at, with an
+-- explicit succeeded filter.
+CREATE OR REPLACE FUNCTION public.get_editors_choice()
+RETURNS TABLE (
+  release_id uuid,
+  revenue_30d numeric,
+  is_fallback boolean
+) LANGUAGE plpgsql STABLE SECURITY DEFINER AS $$
+DECLARE
+  top_record record;
+BEGIN
+  SELECT r.id AS id,
+         COALESCE(SUM(p.amount_paid_cents), 0)::numeric / 100 AS rev,
+         r.created_at AS created_at
+  INTO top_record
+  FROM public.releases r
+  LEFT JOIN public.purchases p ON p.release_id = r.id
+    AND p.status = 'succeeded'
+    AND p.succeeded_at >= now() - interval '30 days'
+  WHERE r.status = 'published' AND r.is_listed = true
+  GROUP BY r.id, r.created_at
+  HAVING COALESCE(SUM(p.amount_paid_cents), 0) > 0
+  ORDER BY rev DESC, r.created_at DESC
+  LIMIT 1;
+
+  IF FOUND THEN
+    RETURN QUERY SELECT top_record.id, top_record.rev, false;
+  ELSE
+    RETURN QUERY
+    SELECT r.id, 0::numeric, true
+    FROM public.releases r
+    WHERE r.status = 'published' AND r.is_listed = true
+    ORDER BY r.created_at DESC
+    LIMIT 1;
+  END IF;
+END;
+$$;
+
 -- Encoding jobs. Polled by the encoder worker.
 CREATE TABLE public.encode_jobs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
