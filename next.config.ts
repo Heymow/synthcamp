@@ -17,6 +17,25 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'placehold.co' },
     ],
   },
+  // Anti-clickjacking: deny framing everywhere except /embed/*, which is
+  // the only surface intended to be iframed by third-party sites. CSP
+  // frame-ancestors is the modern directive and takes precedence over
+  // X-Frame-Options where both are honored; we set both for older browsers.
+  async headers() {
+    return [
+      {
+        source: '/embed/:path*',
+        headers: [{ key: 'Content-Security-Policy', value: 'frame-ancestors *' }],
+      },
+      {
+        source: '/((?!embed).*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+        ],
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);
