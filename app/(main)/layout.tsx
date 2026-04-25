@@ -24,6 +24,10 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         <Background3DLazy />
         <div className="ui-overlay pb-32">
           <Header profile={profile} unreadCount={unreadCount} />
+          {/* Spacer is intentionally shorter than the actual header height on
+              mobile (96px vs ~128px). The header's pb-12 gradient fade is
+              meant to bleed onto the top of the page content, creating a soft
+              transition. Don't "fix" this to match the exact header bbox. */}
           <div className="h-24 md:h-40" aria-hidden="true" />
           <main id="main-content" tabIndex={-1}>
             {children}
