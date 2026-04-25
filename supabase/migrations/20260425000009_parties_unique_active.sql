@@ -63,11 +63,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_parties_one_active_per_artist
 
 -- 4. Partial unique index: 1 GMC party per artist per calendar month.
 --
--- The 2-arg date_trunc('month', timestamptz) is STABLE (session-TZ
--- dependent) and Postgres rejects STABLE expressions in index
--- definitions. The 3-arg form date_trunc('month', timestamptz, 'UTC')
--- is IMMUTABLE in PG 12+ — pinning the timezone explicitly to UTC makes
--- the result deterministic regardless of session settings.
+-- date_trunc on a timestamptz is STABLE (depends on session TZ), even in
+-- the 3-arg form. Postgres rejects STABLE expressions in index
+-- definitions. The trick: `scheduled_at AT TIME ZONE 'UTC'` coerces the
+-- timestamptz to a plain timestamp (no TZ) representing the UTC
+-- wall-clock — that conversion is IMMUTABLE — and then date_trunc on a
+-- plain timestamp is also IMMUTABLE.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_parties_gmc_one_per_month_per_artist
-  ON public.listening_parties (artist_id, date_trunc('month', scheduled_at, 'UTC'))
+  ON public.listening_parties (
+    artist_id,
+    date_trunc('month', (scheduled_at AT TIME ZONE 'UTC'))
+  )
   WHERE status <> 'cancelled' AND room_kind = 'global_master';
