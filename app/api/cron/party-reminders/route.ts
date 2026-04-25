@@ -67,10 +67,18 @@ export async function POST(request: NextRequest) {
   if (alertsErr) {
     // Fail loud: rolling back every claimed marker because we never even
     // got far enough to know who to email.
-    await supabase
+    const { error: rollbackErr } = await supabase
       .from('listening_parties')
       .update({ reminder_sent_at: null })
       .in('id', partyIds);
+    if (rollbackErr) {
+      // Rollback itself failed — these parties stay claimed forever
+      // unless a human/reaper intervenes. Mark CRITICAL so it's
+      // grep-able in Railway logs.
+      console.error(
+        `[cron] CRITICAL rollback failed for ${partyIds.join(',')}: ${rollbackErr.message}`,
+      );
+    }
     return NextResponse.json({ error: alertsErr.message }, { status: 500 });
   }
 
@@ -92,10 +100,15 @@ export async function POST(request: NextRequest) {
       { p_ids: Array.from(allSubscriberIds) },
     );
     if (emailErr) {
-      await supabase
+      const { error: rollbackErr } = await supabase
         .from('listening_parties')
         .update({ reminder_sent_at: null })
         .in('id', partyIds);
+      if (rollbackErr) {
+        console.error(
+          `[cron] CRITICAL rollback failed for ${partyIds.join(',')}: ${rollbackErr.message}`,
+        );
+      }
       return NextResponse.json({ error: emailErr.message }, { status: 500 });
     }
     for (const row of emailRows ?? []) {
@@ -158,10 +171,15 @@ export async function POST(request: NextRequest) {
         // Roll back the claim so the next cron tick retries this party.
         // Silently dropping a reminder is far worse than firing twice.
         console.error(`[cron] party-reminders failed for ${p.party_id}:`, err);
-        await supabase
+        const { error: rollbackErr } = await supabase
           .from('listening_parties')
           .update({ reminder_sent_at: null })
           .eq('id', p.party_id);
+        if (rollbackErr) {
+          console.error(
+            `[cron] CRITICAL rollback failed for ${p.party_id}: ${rollbackErr.message}`,
+          );
+        }
       }
     }),
   );
