@@ -1,2 +1,9 @@
 packages:
   - encoder
+
+# Whitelist postinstall scripts. pnpm 9+ blocks all by default for safety.
+# ffmpeg-static needs its postinstall to download the FFmpeg binary —
+# without it, runtime spawns ENOENT. esbuild has a similar binary fetch.
+onlyBuiltDependencies:
+  - ffmpeg-static
+  - esbuild
