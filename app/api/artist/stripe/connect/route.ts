@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceLimit } from '@/lib/api/limit';
 import { requireActiveAccount } from '@/lib/api/require-active';
+import { resolveOrigin } from '@/lib/auth/origin';
 import {
   createExpressAccount,
   createOnboardingLink,
   isStripeConfigured,
 } from '@/lib/stripe';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   if (!isStripeConfigured()) {
     return NextResponse.json(
       { error: 'Stripe is not configured on this deployment.' },
@@ -57,9 +58,14 @@ export async function POST() {
     }
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-  const returnUrl = `${appUrl}/settings/profile?stripe=return`;
-  const refreshUrl = `${appUrl}/settings/profile?stripe=refresh`;
+  // resolveOrigin prefers NEXT_PUBLIC_APP_URL, then X-Forwarded-Host from
+  // the proxy, and only falls back to request.url — never localhost. This
+  // matters because onboarded artists are redirected here by Stripe, and
+  // a prod deploy missing NEXT_PUBLIC_APP_URL used to send them to
+  // http://localhost:3000.
+  const origin = resolveOrigin(request);
+  const returnUrl = `${origin}/settings/profile?stripe=return`;
+  const refreshUrl = `${origin}/settings/profile?stripe=refresh`;
 
   try {
     const url = await createOnboardingLink(accountId, returnUrl, refreshUrl);
