@@ -145,7 +145,7 @@ export async function POST(
       ],
       payment_intent_data: {
         application_fee_amount: platformFeeCents,
-        transfer_data: { destination: artistStripe.stripe_account_id },
+        statement_descriptor_suffix: 'SYNTHCAMP',
         metadata: {
           release_id: release.id,
           buyer_id: user.id,
@@ -161,7 +161,10 @@ export async function POST(
         party_discount_applied: String(partyDiscountApplied),
       },
     },
-    { idempotencyKey },
+    {
+      idempotencyKey,
+      stripeAccount: artistStripe.stripe_account_id,
+    },
   );
 
   // 7. Reserve a pending purchase row. record_purchase is service-role-only
