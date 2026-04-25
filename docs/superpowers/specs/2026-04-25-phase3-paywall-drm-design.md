@@ -57,9 +57,12 @@ Three new moving parts on top of phase 2:
 
 ### New tables
 
+**Note on existing `purchases` table.** Phase 2 migration `20260422000008_purchases.sql` already created a stub `public.purchases` with a different schema (`amount_paid numeric(10,2)`, `stripe_payment_intent text`, `purchased_at`, no status field, no platform_fee/artist_payout/tip split). It was created as a placeholder, marked "populated Phase 3," and is **empty in production** (no purchases exist yet because Stripe wasn't wired). Phase 3 replaces the stub with the production schema below via a `DROP TABLE … CASCADE` + `CREATE TABLE` in migration #1. The drop also removes the existing RLS policy `purchases_select_self_or_artist` and the index `idx_purchases_release_date`, both of which are recreated under the new shape. **This DROP is destructive** — if any seeded test data exists in staging it will be wiped; production has no real rows so no business impact.
+
 ```sql
--- Purchase records. One per (buyer, release) pair. Lifetime, immutable
--- once paid. status reflects Stripe state machine (succeeded, refunded).
+-- Phase 3 replacement schema for purchases. Drops the phase 2 stub first.
+DROP TABLE IF EXISTS public.purchases CASCADE;
+
 CREATE TABLE public.purchases (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   buyer_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
@@ -84,6 +87,9 @@ CREATE TABLE public.purchases (
 CREATE UNIQUE INDEX idx_purchases_one_per_buyer_release
   ON public.purchases (buyer_id, release_id)
   WHERE status != 'refunded';
+
+CREATE INDEX idx_purchases_artist ON public.purchases (artist_id, succeeded_at DESC)
+  WHERE status = 'succeeded';
 
 -- Encoding jobs. Polled by the encoder worker.
 CREATE TABLE public.encode_jobs (
@@ -123,6 +129,16 @@ ALTER TABLE public.tracks
   ADD COLUMN preview_start_seconds int NOT NULL DEFAULT 0,
   ADD COLUMN encode_status text NOT NULL DEFAULT 'pending'
     CHECK (encode_status IN ('pending', 'encoding', 'ready', 'failed'));
+
+-- Backfill existing tracks: anything with an HLS manifest already in R2
+-- (i.e. tracks uploaded under phase 2 with the old upload route) should
+-- start in 'ready' state, not 'pending'. Otherwise the trigger added in
+-- migration #8 would queue a re-encode for every existing track at
+-- deploy time. New uploads after this point default to 'pending' and
+-- are picked up by the worker normally.
+UPDATE public.tracks
+SET encode_status = 'ready'
+WHERE hls_manifest_key IS NOT NULL;
 
 ALTER TABLE public.tracks
   ADD CONSTRAINT preview_window_in_bounds
