@@ -41,15 +41,19 @@ export function EmbeddedConnect({ mode, onExit }: Props) {
         const { client_secret } = (await res.json()) as { client_secret: string };
         return client_secret;
       },
-      // Use Stripe's default light theme for inputs (white background, dark
-      // text) so form fields are readable. Only override the primary action
-      // color so CTAs match the page accent. Trying to fully re-theme the
-      // embedded form clashes with Stripe's input default styling.
+      // Force an explicit light theme on the embedded form so it lives on a
+      // white card regardless of the parent page background. Stripe's
+      // defaults use medium-contrast grays that wash out on either pure
+      // dark or pure light parents.
       appearance: {
         overlays: 'dialog',
         variables: {
           colorPrimary: '#000000',
+          colorBackground: '#ffffff',
+          colorText: '#0a0a0a',
+          colorSecondaryText: '#404040',
           fontFamily: 'inherit',
+          borderRadius: '8px',
         },
       },
     });
@@ -65,16 +69,18 @@ export function EmbeddedConnect({ mode, onExit }: Props) {
   if (!stripeConnectInstance) return null;
 
   return (
-    <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
-      {mode === 'onboarding' ? (
-        <ConnectAccountOnboarding
-          onExit={() => {
-            if (onExit) onExit();
-          }}
-        />
-      ) : (
-        <ConnectAccountManagement />
-      )}
-    </ConnectComponentsProvider>
+    <div className="rounded-lg bg-white p-4 text-neutral-900">
+      <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+        {mode === 'onboarding' ? (
+          <ConnectAccountOnboarding
+            onExit={() => {
+              if (onExit) onExit();
+            }}
+          />
+        ) : (
+          <ConnectAccountManagement />
+        )}
+      </ConnectComponentsProvider>
+    </div>
   );
 }
