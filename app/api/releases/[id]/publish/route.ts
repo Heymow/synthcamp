@@ -68,24 +68,21 @@ export async function POST(
 
   // 3. Dispatch based on party/no-party
   if (body.party) {
-    // The party RPC flips status to 'scheduled' and sets release_date as
-    // its final write. We update price_minimum immediately after — if the
-    // RPC throws, we never wrote anything to the release.
+    // The party RPC flips status='scheduled', release_date, and
+    // price_minimum in a single UPDATE inside its own transaction, so
+    // either all three land or none do. No trailing UPDATE from the
+    // route — that used to leave the release scheduled with a stale
+    // price if the second write failed.
     const { data: partyId, error: partyErr } = await supabase.rpc(
       'validate_and_create_listening_party',
       {
         p_release_id: id,
         p_room_id: body.party.room_id,
         p_scheduled_at: body.party.scheduled_at,
+        p_price_minimum: priceMinimum,
       },
     );
     if (partyErr) return NextResponse.json({ error: partyErr.message }, { status: 400 });
-
-    const { error: priceErr } = await supabase
-      .from('releases')
-      .update({ price_minimum: priceMinimum })
-      .eq('id', id);
-    if (priceErr) return NextResponse.json({ error: priceErr.message }, { status: 400 });
 
     return NextResponse.json({ ok: true, party_id: partyId });
   }

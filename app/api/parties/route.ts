@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { enforceLimit } from '@/lib/api/limit';
 import { requireActiveAccount } from '@/lib/api/require-active';
+import { getPrice } from '@/lib/pricing';
 
 interface CreatePartyBody {
   release_id?: string;
@@ -30,10 +31,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Compute price_minimum the same way /api/releases/[id]/publish does —
+  // the RPC now writes price + status + release_date in a single UPDATE,
+  // so callers must supply it.
+  const { data: tracks } = await supabase
+    .from('tracks')
+    .select('id')
+    .eq('release_id', body.release_id);
+  const priceMinimum = parseFloat(getPrice(tracks?.length ?? 0));
+
   const { data: partyId, error } = await supabase.rpc('validate_and_create_listening_party', {
     p_release_id: body.release_id,
     p_room_id: body.room_id,
     p_scheduled_at: body.scheduled_at,
+    p_price_minimum: priceMinimum,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 

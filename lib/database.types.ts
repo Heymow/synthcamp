@@ -569,6 +569,7 @@ export interface Database {
           p_release_id: string;
           p_room_id: string;
           p_scheduled_at: string;
+          p_price_minimum: number;
         };
         Returns: string;
       };
