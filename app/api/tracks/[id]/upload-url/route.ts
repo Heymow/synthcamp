@@ -8,7 +8,26 @@ import { getR2Client, R2_BUCKET } from '@/lib/r2';
 
 interface TrackUploadBody {
   filename?: string;
+  content_length?: number;
 }
+
+// Whitelist of allowed audio extensions and their corresponding concrete
+// MIME types. R2/S3 reject wildcard MIME (`audio/*`) on signed PUTs, so the
+// signed URL has to commit to one. The client must send the matching
+// Content-Type header at upload time.
+const AUDIO_MIME: Record<string, string> = {
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  flac: 'audio/flac',
+  aac: 'audio/aac',
+  m4a: 'audio/mp4',
+  ogg: 'audio/ogg',
+  opus: 'audio/opus',
+  aiff: 'audio/aiff',
+  wma: 'audio/x-ms-wma',
+};
+
+const MAX_AUDIO_BYTES = 200 * 1024 * 1024; // 200 MB
 
 export async function POST(
   request: NextRequest,
@@ -46,13 +65,51 @@ export async function POST(
   }
 
   const body = (await request.json().catch(() => ({}))) as TrackUploadBody;
-  const ext = body.filename?.split('.').pop() ?? 'mp3';
+  // Take ONLY the last segment after a dot, lowercase it, and validate
+  // against the whitelist. This rejects filenames like `evil.mp3/../../x`
+  // or no-dot filenames before they ever land in the R2 key.
+  const rawExt = body.filename?.split('.').pop()?.toLowerCase() ?? '';
+  if (!rawExt || !(rawExt in AUDIO_MIME)) {
+    return NextResponse.json(
+      {
+        error: `Unsupported audio format. Allowed: ${Object.keys(AUDIO_MIME).join(', ')}`,
+      },
+      { status: 400 },
+    );
+  }
+  const ext = rawExt;
+  const contentType = AUDIO_MIME[ext];
+
+  // Require a declared content_length so the signed URL pins it. The signed
+  // header forces the client to send a matching Content-Length on PUT — R2
+  // rejects mismatches with a signature error. Cap at MAX_AUDIO_BYTES so a
+  // malicious caller can't sign a 10 GB upload.
+  const declaredLen = body.content_length;
+  if (
+    typeof declaredLen !== 'number' ||
+    !Number.isFinite(declaredLen) ||
+    declaredLen <= 0 ||
+    Math.floor(declaredLen) !== declaredLen
+  ) {
+    return NextResponse.json(
+      { error: 'content_length (positive integer bytes) required' },
+      { status: 400 },
+    );
+  }
+  if (declaredLen > MAX_AUDIO_BYTES) {
+    return NextResponse.json(
+      { error: `File too large. Max ${MAX_AUDIO_BYTES} bytes (200 MB).` },
+      { status: 400 },
+    );
+  }
+
   const key = `artist_${user.id}/release_${track.release_id}/track_${track.track_number}.${ext}`;
 
   const cmd = new PutObjectCommand({
     Bucket: R2_BUCKET,
     Key: key,
-    ContentType: 'audio/*',
+    ContentType: contentType,
+    ContentLength: declaredLen,
   });
 
   let signedUrl: string;
@@ -65,5 +122,5 @@ export async function POST(
     );
   }
 
-  return NextResponse.json({ signed_url: signedUrl, key });
+  return NextResponse.json({ signed_url: signedUrl, key, content_type: contentType });
 }

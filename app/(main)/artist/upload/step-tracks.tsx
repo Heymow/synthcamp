@@ -114,7 +114,7 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
       const urlRes = await fetch(`/api/tracks/${trackId}/upload-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name }),
+        body: JSON.stringify({ filename: file.name, content_length: file.size }),
       });
       if (!urlRes.ok) {
         const body = (await urlRes.json().catch(() => ({ error: 'Signed URL failed' }))) as {
@@ -122,11 +122,23 @@ export function StepTracks({ state, setState, onNext, onBack }: StepTracksProps)
         };
         throw new Error(body.error ?? 'Signed URL failed');
       }
-      const { signed_url, key } = (await urlRes.json()) as { signed_url: string; key: string };
+      // The route now returns the concrete content_type it baked into the
+      // signed URL; the client must echo it on PUT or R2 rejects the
+      // signature. Same for content_length, signed via the file size we
+      // declared above.
+      const {
+        signed_url,
+        key,
+        content_type,
+      } = (await urlRes.json()) as {
+        signed_url: string;
+        key: string;
+        content_type: string;
+      };
 
       setPhase('uploading');
       setProgress(0);
-      await xhrUpload(signed_url, file, file.type || 'audio/mpeg', (pct) => setProgress(pct));
+      await xhrUpload(signed_url, file, content_type, (pct) => setProgress(pct));
 
       setPhase('finalizing');
       await fetch(`/api/releases/${state.releaseId}/tracks/${trackId}`, {
