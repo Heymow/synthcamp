@@ -45,9 +45,13 @@ async function stripePost<T>(path: string, body: Record<string, string | boolean
 }
 
 export async function createExpressAccount(email: string): Promise<string> {
+  // Direct charges require card_payments AND transfers on the connected
+  // account: card_payments lets the connected account accept buyer charges,
+  // transfers lets the platform pull application_fee_amount on each charge.
   const result = await stripePost<{ id: string }>('/accounts', {
     type: 'express',
     email,
+    'capabilities[card_payments][requested]': 'true',
     'capabilities[transfers][requested]': 'true',
   });
   return result.id;
