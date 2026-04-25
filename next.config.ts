@@ -6,11 +6,8 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'i.pravatar.cc' },
-      { protocol: 'https', hostname: 'picsum.photos' },
-      { protocol: 'https', hostname: 'placehold.co' },
+      // Self-hosted Supabase storage (covers, avatars).
       { protocol: 'https', hostname: 'api.synthcamp.net' },
-      { protocol: 'https', hostname: 'www.synthcamp.net' },
     ],
   },
 };
