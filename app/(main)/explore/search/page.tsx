@@ -19,6 +19,20 @@ interface ReleaseRow {
   tracks: { count: number }[] | null;
 }
 
+// Escape PostgREST .or() meta-characters. Raw commas / parens / asterisks /
+// backslashes in user input would be parsed as additional filters or
+// wildcards against neighbouring columns (and enable filter injection into
+// the OR group), so strip them before interpolation.
+function sanitizePostgrestTerm(input: string): string {
+  return input.replace(/[,()*\\]/g, ' ').trim();
+}
+
+// Escape SQL LIKE wildcards so `%` and `_` typed by the user are treated
+// literally instead of matching "anything" / "any single char".
+function escapeLikeWildcards(input: string): string {
+  return input.replace(/[\\%_]/g, '\\$&');
+}
+
 interface ArtistRow {
   id: string;
   display_name: string;
@@ -53,6 +67,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const hasFilter = query.length > 0 || selectedGenres.length > 0;
   if (hasFilter) {
+    // Escape LIKE wildcards so `%` and `_` in user input don't expand
+    // matches, and strip PostgREST meta-characters before any interpolation.
+    const safeQuery = sanitizePostgrestTerm(query);
+    const likeSafe = escapeLikeWildcards(safeQuery);
+
     let rq = supabase
       .from('releases')
       .select(
@@ -61,7 +80,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       .in('status', ['published', 'unlisted', 'scheduled'])
       .eq('is_listed', true);
 
-    if (query.length > 0) rq = rq.ilike('title', `%${query}%`);
+    if (safeQuery.length > 0) rq = rq.ilike('title', `%${likeSafe}%`);
     if (selectedGenres.length > 0) rq = rq.overlaps('genres', selectedGenres);
     rq =
       sortMode === 'title'
@@ -69,19 +88,46 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         : rq.order('created_at', { ascending: false });
 
     const { data: releaseRows } = await rq.limit(24);
-    releases = (releaseRows ?? []) as unknown as ReleaseRow[];
+    // RLS hides banned artists' profile rows, so an orphan join row with
+    // artist: null means the owning artist is banned. Drop those so search
+    // results don't surface banned-artist content.
+    releases = ((releaseRows ?? []) as unknown as ReleaseRow[]).filter(
+      (r) => r.artist !== null,
+    );
 
-    if (query.length > 0) {
-      const like = `%${query}%`;
-      const { data: artistRows } = await supabase
-        .from('profiles')
-        .select('id, display_name, slug, avatar_url, bio')
-        .eq('is_artist', true)
-        .not('slug', 'is', null)
-        .or(`display_name.ilike.${like},slug.ilike.${like}`)
-        .order('display_name', { ascending: true })
-        .limit(20);
-      artists = (artistRows ?? []) as ArtistRow[];
+    if (safeQuery.length > 0) {
+      // Split the previous .or() into two ilike queries and merge in JS.
+      // This avoids the PostgREST .or() filter parser entirely, so even if
+      // a future refactor drops sanitizePostgrestTerm we can't inject more
+      // filter clauses through commas/parens in the input.
+      const pattern = `%${likeSafe}%`;
+      const [{ data: byName }, { data: bySlug }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, display_name, slug, avatar_url, bio')
+          .eq('is_artist', true)
+          .not('slug', 'is', null)
+          .ilike('display_name', pattern)
+          .order('display_name', { ascending: true })
+          .limit(20),
+        supabase
+          .from('profiles')
+          .select('id, display_name, slug, avatar_url, bio')
+          .eq('is_artist', true)
+          .not('slug', 'is', null)
+          .ilike('slug', pattern)
+          .order('display_name', { ascending: true })
+          .limit(20),
+      ]);
+      const seen = new Set<string>();
+      const merged: ArtistRow[] = [];
+      for (const row of [...(byName ?? []), ...(bySlug ?? [])] as ArtistRow[]) {
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        merged.push(row);
+      }
+      merged.sort((a, b) => a.display_name.localeCompare(b.display_name));
+      artists = merged.slice(0, 20);
     }
   }
 
