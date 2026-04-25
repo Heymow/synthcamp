@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_artist, stripe_account_id')
+    .select('is_artist')
     .eq('id', user.id)
     .single();
   if (!profile) return NextResponse.json({ error: 'Profile missing' }, { status: 404 });
@@ -39,7 +39,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Artists only' }, { status: 403 });
   }
 
-  let accountId = profile.stripe_account_id;
+  // stripe_account_id lives on public.profiles_stripe (owner-only RLS) so
+  // it isn't exposed by the profile's public SELECT policy. The row is
+  // absent until the artist starts onboarding.
+  const { data: stripeRow } = await supabase
+    .from('profiles_stripe')
+    .select('stripe_account_id')
+    .eq('profile_id', user.id)
+    .maybeSingle();
+
+  let accountId = stripeRow?.stripe_account_id ?? null;
   if (!accountId) {
     try {
       accountId = await createExpressAccount(user.email ?? '');
@@ -49,12 +58,16 @@ export async function POST(request: NextRequest) {
         { status: 502 },
       );
     }
-    const { error: updateErr } = await supabase
-      .from('profiles')
-      .update({ stripe_account_id: accountId })
-      .eq('id', user.id);
-    if (updateErr) {
-      return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    // Upsert so both the first-ever onboarding (no row yet) and any retry
+    // after a prior partial failure write the account id cleanly.
+    const { error: upsertErr } = await supabase
+      .from('profiles_stripe')
+      .upsert(
+        { profile_id: user.id, stripe_account_id: accountId },
+        { onConflict: 'profile_id' },
+      );
+    if (upsertErr) {
+      return NextResponse.json({ error: upsertErr.message }, { status: 500 });
     }
   }
 

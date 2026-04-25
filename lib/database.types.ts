@@ -40,8 +40,6 @@ export interface Database {
           is_admin: boolean;
           banned_at: string | null;
           banned_reason: string | null;
-          stripe_account_id: string | null;
-          payout_enabled: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -55,8 +53,6 @@ export interface Database {
           is_admin?: boolean;
           banned_at?: string | null;
           banned_reason?: string | null;
-          stripe_account_id?: string | null;
-          payout_enabled?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -70,8 +66,6 @@ export interface Database {
           is_admin?: boolean;
           banned_at?: string | null;
           banned_reason?: string | null;
-          stripe_account_id?: string | null;
-          payout_enabled?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -80,6 +74,38 @@ export interface Database {
             foreignKeyName: 'profiles_id_fkey';
             columns: ['id'];
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+            isOneToOne: true;
+          },
+        ];
+      };
+      profiles_stripe: {
+        Row: {
+          profile_id: string;
+          stripe_account_id: string | null;
+          payout_enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          profile_id: string;
+          stripe_account_id?: string | null;
+          payout_enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          profile_id?: string;
+          stripe_account_id?: string | null;
+          payout_enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profiles_stripe_profile_id_fkey';
+            columns: ['profile_id'];
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
             isOneToOne: true;
           },
@@ -626,6 +652,7 @@ export type TablesUpdate<T extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][T]['Update'];
 
 export type Profile = Tables<'profiles'>;
+export type ProfileStripe = Tables<'profiles_stripe'>;
 export type Room = Tables<'rooms'>;
 export type Release = Tables<'releases'>;
 export type Track = Tables<'tracks'>;

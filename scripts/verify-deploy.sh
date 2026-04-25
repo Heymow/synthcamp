@@ -30,8 +30,8 @@ SELECT
   EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='reports') AS has_reports,
   EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tracks' AND column_name='preview_url') AS has_preview_url,
   EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tracks' AND column_name='plays_count') AS has_plays_count,
-  EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='stripe_account_id') AS has_stripe_id,
-  EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='payout_enabled') AS has_payout_enabled,
+  EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles_stripe' AND column_name='stripe_account_id') AS has_stripe_id,
+  EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles_stripe' AND column_name='payout_enabled') AS has_payout_enabled,
   EXISTS (SELECT 1 FROM pg_proc WHERE proname='increment_track_play') AS has_increment_play,
   EXISTS (SELECT 1 FROM pg_proc WHERE proname='fanout_release_notification') AS has_fanout,
   EXISTS (SELECT 1 FROM pg_proc WHERE proname='popular_genres') AS has_popular_genres,
@@ -56,8 +56,8 @@ else
     [[ "$f3"  == "t" ]] && ok "reports table"           || { bad "reports table missing";           FAILURES=$((FAILURES+1)); }
     [[ "$f4"  == "t" ]] && ok "tracks.preview_url"      || { bad "tracks.preview_url missing";      FAILURES=$((FAILURES+1)); }
     [[ "$f5"  == "t" ]] && ok "tracks.plays_count"      || { bad "tracks.plays_count missing";      FAILURES=$((FAILURES+1)); }
-    [[ "$f6"  == "t" ]] && ok "profiles.stripe_account_id" || { bad "profiles.stripe_account_id missing"; FAILURES=$((FAILURES+1)); }
-    [[ "$f7"  == "t" ]] && ok "profiles.payout_enabled" || { bad "profiles.payout_enabled missing"; FAILURES=$((FAILURES+1)); }
+    [[ "$f6"  == "t" ]] && ok "profiles_stripe.stripe_account_id" || { bad "profiles_stripe.stripe_account_id missing"; FAILURES=$((FAILURES+1)); }
+    [[ "$f7"  == "t" ]] && ok "profiles_stripe.payout_enabled" || { bad "profiles_stripe.payout_enabled missing"; FAILURES=$((FAILURES+1)); }
     [[ "$f8"  == "t" ]] && ok "increment_track_play RPC" || { bad "increment_track_play RPC missing"; FAILURES=$((FAILURES+1)); }
     [[ "$f9"  == "t" ]] && ok "fanout_release_notification RPC" || { bad "fanout_release_notification RPC missing"; FAILURES=$((FAILURES+1)); }
     [[ "$f10" == "t" ]] && ok "popular_genres RPC"      || { bad "popular_genres RPC missing";      FAILURES=$((FAILURES+1)); }
