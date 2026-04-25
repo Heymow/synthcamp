@@ -81,6 +81,13 @@ export async function POST(
       return NextResponse.json(data, { status: 201 });
     }
 
+    // Postgres foreign_key_violation — the parent release was deleted
+    // between the max-lookup and the insert. Retrying won't bring it
+    // back; surface a clean 404 instead of leaking the raw FK message.
+    if (error.code === '23503') {
+      return NextResponse.json({ error: 'Release not found' }, { status: 404 });
+    }
+
     // Postgres unique_violation — another concurrent insert grabbed the same
     // track_number. Loop back to re-read the max and retry. Any other error
     // is fatal.
