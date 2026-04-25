@@ -717,6 +717,10 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
+      effective_min_price_cents: {
+        Args: { p_release_id: string };
+        Returns: number;
+      };
       increment_track_play: {
         Args: { p_track_id: string };
         Returns: undefined;
@@ -731,6 +735,10 @@ export interface Database {
       };
       is_current_user_admin: {
         Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      is_release_purchasable: {
+        Args: { p_release_id: string; p_buyer_id: string };
         Returns: boolean;
       };
       admin_ban_user: {
@@ -761,6 +769,20 @@ export interface Database {
       mark_encode_job_done: {
         Args: { p_job_id: string; p_status: string; p_error?: string | null };
         Returns: undefined;
+      };
+      record_purchase: {
+        Args: {
+          p_buyer_id: string;
+          p_release_id: string;
+          p_amount_paid_cents: number;
+          p_amount_min_cents: number;
+          p_platform_fee_cents: number;
+          p_artist_payout_cents: number;
+          p_currency: string;
+          p_stripe_session_id: string;
+          p_party_discount_applied: boolean;
+        };
+        Returns: string;
       };
     };
     Enums: {
