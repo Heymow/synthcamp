@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { loadConnectAndInitialize } from '@stripe/connect-js';
+import { loadConnectAndInitialize } from '@stripe/connect-js/pure';
 import {
   ConnectComponentsProvider,
   ConnectAccountOnboarding,
