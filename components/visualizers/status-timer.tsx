@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { cn } from '@/lib/cn';
+import { useNow } from '@/lib/now-context';
 
 export interface StatusTimerProps {
   baseTime: number;
@@ -30,22 +30,9 @@ export function StatusTimer({
   small = false,
   inline = false,
 }: StatusTimerProps) {
-  const [time, setTime] = useState('');
-
-  useEffect(() => {
-    const update = () => {
-      const now = Date.now();
-      const diff = isCountdown ? baseTime - now : now - baseTime;
-      if (isCountdown && diff <= 0) {
-        setTime('LIVE');
-        return;
-      }
-      setTime(formatTime(diff));
-    };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [baseTime, isCountdown]);
+  const now = useNow();
+  const diff = isCountdown ? baseTime - now : now - baseTime;
+  const time = isCountdown && diff <= 0 ? 'LIVE' : formatTime(diff);
 
   const chip = (
     <span

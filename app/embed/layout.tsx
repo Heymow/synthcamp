@@ -6,8 +6,6 @@ export const metadata: Metadata = {
 
 export default function EmbedLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#050507] text-white antialiased">
-      {children}
-    </div>
+    <div className="bg-bg min-h-screen text-white antialiased">{children}</div>
   );
 }

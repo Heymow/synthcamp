@@ -3,41 +3,34 @@ import { Background3DLazy } from '@/components/three/background-3d-lazy';
 import { Header } from '@/components/layout/header';
 import { MiniPlayer } from '@/components/player/mini-player';
 import { MiniPlayerProvider } from '@/components/player/mini-player-provider';
+import { NowProvider } from '@/lib/now-context';
 import { getCurrentProfile } from '@/lib/data/profile';
-import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getUnreadNotificationsCount } from '@/lib/data/notifications';
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations('nav');
   const profile = await getCurrentProfile();
-
-  let unreadCount = 0;
-  if (profile) {
-    const supabase = await getSupabaseServerClient();
-    const { count } = await supabase
-      .from('notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', profile.id)
-      .is('read_at', null);
-    unreadCount = count ?? 0;
-  }
+  const unreadCount = profile ? await getUnreadNotificationsCount(profile.id) : 0;
 
   return (
-    <MiniPlayerProvider>
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-indigo-500 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
-      >
-        {t('skipToContent')}
-      </a>
-      <Background3DLazy />
-      <div className="ui-overlay pb-32">
-        <Header profile={profile} unreadCount={unreadCount} />
-        <div className="h-24 md:h-40" aria-hidden="true" />
-        <div id="main-content" tabIndex={-1}>
-          {children}
+    <NowProvider>
+      <MiniPlayerProvider>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-indigo-500 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
+        >
+          {t('skipToContent')}
+        </a>
+        <Background3DLazy />
+        <div className="ui-overlay pb-32">
+          <Header profile={profile} unreadCount={unreadCount} />
+          <div className="h-24 md:h-40" aria-hidden="true" />
+          <main id="main-content" tabIndex={-1}>
+            {children}
+          </main>
         </div>
-      </div>
-      <MiniPlayer />
-    </MiniPlayerProvider>
+        <MiniPlayer />
+      </MiniPlayerProvider>
+    </NowProvider>
   );
 }
