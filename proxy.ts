@@ -9,6 +9,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icon.svg|mock-covers|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Skip static assets and cron endpoints (cron auths via CRON_SECRET,
+    // not user session — running auth.getUser there is wasted work).
+    '/((?!_next/static|_next/image|favicon.ico|icon.svg|mock-covers|api/cron/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

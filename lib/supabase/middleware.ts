@@ -5,6 +5,11 @@ import type { Database } from '@/lib/database.types';
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // Skip the GoTrue roundtrip entirely for visitors with no Supabase
+  // auth cookies — there's no session to refresh, so it's a wasted hop.
+  const hasSupabaseCookie = request.cookies.getAll().some((c) => c.name.startsWith('sb-'));
+  if (!hasSupabaseCookie) return response;
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) return response;
