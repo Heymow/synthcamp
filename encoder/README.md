@@ -27,3 +27,23 @@ pnpm dev
 ## Deploy
 
 Railway service named `synthcamp-encoder`, root `encoder/`, build via Dockerfile.
+
+## Smoke test (local)
+
+1. Copy `.env.example` to `.env` and fill values from Railway / R2 / Supabase dashboards.
+2. In another terminal, manually enqueue a test job against an existing track:
+
+```sql
+-- On the VPS:
+docker exec -i supabase-db psql -U postgres -d postgres <<SQL
+INSERT INTO public.encode_jobs (track_id, kind)
+SELECT id, 'preview' FROM public.tracks WHERE audio_source_key IS NOT NULL LIMIT 1;
+SQL
+```
+
+3. Run the encoder locally: `pnpm dev` (from `encoder/`).
+4. Watch the logs:
+   - "claimed job ... preview ..."
+   - "preview encoded: https://..."
+5. Verify R2 has the new `audio-preview/.../<track_id>.mp3` object.
+6. Verify the track row: `SELECT preview_url FROM tracks WHERE id = '<track_id>';` is now set.
